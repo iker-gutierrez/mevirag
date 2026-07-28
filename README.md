@@ -1,33 +1,33 @@
 # Medical RAG MA thesis
 
 Retrieval-augmented generation (RAG) pipeline for clinical question answering in Spanish and Basque.
-The system is evaluated on two tasks: open-answer clinical QA (SNS-1064) and multiple-choice medical exam QA (CasiMédicos-Exp), across four core generator configurations (Qwen3.5-9B in non-thinking and thinking mode, Llama-3.1-8B-Instruct, and its Basque-adapted counterpart Latxa-Llama-3.1-8B-Instruct) and an eleven-condition ablation grid varying retrieval depth, cross-encoder reranking, few-shot prompting, self-feedback, and domain restriction, plus four inference-only reasoning pipelines drawn from recent literature. Ministral-8B is additionally evaluated as a fifth, exploratory single-pass and reasoning-pipeline configuration.
+The system is evaluated on two tasks: open-answer clinical QA (SNS-1064) and multiple-choice medical exam QA (CasiMédicos-Exp), across four core generator configurations (Qwen3.5-9B in non-thinking and thinking mode, Llama-3.1-8B-Instruct, and its Basque-adapted counterpart Latxa-Llama-3.1-8B-Instruct) and an eleven-condition ablation grid varying retrieval depth, cross-encoder reranking, few-shot prompting, self-feedback, and domain restriction, plus five inference-only reasoning-pipeline variants drawn from recent literature. Ministral-8B is additionally evaluated as a fifth, exploratory single-pass and reasoning-pipeline configuration.
 
 Full system implementation: retrieval, generation, self-feedback, reasoning pipelines, and evaluation.
 
 ## Status
 
-- **Spanish and Basque dev ablations**: complete, all eleven conditions, three seeds each, decided by MeanQ (mean of ROUGE-L, BERT-F1, MC-accuracy; see `scripts/meanq.py`).
+- **Spanish and Basque dev ablations**: complete, all eleven conditions, three seeds each, decided by MeanQ (mean of ROUGE-L, BERT-F1, MC-accuracy; see `scripts/meanq.py`). Rerun in full against a rebuilt evidence-only retrieval index (`configs/experiments/3*.json`), closing an answer-leakage path where the original full-record index could let one dev/test instance's retrieval surface a different instance's gold answer.
 - **Reasoning-pipeline comparison**: complete for both languages, including a second Basque backbone (Llama) alongside Latxa, and both Qwen3.5-9B modes.
-- **Test set evaluation**: not yet run, pending supervisor approval.
+- **Test set evaluation**: complete. Each model's own dev-set MeanQ-best configuration was frozen and run once against the held-out test split.
 
 ## Key findings
 
 - Retrieval helps every model in both languages substantially; reranking and few-shot prompting each help only narrowly and inconsistently, and are actively harmful for the weakest models in each language, while self-feedback is neutral for three of the four models but a genuine, if modest, gain for the Basque-adapted model specifically.
-- Of the four reasoning pipelines, two show a real gain over single-pass retrieval, and only for one of the two Spanish configurations tested, at several times the inference cost; every pipeline underperforms the single-pass baseline in Basque, and for the other Spanish configuration.
-- A persistent 20-26 point MeanQ gap between the best achievable Spanish and Basque configurations survives every technique tested.
+- Of the five reasoning-pipeline variants, two show a real gain over our single-pass RAG ablation winner, and only for one of the two Spanish configurations tested, at several times the inference cost; every pipeline underperforms our ablation winner in Basque, and for the other Spanish configuration.
+- A persistent 20-26 point MeanQ gap between the best achievable Spanish and Basque configurations survives every technique tested on dev, and holds, narrower but still substantial (16-20 points), on the held-out test set.
 - Basque language adaptation (Latxa vs. Llama) does not raise overall single-pass MeanQ above the non-adapted model's, but it does raise multiple-choice accuracy specifically, and it is the only technique tested for which the Basque-adapted model shows a genuine advantage: a positive self-feedback gain that does not extend to multi-step reasoning.
 
 ## Best dev configuration per model
 
-| Language | Model | Best config | MeanQ |
-|---|---|---|---|
-| Spanish | Qwen3.5-9B (no-think) | rerank top 5 | 69.15±0.72 |
-| Spanish | Qwen3.5-9B (think) | 3-shot + rerank top 5 | 73.51±0.25 |
-| Basque | Llama-3.1-8B-Instruct | retrieve top 3 | 49.01±1.71 |
-| Basque | Latxa-Llama-3.1-8B-Instruct | retrieve top 3 (with self-feedback) | 47.66±0.37 |
+| Language | Model | Best config | Dev MeanQ | Test MeanQ |
+|---|---|---|---|---|
+| Spanish | Qwen3.5-9B (no-think) | MedCoT-RAG (our best retrieval) | 71.19 | 65.86 |
+| Spanish | Qwen3.5-9B (think) | 3-shot + rerank top 5 | 73.51±0.25 | 68.62 |
+| Basque | Llama-3.1-8B-Instruct | retrieve top 3 | 49.01±1.71 | 48.52 |
+| Basque | Latxa-Llama-3.1-8B-Instruct | retrieve top 3 (with self-feedback) | 47.66±0.37 | 49.68 |
 
-Full per-condition results, including cost (seconds/tokens per sample) and self-feedback deltas, are in the ablation reports linked below.
+For Qwen no-think, MedCoT-RAG (our best retrieval) was the only one of the five reasoning-pipeline variants to beat its own model's RAG ablation winner on dev, so it is the frozen test-set configuration; the other three models carry forward their own single-pass ablation winner instead. Full per-condition results, including cost (seconds/tokens per sample) and self-feedback deltas, are in the ablation reports linked below.
 
 ## Repository layout
 
@@ -37,7 +37,7 @@ Full per-condition results, including cost (seconds/tokens per sample) and self-
 - `src/medical_rag_thesis/`: reusable experiment code (retrieval, generation, evaluation, reasoning pipelines).
 - `scripts/`: command-line entry points for data prep, experiments, staged ablation, and result-table/report generation.
 - `slurm/`: Slurm job scripts, including the staged-ablation launchers (`slurm/staged_*.sh`).
-- `configs/experiments/`: per-run experiment configs (retrieval depth, reranking, few-shot, self-feedback, reasoning pipeline).
+- `configs/experiments/`: per-run experiment configs (retrieval depth, reranking, few-shot, self-feedback, reasoning pipeline). The `3xxx`-prefixed configs are the ablation grid rerun against the evidence-only retrieval index; other prefixes predate that rebuild.
 - `experiments/runs/`: generated predictions and run artifacts (gitignored).
 - `reports/metrics/`: ablation result tables and summaries.
 - `docs/`: current prompt reference (`prompts.md`), supervisor meeting notes, reading list, bibliography notes.
@@ -59,13 +59,14 @@ python -m pip install -e .
 
 ### Data preparation
 
-Prepare SNS-1064:
+Prepare SNS-1064 from the pre-split train/dev/test CSVs published in the [SNS1064-dataset](https://github.com/iker-gutierrez/SNS1064-dataset) repository (the split used for every experiment in this thesis is fixed there, not re-derived here):
 
 ```bash
 python scripts/prepare_sns1064.py \
-  --input data/raw/sns1064.csv \
-  --output-dir data/processed/sns1064 \
-  --seed 42
+  --train-df /path/to/train_df.csv \
+  --dev-df /path/to/dev_df.csv \
+  --test-df /path/to/test_df.csv \
+  --output-dir data/processed/sns1064
 ```
 
 Import CasiMédicos-Exp from Hugging Face (`HiTZ/casimedicos-exp`):
