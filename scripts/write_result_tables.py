@@ -142,7 +142,22 @@ DOMAIN_BASE_LABEL: dict[str, dict[str, str]] = {
 }
 
 
-def display_label(label: str, best_config: Optional[str], model: str) -> str:
+def display_label(label: str, best_config: Optional[str], model: str,
+                   fewshot_config: Optional[str] | Optional[dict[str, str]] = None) -> str:
+    """`best_config` substitutes into DOMAIN_RENAME labels (rows 9-10) AND, when
+    `fewshot_config` is not separately given, into the row-8 "3-shot + rerank
+    top 5" label too -- the single-stage main-text tables pass one dict that
+    happens to serve both purposes there (each call is scoped to one stage, so
+    only one of the two substitutions is ever actually exercised on a given
+    call). The appendix full-listing table shows rows 8 AND 9-10 in the SAME
+    table, where row 8's own RAG base (that model's stage-1/2 MeanQ winner,
+    i.e. the fewshot stage's own `reference`/FORCED_REFERENCES pin) and rows
+    9-10's RAG base (DOMAIN_BASE_LABEL, a fixed, independent-of-pins fact
+    about which config the domain runs were actually built against) are not
+    always the same value for a given model -- e.g. ES's Qwen think: fewshot
+    base "rerank top 5" but domain base "3-shot + rerank top 5". Passing both
+    `best_config` (domain) and `fewshot_config` (row 8) lets the appendix call
+    resolve each label correctly instead of reusing one dict for both."""
     if label in DOMAIN_RENAME:
         config_text = best_config.get(model) if isinstance(best_config, dict) else best_config
         return f"{DOMAIN_RENAME[label]}, {config_text}" if config_text else DOMAIN_RENAME[label]
@@ -153,7 +168,8 @@ def display_label(label: str, best_config: Optional[str], model: str) -> str:
         # (as it did: rerank5 -> retrieve top3 once MC-acc was correctly
         # included). Substitute the actual pinned config so the table never
         # names a RAG setting the row wasn't actually run with.
-        config_text = best_config.get(model) if isinstance(best_config, dict) else best_config
+        source = fewshot_config if fewshot_config is not None else best_config
+        config_text = source.get(model) if isinstance(source, dict) else source
         # Guard against self-substitution: when THIS row's own literal label
         # (e.g. row 8, carried forward as the domain stage's reference) is
         # itself "3-shot + rerank top 5" and that also happens to be the
@@ -255,7 +271,13 @@ FORCED_REFERENCES: dict[str, list[tuple[str, str]]] = {
 # pin-not-yet-reached logic already shows no carried-forward reference in a
 # pin's own stage).
 ES_STAGE_REFERENCE_OVERRIDE: dict[str, list[tuple[str, str]]] = {
-    "rerank": [("rerank top 5", "Qwen no-think"), ("rerank top 5", "Qwen think")],
+    # No "rerank" entry: the rerank stage's own reference is FORCED_REFERENCES's
+    # stage-1 default (1a/3b, retrieve top 1 / retrieve top 5), unmodified.
+    # An override here that names "rerank top 5" would be that stage's own row
+    # carrying itself forward as its own reference, which the "own stage" guard
+    # in emit_table() correctly reduces to nothing -- that emptiness was the bug
+    # (Table "Effect of cross-encoder reranking" showing no reference row / no
+    # 1a, 3b) fixed by removing this entry rather than by changing the guard.
     "fewshot": [("rerank top 5", "Qwen no-think"), ("rerank top 5", "Qwen think")],
     "domain": [("rerank top 5", "Qwen no-think"), ("3-shot + rerank top 5", "Qwen think")],
 }
@@ -513,15 +535,42 @@ def best_label(experiments, models, pool, suffix, *, only_model: Optional[str] =
     return best
 
 
+def best_label_either_sf(experiments, models, pool, suffix, *, only_model: Optional[str] = None
+                          ) -> Optional[tuple[str, str, bool]]:
+    """Like best_label, but searches BOTH SF states rather than noSF only, and
+    returns which one won. Used for the per-dataset appendix tables
+    (write_evidence_only_appendix_table.py-style highlighting), where the
+    question is genuinely "which single row in this flat table has the
+    highest MeanQ" -- unlike the main-text staging best_label() serves, there
+    is no later stage this choice gets carried into, so restricting to noSF
+    the way best_label() deliberately does (see its own docstring) would
+    silently skip a higher-MeanQ SF row and highlight a worse one instead.
+    """
+    best, best_score, best_sf = None, float("-inf"), False
+    for label in pool:
+        for use_sf in (False, True):
+            for model, row in rows_for(experiments, models, label, suffix, use_sf=use_sf):
+                if only_model and model != only_model:
+                    continue
+                mean = row["meanq"][0]
+                if mean is not None and mean > best_score:
+                    best_score, best, best_sf = mean, (label, model), use_sf
+    if best is None:
+        return None
+    return (best[0], best[1], best_sf)
+
+
 def emit_table(experiments, models, labels, *, caption, short, tag, suffix,
-               best_config: Optional[str] | Optional[dict[str, str]] = None, quality=None,
+               best_config: Optional[str] | Optional[dict[str, str]] = None,
+               fewshot_config: Optional[str] | Optional[dict[str, str]] = None, quality=None,
                highlight_rows: frozenset[tuple[str, str]] = frozenset(),
                restrict: Optional[dict[str, frozenset[str]]] = None,
                best_sf_only: frozenset[tuple[str, str]] = frozenset(),
                pin_rows: frozenset[tuple[str, str]] = frozenset(),
                pin_sf_override: Optional[dict[tuple[str, str], bool]] = None,
                color_pins: bool = True,
-               separator_after: int = 0) -> list[str]:
+               separator_after: int = 0,
+               fixed_config_width: bool = False) -> list[str]:
     """`labels` is the row labels to show, in order. `restrict`, if given, maps a
     label to the SET of models whose rows should be shown for it -- used for
     carried-forward reference row(s), which are specific config-model
@@ -549,7 +598,13 @@ def emit_table(experiments, models, labels, *, caption, short, tag, suffix,
     restrict = restrict or {}
     # 4 label columns (#, Model, Config, SF) + quality + 2 cost columns.
     ncol = 4 + len(quality) + 2
-    colspec = r"r l l c " + "c " * len(quality) + r"c c"
+    # The appendix tables' domain rows carry much longer Config text ("SNS
+    # retrieval, rerank top 5, Qwen think") than the main-text per-stage
+    # tables ever do, wide enough to push the table past the right margin
+    # under plain auto-width "l". Same fixed-width convention already used
+    # for table_evidence_only.tex (write_evidence_only_appendix_table.py).
+    config_col = r">{\raggedright\arraybackslash}p{3.8cm}" if fixed_config_width else "l"
+    colspec = r"r l " + config_col + r" c " + "c " * len(quality) + r"c c"
     header = (
         r"\# & Model & Config & SF & \multicolumn{%d}{c}{Quality $\uparrow$} & "
         r"\multicolumn{2}{c}{Cost $\downarrow$} \\" % len(quality)
@@ -661,7 +716,7 @@ def emit_table(experiments, models, labels, *, caption, short, tag, suffix,
                 row = rows_by_model.get(model)
                 if row is None:
                     continue
-                exp_cell = esc(display_label(label, best_config, model))
+                exp_cell = esc(display_label(label, best_config, model, fewshot_config))
                 is_pinned_row = (label, model) in pin_rows and (pin_sf is None or use_sf == pin_sf)
                 row_prefix = r"\rowcolor{pinnedrow}" if (is_pinned_row and color_pins) else ""
                 cells = [
@@ -722,16 +777,33 @@ def emit_table(experiments, models, labels, *, caption, short, tag, suffix,
 
 def assign_ids(experiments, models) -> None:
     """Assign the experiment number (0-10, canonical EXPERIMENTS order) and model
-    letter (a, b, c, ..., canonical model-list order) once, before any table is
-    rendered. If ids were instead allocated lazily as rows were drawn, the id a
-    run received would depend on which table happened to be generated first, and
-    the same experiment would carry different ids in the staged tables and the
+    letter (canonical model-list order) once, before any table is rendered. If
+    ids were instead allocated lazily as rows were drawn, the id a run received
+    would depend on which table happened to be generated first, and the same
+    experiment would carry different ids in the staged tables and the
     appendix.
+
+    Model letters are assigned from MODEL_LETTERS' current size, NOT reset to
+    "a" per language: ES and EU are independent grids for experiment numbers
+    (each staged 0-10, cleared between languages -- a row id like "6a" is only
+    ever compared against other rows in its own language's own tables), but a
+    row id is also cited standalone in manuscript prose and cross-referenced
+    into the reasoning-pipeline and evidence-only tables by exact string (e.g.
+    "2a", "2b'"), where language context is not always visible at the citation
+    site. Letting ES use a/b and EU independently reuse a/b for entirely
+    different models made "6a" ambiguous outside its own table; EU instead
+    continues from where ES left off (c/d), so every row id in this thesis is
+    unique across languages, not just within one language's own tables. Model
+    letters are therefore NOT cleared between languages in main() the way
+    EXPERIMENT_NUMBERS is.
     """
     for i, entry in enumerate(experiments):
         EXPERIMENT_NUMBERS[entry[0]] = i
+    next_letter_index = len(MODEL_LETTERS)
     for i, model in enumerate(models):
-        MODEL_LETTERS[model] = chr(ord("a") + i)
+        if model not in MODEL_LETTERS:
+            MODEL_LETTERS[model] = chr(ord("a") + next_letter_index)
+            next_letter_index += 1
 
 
 def build_language(experiments, models, lang: str, dev_slug: str, suffix: str, color_pins: bool = True) -> None:
@@ -782,6 +854,9 @@ def build_language(experiments, models, lang: str, dev_slug: str, suffix: str, c
             if pin_label in stage_labels[slug]:
                 return idx
         return -1
+    # Captured at the "fewshot" stage's own iteration below, and reused after
+    # the loop for the appendix table's row-8 label substitution (see there).
+    captured_fewshot_base: Optional[dict[str, str]] = None
     for stage_index, (slug, stem, question, labels) in enumerate(STAGES):
         is_tie_break_stage = slug == tie_break_stage
         # A pin only applies (is prepended as a carried-forward reference) from
@@ -803,7 +878,16 @@ def build_language(experiments, models, lang: str, dev_slug: str, suffix: str, c
                 (lbl, mdl) for lbl, mdl in ES_STAGE_REFERENCE_OVERRIDE[slug]
                 if stage_index > pin_own_index(lbl)
             ]
-        ref_labels = sorted({label for label, _ in reference})
+        # Order reference rows by model letter (a before b), not alphabetically
+        # by label text -- the two pinned rows can carry different label text
+        # (e.g. domain stage: "rerank top 5" for model a's pin vs. "3-shot +
+        # rerank top 5" for model b's), and sorting the label strings
+        # themselves can then put model b's row above model a's.
+        label_to_model = {label: mdl for label, mdl in reference}
+        ref_labels = sorted(
+            {label for label, _ in reference},
+            key=lambda lbl: models.index(label_to_model[lbl]) if label_to_model[lbl] in models else 0,
+        )
         ref_items = [f"{lbl}, {mdl}" for lbl, mdl in reference]
         if len(ref_items) <= 2:
             ref_desc = " and ".join(ref_items)
@@ -848,6 +932,8 @@ def build_language(experiments, models, lang: str, dev_slug: str, suffix: str, c
         # already is, one label per model, so each model's row 8 names the
         # RAG base IT was actually built on.
         fewshot_base = {mdl: lbl for lbl, mdl in reference} if reference else None
+        if slug == "fewshot":
+            captured_fewshot_base = fewshot_base
         extra_pins = EXTRA_PIN_ROWS.get((lang, slug), frozenset())
         # pin_rows drives the blue \rowcolor{pinnedrow} highlight. It normally
         # tracks the same static `pins` used to compute `reference` above, but
@@ -863,9 +949,22 @@ def build_language(experiments, models, lang: str, dev_slug: str, suffix: str, c
             if lang == "ES" and stg == slug
         }
         out = OUT_DIR / f"table_{lang.lower()}_{dev_slug}_{slug}.tex"
+        # Short-caption dev-slug display text, matching the List of Tables
+        # convention used elsewhere in the manuscript: the mixed-corpus tables
+        # spell out "mixed dataset" (including the rerank stage -- a prior
+        # version of this dict special-cased rerank to the shorter "mixed",
+        # an inconsistency since fixed by explicit request), and the two
+        # single-source tables use the dataset's own capitalization (SNS1064,
+        # CasiMédicos) instead of the lowercase slug used internally for
+        # filenames/labels.
+        dev_slug_display = {
+            "mixed": "mixed dataset",
+            "sns1064": "SNS1064",
+            "casimedicos": "CasiMédicos",
+        }[dev_slug]
         out.write_text("\n".join(emit_table(
             experiments, models, shown,
-            caption=caption, short=f"{stem} ({lang}, {dev_slug})",
+            caption=caption, short=f"{stem} ({lang}, {dev_slug_display})",
             tag=f"{lang.lower()}-{dev_slug}-{slug}", suffix=suffix,
             best_config=domain_base if slug == "domain" else fewshot_base,
             restrict=restrict or None,
@@ -875,19 +974,68 @@ def build_language(experiments, models, lang: str, dev_slug: str, suffix: str, c
             pin_sf_override=pin_sf_override or None,
             color_pins=color_pins,
             separator_after=len(ref_labels) if reference else 0,
+            # Only the domain stage's Config text gets long enough ("CasiMédicos
+            # retrieval, 3-shot + rerank top 5") to overflow the right margin --
+            # retrieval/rerank/fewshot's labels are all short enough for plain
+            # auto-width "l".
+            fixed_config_width=(slug == "domain"),
         )) + "\n")
 
     # ── full appendix table: all eleven conditions ─────────────────────────────
     all_labels = [e[0] for e in experiments]
+    # Per-dataset tables (SNS1064-only, CasiMedicos-only) highlight each model's
+    # OWN best-MeanQ row computed on THAT dataset's own metrics -- not the
+    # mixed-set winner staged in the main text and reused, unstaged, in every
+    # earlier version of this appendix. The mixed-set table (dev_slug=="mixed")
+    # is left unhighlighted: that winner is already the one reported everywhere
+    # else, so a second, redundant highlight here would add nothing.
+    per_dataset_pins: frozenset[tuple[str, str]] = frozenset()
+    per_dataset_pin_sf: dict[tuple[str, str], bool] = {}
+    if dev_slug != "mixed":
+        winners = []
+        for model in models:
+            # Searches both SF states: this is "which single row in this flat
+            # table has the highest MeanQ", not the main-text staging question
+            # best_label() answers (which is deliberately noSF-only, see its
+            # own docstring) -- a higher-MeanQ SF row must not be skipped.
+            win = best_label_either_sf(experiments, models, all_labels, suffix, only_model=model)
+            if win is not None:
+                label, mdl, use_sf = win
+                winners.append((label, mdl))
+                per_dataset_pin_sf[(label, mdl)] = use_sf
+        per_dataset_pins = frozenset(winners)
+    # Same List of Tables display-text convention as the staged tables above
+    # (dev_slug_display, computed per-stage inside the loop): "mixed dataset",
+    # "SNS1064", "CasiMédicos", never the raw lowercase internal slug.
+    appendix_dev_slug_display = {
+        "mixed": "mixed dataset", "sns1064": "SNS1064", "casimedicos": "CasiMédicos",
+    }[dev_slug]
     out = OUT_DIR / f"appendix_table_{lang.lower()}_{dev_slug}.tex"
     out.write_text("\n".join(emit_table(
         experiments, models, all_labels,
-        caption=(f"Full dev ablation ({lang}, {dev_slug}): all eleven configurations, "
+        caption=(f"Full dev ablation ({lang}, {appendix_dev_slug_display}): all eleven configurations, "
                  f"each with and without self-feedback, mean$\\pm$std over seeds "
-                 f"{', '.join(str(s) for s in SEEDS)}."),
-        short=f"Full dev ablation ({lang}, {dev_slug})",
+                 f"{', '.join(str(s) for s in SEEDS)}."
+                 + (" Each model's own best-MeanQ configuration on this dataset "
+                    "alone (not the mixed-set winner reported in the main text) "
+                    "is highlighted."
+                    if dev_slug != "mixed" else "")),
+        short=f"Full dev ablation ({lang}, {appendix_dev_slug_display})",
         tag=f"app-{lang.lower()}-{dev_slug}", suffix=suffix,
         quality=QUALITY,
+        fixed_config_width=True,
+        # Row 8 ("3-shot + rerank top 5") and rows 9-10 (SNS/CasiMedicos
+        # retrieval) both need their RAG-base substitution here, and it is
+        # NOT always the same value per model (see display_label()'s own
+        # docstring for the ES Qwen-think counterexample) -- unlike the
+        # single-stage main-text calls above, which only ever need one of the
+        # two on a given call. best_config drives rows 9-10 (DOMAIN_BASE_LABEL,
+        # a fixed fact about the domain runs); fewshot_config drives row 8
+        # (that model's own fewshot-stage reference, captured above).
+        best_config=DOMAIN_BASE_LABEL.get(lang),
+        fewshot_config=captured_fewshot_base,
+        pin_rows=per_dataset_pins,
+        pin_sf_override=per_dataset_pin_sf or None,
     )) + "\n")
 
 
@@ -897,7 +1045,9 @@ def main() -> None:
         (EU_EXPERIMENTS, EU_MODELS, "EU"),
     ):
         EXPERIMENT_NUMBERS.clear()   # ES and EU are independent grids, each numbered from 0
-        MODEL_LETTERS.clear()
+        # MODEL_LETTERS is deliberately NOT cleared here -- see assign_ids()'s
+        # own docstring: EU continues from c/d rather than restarting at a/b,
+        # so every row id (e.g. "6a", "2c") is globally unique across languages.
         assign_ids(experiments, models)
         for dev_slug, suffix in (("mixed", ""), ("sns1064", "_sns1064"),
                                  ("casimedicos", "_casimedicos")):

@@ -17,7 +17,22 @@ experiments/runs_archive*/
 experiments/runs_v2/
 experiments/runs_hf_baseline/
 experiments/runs_stale_oldbudget/
+experiments/runs_stale_backup/
 experiments/slurm_logs/*
+data/processed_snapshots/
+
+# Transient debugging configs (per-seed truncation-fix retries, smoke tests,
+# ad-hoc /tmp-pointing debug configs) -- not part of the reproducible pipeline
+configs/experiments/*_retry.json
+configs/experiments/*_retry[0-9].json
+configs/experiments/smoke_stagedeval_*.json
+configs/experiments/mini_test_qwen_fix.json
+configs/experiments/no_copy_prompt_test_1050.json
+
+# Superseded prompt-doc snapshots (docs/prompts.md is current)
+docs/prompts_v1.md
+docs/prompts_v2.md
+docs/prompts_v3.md
 models/*
 reports/figures/*
 reports/metrics/*

@@ -59,6 +59,15 @@ CASIMEDICOS_REFERENCE_CANDIDATES = [
     ROOT / "data/processed/sns1064_casimedicos/dev_casimedicos_only.jsonl",
     ROOT / "data/processed/casimedicos_eu/dev.jsonl",
     ROOT / "data/processed/sns1064_casimedicos_eu_truncated/dev_casimedicos_only.jsonl",
+    # Test-set records (test-set inference, slurm/test_set_inference.sh) --
+    # unlike the dev files above, there is no pre-split test_casimedicos_only.jsonl,
+    # but the mixed file carries options/correct_option directly on its
+    # CasiMedicos-Exp rows, which build_casimedicos_reference_index() already
+    # filters for (SNS1064 rows have neither field, so they contribute nothing).
+    # ES and EU share the same casimedicos_<id> ids and correct_option values
+    # (Basque is a translation of the same source records, verified by direct
+    # comparison), so this one file is sufficient for both languages.
+    ROOT / "data/processed/sns1064_casimedicos/test.jsonl",
 ]
 
 

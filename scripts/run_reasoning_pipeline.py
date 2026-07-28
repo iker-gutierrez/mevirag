@@ -5,12 +5,24 @@ Pipelines: structured_cot | thought_rag | thought_rag_iter | marag
 (see src/medical_rag_thesis/reasoning.py for what each one is and where it
 comes from).
 
+thought_rag is RAR2's Parallel Scaling strategy (xuEtAl2025 Fig. 4): sample
+`parallel_thoughts` independent thoughts, concatenate, retrieve once, answer
+once. thought_rag_iter is the separate Iterative Scaling strategy (re-think
+with retrieved evidence, re-retrieve, repeat for `rounds`). marag samples
+`num_candidates` per round, measures conflict, turns conflict into up to four
+retrieval queries, and carries ALL candidates (re-sorted by confidence) into
+the next round -- matching the actual NJU-RL/MA-RAG code, not just its paper.
+The previous v1 pipelines (single-retrieval thought_rag, and a marag variant
+with a separate ranking/pruning agent not present in the original) are kept,
+unmodified, in reasoning_v1.py / run_reasoning_pipeline_v1.py for
+reproducibility of results already reported from them.
+
 Predictions are written in exactly the schema produced by
 run_generation_experiment.py, so scripts/evaluate_predictions.py and every
 downstream summary script work on these runs unchanged.
 
 Usage:
-    python scripts/run_reasoning_pipeline.py --config configs/experiments/1300_*.json
+    python scripts/run_reasoning_pipeline.py --config configs/experiments/1600_*.json
     python scripts/run_reasoning_pipeline.py --config ... --seed 43
 """
 from __future__ import annotations
@@ -44,17 +56,19 @@ from medical_rag_thesis.reasoning import (  # noqa: E402
     PIPELINES,
     build_conflict_query_prompt,
     build_consensus_prompt,
-    build_ranking_prompt,
     build_solver_prompt,
     build_structured_cot_prompt,
     build_thought_answer_prompt,
     build_thought_prompt,
+    concatenate_thoughts,
     conflict_score,
     has_answer_label,
     majority_candidate,
     merge_documents,
+    parse_conflict_queries,
     parse_pipeline_answer,
-    parse_ranking_choice,
+    sort_by_confidence,
+    token_confidence,
 )
 from medical_rag_thesis.causal_scoring import causal_score  # noqa: E402
 from medical_rag_thesis.retrieval import EmbeddingRetriever  # noqa: E402
@@ -100,7 +114,6 @@ class Config:
         self.max_new_tokens: int = int(payload.get("max_new_tokens", 2048))
         self.thought_max_new_tokens: int = int(payload.get("thought_max_new_tokens", self.max_new_tokens))
         self.query_max_new_tokens: int = int(payload.get("query_max_new_tokens", 128))
-        self.ranking_max_new_tokens: int = int(payload.get("ranking_max_new_tokens", 32))
         self.temperature: float = float(payload.get("temperature", 0.7))
         self.top_p: float = float(payload.get("top_p", 0.95))
         self.top_k: int = int(payload.get("top_k", 0))
@@ -152,6 +165,11 @@ class Config:
         # pipeline knobs
         self.rounds: int = int(payload.get("rounds", 2))
         self.num_candidates: int = int(payload.get("num_candidates", 3))
+        # RAR2 Parallel Scaling: m independent thoughts sampled per record,
+        # concatenated, retrieved once. Distinct from `rounds`
+        # (thought_rag_iter's re-retrieve budget) -- Parallel Scaling never
+        # re-retrieves.
+        self.parallel_thoughts: int = int(payload.get("parallel_thoughts", 3))
         # Two thresholds, because the two conflict signals live on different scales.
         # Multiple choice is discrete: any candidate not backing the plurality option
         # is a real disagreement, so the bar is 0 (MA-RAG's own criterion). Semantic
@@ -233,30 +251,11 @@ class Generator:
             return 0
         return len(self.tokenizer(text)["input_ids"])
 
-    def generate(
-        self,
-        user_prompts: Sequence[str],
-        *,
-        max_new_tokens: int,
-        n: int = 1,
-        temperature: Optional[float] = None,
-    ) -> tuple[list[list[str]], list[list[Optional[str]]], list[str]]:
-        """Returns (texts[record][sample], finish_reasons[record][sample], chat_prompts).
-
-        `n > 1` asks vLLM for n independent samples per prompt in a single pass --
-        this is the Solver agent's parallel sampling, and it shares the prompt's
-        KV cache across the samples instead of re-encoding it n times.
-        """
-        from vllm import SamplingParams
-        from vllm.sampling_params import RepetitionDetectionParams
-
-        config = self.config
-        chat_prompts = self.chat(user_prompts)
-
-        allowed = config.max_model_len - max_new_tokens
+    def _truncate(self, chat_prompts: Sequence[str], max_new_tokens: int) -> list[str]:
+        allowed = self.config.max_model_len - max_new_tokens
         if allowed <= 0:
             raise ValueError(
-                f"max_new_tokens ({max_new_tokens}) leaves no room in max_model_len ({config.max_model_len})"
+                f"max_new_tokens ({max_new_tokens}) leaves no room in max_model_len ({self.config.max_model_len})"
             )
         truncated = []
         for prompt in chat_prompts:
@@ -266,7 +265,13 @@ class Generator:
                 ids = ids[-allowed:]
                 prompt = self.tokenizer.decode(ids, skip_special_tokens=False)
             truncated.append(prompt)
+        return truncated
 
+    def _sampling_kwargs(self, *, n: int, max_new_tokens: int, temperature: Optional[float],
+                          logprobs: Optional[int] = None) -> dict[str, Any]:
+        from vllm.sampling_params import RepetitionDetectionParams
+
+        config = self.config
         # The seed MUST reach SamplingParams. Plumbing it only as far as the config
         # (which is what the single-pass runs do) leaves vLLM on its own fixed engine
         # seed, so every "seed" re-runs the identical sample and the resulting +/-std
@@ -291,6 +296,29 @@ class Generator:
             sp_kwargs["thinking_token_budget"] = config.thinking_token_budget
         if config.repetition_detection is not None:
             sp_kwargs["repetition_detection"] = RepetitionDetectionParams(**config.repetition_detection)
+        if logprobs is not None:
+            sp_kwargs["logprobs"] = logprobs
+        return sp_kwargs
+
+    def generate(
+        self,
+        user_prompts: Sequence[str],
+        *,
+        max_new_tokens: int,
+        n: int = 1,
+        temperature: Optional[float] = None,
+    ) -> tuple[list[list[str]], list[list[Optional[str]]], list[str]]:
+        """Returns (texts[record][sample], finish_reasons[record][sample], chat_prompts).
+
+        `n > 1` asks vLLM for n independent samples per prompt in a single pass --
+        this is the Solver agent's parallel sampling, and it shares the prompt's
+        KV cache across the samples instead of re-encoding it n times.
+        """
+        from vllm import SamplingParams
+
+        chat_prompts = self.chat(user_prompts)
+        truncated = self._truncate(chat_prompts, max_new_tokens)
+        sp_kwargs = self._sampling_kwargs(n=n, max_new_tokens=max_new_tokens, temperature=temperature)
 
         started = time.perf_counter()
         outputs = self.llm.generate(truncated, SamplingParams(**sp_kwargs))
@@ -314,6 +342,56 @@ class Generator:
             user_prompts, max_new_tokens=max_new_tokens, n=1, temperature=temperature
         )
         return [t[0] for t in texts], [r[0] for r in reasons], prompts
+
+    def generate_with_confidence(
+        self,
+        user_prompts: Sequence[str],
+        *,
+        max_new_tokens: int,
+        n: int,
+    ) -> tuple[list[list[str]], list[list[Optional[str]]], list[list[float]], list[str]]:
+        """Like generate(), plus per-sample mean sampled-token logprob (see
+        reasoning.token_confidence for what this stands in for and why).
+        MA-RAG's Solver call goes through this so its history can be sorted
+        by confidence, matching the original NJU-RL/MA-RAG code. Returns
+        (texts, finish_reasons, confidences, chat_prompts)."""
+        from vllm import SamplingParams
+
+        chat_prompts = self.chat(user_prompts)
+        truncated = self._truncate(chat_prompts, max_new_tokens)
+        # logprobs=0: return only the sampled token's own logprob per
+        # position (no top-k alternatives), the minimum needed for
+        # token_confidence's mean-logprob proxy without the extra cost of
+        # requesting a full top-k distribution per token.
+        sp_kwargs = self._sampling_kwargs(n=n, max_new_tokens=max_new_tokens, temperature=None, logprobs=0)
+
+        started = time.perf_counter()
+        outputs = self.llm.generate(truncated, SamplingParams(**sp_kwargs))
+        self.total_generation_seconds += time.perf_counter() - started
+
+        texts: list[list[str]] = []
+        reasons: list[list[Optional[str]]] = []
+        confidences: list[list[float]] = []
+        for output in outputs:
+            texts.append([completion.text.strip() for completion in output.outputs])
+            reasons.append([completion.finish_reason for completion in output.outputs])
+            sample_confidences = []
+            for completion in output.outputs:
+                token_logprobs = []
+                for position_index, position in enumerate(completion.logprobs or []):
+                    # Each position maps {token_id: Logprob}; the sampled
+                    # token's own entry is what was actually emitted. Indexed
+                    # by the loop position, not by len(token_logprobs) -- a
+                    # missing entry at any position must not shift every
+                    # later lookup out of alignment with completion.token_ids.
+                    if position is None or position_index >= len(completion.token_ids):
+                        continue
+                    entry = position.get(completion.token_ids[position_index])
+                    if entry is not None:
+                        token_logprobs.append(entry.logprob)
+                sample_confidences.append(token_confidence(token_logprobs))
+            confidences.append(sample_confidences)
+        return texts, reasons, confidences, chat_prompts
 
     def visible(self, text: str) -> str:
         """Drop the thinking block for models that emit one, so downstream stages
@@ -517,12 +595,85 @@ def run_thought_rag(
     config: Config,
     acc: Accumulator,
     *,
+    examples_per_record: Optional[list[list[dict[str, Any]]]] = None,
+) -> tuple[list[str], list[Optional[str]], list[list[dict[str, Any]]], list[list[str]]]:
+    """RAR2 Parallel Scaling (xuEtAl2025 Fig. 4), tuning-free: sample
+    `config.parallel_thoughts` independent thought processes per record (one
+    vLLM call, n=parallel_thoughts, sharing the prompt's KV cache -- same
+    mechanism MA-RAG's Solver uses for its own parallel sampling), concatenate
+    them into a single extended thought, retrieve ONCE with the
+    concatenation, answer ONCE. Never re-retrieves or re-thinks across rounds
+    -- that is thought_rag_iter's job, not this pipeline's."""
+    n = len(records)
+    examples_per_record = examples_per_record or [[] for _ in range(n)]
+
+    prompts = [build_thought_prompt(record, language=config.language) for record in records]
+    started = time.perf_counter()
+    sampled, reasons, chat_prompts = generator.generate(
+        prompts, max_new_tokens=config.thought_max_new_tokens, n=config.parallel_thoughts
+    )
+    per_record_seconds = (time.perf_counter() - started) / max(n, 1)
+
+    combined_thoughts: list[str] = []
+    for i in range(n):
+        visible = [generator.visible(text) for text in sampled[i]]
+        acc.add(
+            i,
+            generator=generator,
+            prompt=chat_prompts[i],
+            outputs=sampled[i],
+            finish_reasons=reasons[i],
+            seconds=per_record_seconds,
+        )
+        combined_thoughts.append(concatenate_thoughts(visible))
+
+    docs_per_record: list[list[dict[str, Any]]] = []
+    candidate_ids: list[list[str]] = []
+    for i, record in enumerate(records):
+        docs = retriever.search(thought_query(record, combined_thoughts[i], config), record.get("id"))
+        docs_per_record.append(docs)
+        candidate_ids.append([str(doc.get("doc_id") or "") for doc in docs])
+
+    prompts = [
+        build_thought_answer_prompt(
+            record, docs_per_record[i], combined_thoughts[i], language=config.language,
+            examples=examples_per_record[i],
+        )
+        for i, record in enumerate(records)
+    ]
+    started = time.perf_counter()
+    answers, reasons, chat_prompts = generator.generate_one(prompts, max_new_tokens=config.max_new_tokens)
+    per_record_seconds = (time.perf_counter() - started) / max(n, 1)
+    for i in range(n):
+        acc.add(
+            i,
+            generator=generator,
+            prompt=chat_prompts[i],
+            outputs=[answers[i]],
+            finish_reasons=[reasons[i]],
+            seconds=per_record_seconds,
+        )
+        acc.trace[i] = {
+            "pipeline": "thought_rag",
+            "parallel_thoughts": config.parallel_thoughts,
+            "combined_thought": combined_thoughts[i],
+        }
+    return answers, reasons, docs_per_record, candidate_ids
+
+
+def run_thought_rag_iter(
+    records: list[dict[str, Any]],
+    generator: Generator,
+    retriever: Retriever,
+    config: Config,
+    acc: Accumulator,
+    *,
     rounds: int,
     examples_per_record: Optional[list[list[dict[str, Any]]]] = None,
 ) -> tuple[list[str], list[Optional[str]], list[list[dict[str, Any]]], list[list[str]]]:
-    """RAR2. `rounds == 1` is the single-retrieval variant; `rounds > 1` is the
-    paper's Iterative Scaling, where each round re-thinks *with* what the previous
-    round retrieved and searches again."""
+    """RAR2 Iterative Scaling: thought -> retrieve -> re-think *with* what was
+    retrieved -> retrieve again, for `rounds` rounds, then answer over the
+    union of every round's evidence."""
     n = len(records)
     examples_per_record = examples_per_record or [[] for _ in range(n)]
     docs_per_record: list[list[dict[str, Any]]] = [[] for _ in range(n)]
@@ -566,7 +717,7 @@ def run_thought_rag(
                 doc_id = str(doc.get("doc_id") or "")
                 if doc_id and doc_id not in candidate_ids[i]:
                     candidate_ids[i].append(doc_id)
-        print(f"  [thought_rag] round {round_index + 1}/{rounds} retrieved", flush=True)
+        print(f"  [thought_rag_iter] round {round_index + 1}/{rounds} retrieved", flush=True)
 
     prompts = [
         build_thought_answer_prompt(
@@ -589,7 +740,7 @@ def run_thought_rag(
             finish_reasons=[reasons[i]],
             seconds=per_record_seconds,
         )
-        acc.trace[i] = {"pipeline": "thought_rag", "rounds": rounds, "final_thought": thoughts[i]}
+        acc.trace[i] = {"pipeline": "thought_rag_iter", "rounds": rounds, "final_thought": thoughts[i]}
     return answers, reasons, docs_per_record, candidate_ids
 
 
@@ -602,13 +753,18 @@ def run_marag(
     *,
     examples_per_record: Optional[list[list[dict[str, Any]]]] = None,
 ) -> tuple[list[str], list[Optional[str]], list[list[dict[str, Any]]], list[list[str]]]:
-    """MA-RAG adapted to generative QA.
+    """MA-RAG, matching NJU-RL/MA-RAG's ma_rag_entropy.py.
 
-    Per round: Solver samples `num_candidates` answers -> conflict is measured ->
-    records already in consensus are frozen and stop consuming compute -> the rest
-    turn their conflict into a retrieval query, pull new evidence, and keep only
-    the ranking agent's top trace as history. A final consensus pass writes the
-    answer. Records that reached consensus early keep their agreed candidate.
+    Per round: Solver samples `num_candidates` answers (with logprobs) ->
+    conflict is measured -> records already unanimous are frozen and stop
+    consuming compute -> the rest turn their conflict into UP TO FOUR
+    retrieval queries (the original's own multi-query retrieval agent), pull
+    new evidence from all of them, and carry ALL candidates (re-sorted
+    ascending by confidence) into the next round's Solver prompt as history
+    -- there is no ranking/pruning agent in the original. A final synthesis
+    pass (this thesis's own addition; the original instead just takes the
+    last round's plurality vote, which has no equivalent on the open-answer
+    half of this dev set) resolves any record that never reaches unanimity.
     """
     n = len(records)
     examples_per_record = examples_per_record or [[] for _ in range(n)]
@@ -619,7 +775,10 @@ def run_marag(
         docs_per_record.append(docs)
         candidate_ids.append([str(doc.get("doc_id") or "") for doc in docs])
 
-    best_previous: list[str] = ["" for _ in range(n)]
+    # history[i] = [(candidate_text, confidence), ...] for ALL candidates of
+    # the most recent round, ascending by confidence -- fed back whole into
+    # the next round's Solver prompt (build_solver_prompt).
+    history: list[list[tuple[str, float]]] = [[] for _ in range(n)]
     final_candidates: list[list[str]] = [[] for _ in range(n)]
     settled: list[bool] = [False for _ in range(n)]
     round_log: list[list[dict[str, Any]]] = [[] for _ in range(n)]
@@ -634,13 +793,13 @@ def run_marag(
 
         prompts = [
             build_solver_prompt(
-                records[i], docs_per_record[i], language=config.language, best_previous=best_previous[i],
+                records[i], docs_per_record[i], language=config.language, history=history[i],
                 examples=examples_per_record[i],
             )
             for i in active
         ]
         started = time.perf_counter()
-        sampled, reasons, chat_prompts = generator.generate(
+        sampled, reasons, confidences, chat_prompts = generator.generate_with_confidence(
             prompts, max_new_tokens=config.max_new_tokens, n=config.num_candidates
         )
         per_record_seconds = (time.perf_counter() - started) / max(len(active), 1)
@@ -684,11 +843,13 @@ def run_marag(
                 # and the record stops consuming compute in later rounds.
                 choice = majority_candidate(visible, records[i])
                 settled[i] = True
-                best_previous[i] = visible[choice]
                 final_answers[i] = visible[choice]
                 final_reasons[i] = reasons[slot][choice]
             else:
                 conflicted.append(i)
+                # Full history for the next round's Solver prompt: ALL
+                # candidates, ascending by confidence -- no ranking agent.
+                history[i] = sort_by_confidence(visible, confidences[slot])
 
         print(
             f"  [marag] round {round_index + 1}/{config.rounds}: "
@@ -703,13 +864,13 @@ def run_marag(
             # the consensus pass below.
             break
 
-        # --- Retrieval agent: conflict -> query -> new evidence ---
+        # --- Retrieval agent: conflict -> up to 4 queries -> new evidence ---
         query_prompts = [
             build_conflict_query_prompt(records[i], final_candidates[i], language=config.language)
             for i in conflicted
         ]
         started = time.perf_counter()
-        queries, query_reasons, chat_prompts = generator.generate_one(
+        raw_queries, query_reasons, chat_prompts = generator.generate_one(
             query_prompts, max_new_tokens=config.query_max_new_tokens
         )
         per_record_seconds = (time.perf_counter() - started) / max(len(conflicted), 1)
@@ -718,56 +879,41 @@ def run_marag(
                 i,
                 generator=generator,
                 prompt=chat_prompts[slot],
-                outputs=[queries[slot]],
+                outputs=[raw_queries[slot]],
                 finish_reasons=[query_reasons[slot]],
                 seconds=per_record_seconds,
             )
-            query = generator.visible(queries[slot]).strip()
-            if not query:
-                query = query_text(records[i], language=config.language)
-            new_docs = retriever.search(query, records[i].get("id"))
-            docs_per_record[i] = merge_documents(
-                docs_per_record[i], new_docs, max_docs=config.max_context_docs
-            )
+            fallback = query_text(records[i], language=config.language)
+            queries = parse_conflict_queries(generator.visible(raw_queries[slot]), fallback=fallback)
+            new_docs: list[dict[str, Any]] = []
+            seen_ids: set[str] = set()
+            for query in queries:
+                for doc in retriever.search(query, records[i].get("id")):
+                    doc_id = str(doc.get("doc_id") or "")
+                    if doc_id and doc_id in seen_ids:
+                        continue
+                    seen_ids.add(doc_id)
+                    new_docs.append(doc)
+            docs_per_record[i] = merge_documents(docs_per_record[i], new_docs, max_docs=config.max_context_docs)
             for doc in new_docs:
                 doc_id = str(doc.get("doc_id") or "")
                 if doc_id and doc_id not in candidate_ids[i]:
                     candidate_ids[i].append(doc_id)
-            round_log[i][-1]["conflict_query"] = query
+            round_log[i][-1]["conflict_queries"] = queries
 
-        # --- Ranking agent: keep only the best trace as history ---
-        ranking_prompts = [
-            build_ranking_prompt(
-                records[i], docs_per_record[i], final_candidates[i], language=config.language
-            )
-            for i in conflicted
-        ]
-        started = time.perf_counter()
-        rankings, ranking_reasons, chat_prompts = generator.generate_one(
-            ranking_prompts, max_new_tokens=config.ranking_max_new_tokens
-        )
-        per_record_seconds = (time.perf_counter() - started) / max(len(conflicted), 1)
-        for slot, i in enumerate(conflicted):
-            acc.add(
-                i,
-                generator=generator,
-                prompt=chat_prompts[slot],
-                outputs=[rankings[slot]],
-                finish_reasons=[ranking_reasons[slot]],
-                seconds=per_record_seconds,
-            )
-            choice = parse_ranking_choice(generator.visible(rankings[slot]), len(final_candidates[i]))
-            best_previous[i] = final_candidates[i][choice]
-            round_log[i][-1]["ranked_best"] = choice + 1
-
-    # --- Consensus pass, only for records that never reached agreement ---
+    # --- Final synthesis, only for records that never reached unanimity ---
     unresolved = [i for i in range(n) if not settled[i]]
     if unresolved:
         prompts = [
             build_consensus_prompt(
                 records[i],
                 docs_per_record[i],
-                final_candidates[i] or [best_previous[i]],
+                # final_candidates[i] is set every round a record stays
+                # active, so it is populated whenever the record reaches this
+                # point; the history fallback only matters if a future edit
+                # adds a code path that leaves a record unresolved without
+                # ever sampling a candidate for it.
+                final_candidates[i] or [text for text, _ in history[i][-1:]],
                 language=config.language,
                 examples=examples_per_record[i],
             )
@@ -861,10 +1007,10 @@ def run(args: argparse.Namespace) -> None:
         )
     elif config.pipeline == "thought_rag":
         answers, reasons, docs_per_record, candidate_ids = run_thought_rag(
-            records, generator, retriever, config, acc, rounds=1, examples_per_record=examples_per_record
+            records, generator, retriever, config, acc, examples_per_record=examples_per_record
         )
     elif config.pipeline == "thought_rag_iter":
-        answers, reasons, docs_per_record, candidate_ids = run_thought_rag(
+        answers, reasons, docs_per_record, candidate_ids = run_thought_rag_iter(
             records, generator, retriever, config, acc, rounds=max(2, config.rounds),
             examples_per_record=examples_per_record,
         )
@@ -993,6 +1139,7 @@ def run(args: argparse.Namespace) -> None:
         "pipeline_params": {
             "rounds": config.rounds,
             "num_candidates": config.num_candidates,
+            "parallel_thoughts": config.parallel_thoughts,
             "conflict_threshold_mc": config.conflict_threshold_mc,
             "conflict_threshold_open": config.conflict_threshold_open,
             "max_context_docs": config.max_context_docs,

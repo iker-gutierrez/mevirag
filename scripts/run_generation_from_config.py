@@ -115,7 +115,7 @@ def build_command(
     add_bool_arg(command, config, "think", "--think")
     add_bool_arg(command, config, "self_feedback", "--self-feedback")
     add_bool_arg(command, config, "trust_remote_code", "--trust-remote-code")
-    add_bool_arg(command, config, "log_retrieval_leak", "--log-retrieval-leak")
+    add_bool_arg(command, config, "log_gold_hit_rate", "--log-gold-hit-rate")
     if dry_run or config.get("dry_run"):
         command.append("--dry-run")
     if save_prompts or config.get("save_prompts"):

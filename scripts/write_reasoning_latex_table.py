@@ -11,9 +11,8 @@ procedure rather than to a change in the evidence supplied.
 The baseline shows only its better-MeanQ SF state (noSF wins for both languages
 currently), not both, matching the ablation tables' reference-row convention --
 so there is no per-row SF split left to show, and no SF column: the baseline's
-own row label ("Single-pass RAG: <model>, <config>") names the frozen
-configuration directly rather than requiring the caption or a footnote to spell
-it out.
+own row label ("<model>, <config>") names the frozen configuration directly
+rather than requiring the caption or a footnote to spell it out.
 
 `calls` (mean LLM generations per answer) is always a real column, in both
 languages, not folded into a footnote: a three-round agentic loop and a
@@ -55,26 +54,35 @@ QUALITY = [
 # depth, even though the baseline itself is only run once, on Latxa.
 #
 # The baseline's row label names its model + config directly and compactly
-# ("Single-pass RAG: <model>, <config>") rather than the generic "Single-pass
-# RAG (baseline)" -- a longer, more explicit inline label ("...(baseline: Qwen3.5-9B
-# (no-think), rerank top 5)") was tried first and overflowed the page width,
-# clipping the rightmost column; this compact form fits within the same column
-# width the other rows use.
+# ("<model>, <config>") rather than a generic "Single-pass RAG (baseline)" --
+# a longer, more explicit inline label ("...(baseline: Qwen3.5-9B (no-think),
+# rerank top 5)") was tried first and overflowed the page width, clipping the
+# rightmost column; this compact form fits within the same column width the
+# other rows use. The row's own number (carried forward from its ablation
+# table, e.g. "6a") plus the dashed rule separating it from the pipeline rows
+# already mark it as the frozen reference, so the label no longer needs to say
+# "Single-pass RAG" either.
 ES_BASELINE_DESC = "Qwen no-think, rerank top 5"
 EU_BASELINE_DESC = "Latxa, retrieve top 3"
 ES_ROWS = [
-    (f"Single-pass RAG: {ES_BASELINE_DESC}", "1134_qwen35_9b_rag_e5_rerank5_no_think_extractive_mixed_dev", True),
+    (ES_BASELINE_DESC, "1134_qwen35_9b_rag_e5_rerank5_no_think_extractive_mixed_dev", True, ("6a", "6a'")),
     # Structured CoT is reported in two retrieval variants: with our own frozen
     # best RAG config (same evidence as the baseline and the other three
     # pipelines -- isolates the effect of the four-stage causal reasoning
     # alone), and with MedCoT-RAG's own causal-aware retrieval scoring
     # (sec:reasoning-pipelines, src/medical_rag_thesis/causal_scoring.py) --
     # faithful to the full original method, retrieval and generation together.
-    ("Structured CoT, our retrieval", "1530_qwen35_9b_no_think_structured_cot_meanq_best_extractive_mixed_dev", False),
-    ("Structured CoT (MedCoT-RAG)", "1341_qwen35_9b_structured_cot_causal_no_think_extractive_mixed_dev", False),
-    ("Thought-driven retrieval", "1531_qwen35_9b_no_think_thought_rag_meanq_best_extractive_mixed_dev", False),
-    ("Thought-driven, iterative", "1532_qwen35_9b_no_think_thought_rag_iter_meanq_best_extractive_mixed_dev", False),
-    ("Multi-round agentic (MA-RAG)", "1533_qwen35_9b_no_think_marag_meanq_best_extractive_mixed_dev", False),
+    ("MedCoT-RAG (our best retrieval)", "1530_qwen35_9b_no_think_structured_cot_meanq_best_extractive_mixed_dev", False, None),
+    ("MedCoT-RAG (their top-5 retrieval)", "1341_qwen35_9b_structured_cot_causal_no_think_extractive_mixed_dev", False, None),
+    # thought_rag (RAR2 Parallel Scaling) and marag (multi-query retrieval
+    # agent, confidence-sorted full-candidate history) were revised for closer
+    # faithfulness to their sources -- see src/medical_rag_thesis/reasoning.py's
+    # module docstring. Configs 1601/1600 are the current, in-code pipelines;
+    # the previous configs (1531/1533) that used the pre-revision logic are
+    # kept, unmodified, in reasoning_v1.py/run_reasoning_pipeline_v1.py.
+    ("RAR$^2$ (parallel scaling)", "1601_qwen35_9b_no_think_thought_rag_meanq_best_extractive_mixed_dev", False, None),
+    ("RAR$^2$ (iterative scaling)", "1532_qwen35_9b_no_think_thought_rag_iter_meanq_best_extractive_mixed_dev", False, None),
+    ("MA-RAG", "1600_qwen35_9b_no_think_marag_meanq_best_extractive_mixed_dev", False, None),
 ]
 
 # Qwen think's own reasoning-pipeline family: same rerank-top-5 base as
@@ -82,9 +90,15 @@ ES_ROWS = [
 # write_result_tables.py), reported as its own table (tab:reasoning-es-think)
 # rather than appended into ES_ROWS, for the same reason Llama's EU rows are
 # separate from Latxa's: each table's baseline row and per-column bolding are
-# computed within that table alone. No MedCoT-RAG (causal-scoring) run exists
-# for Qwen think specifically, so that row is omitted here rather than reusing
-# the no-think run under a different model's label.
+# computed within that table alone.
+#
+# The MedCoT-RAG (causal-scoring) row (config 1340) was regenerated against
+# the full-corpus retrieval index (2026-07-21 rebuild; the July 19 predictions
+# were stale) and evaluated with evaluate_predictions_by_source.py + the
+# patch_mc_accuracy.py follow-up, matching every other mixed-dev row's
+# convention -- it was previously missing from this table because its
+# original evaluation never produced the _casimedicos split MC-acc/MeanQ
+# need, not because the run didn't exist.
 ES_THINK_ROWS = [
     # Row 1 is the TRUE base the four pipeline rows below are actually built
     # on: config 1280 (3-shot + rerank top 5, MeanQ 73.51, row 8's winner),
@@ -92,11 +106,12 @@ ES_THINK_ROWS = [
     # explicitly chained onto 1280 (see their own rag_base_source field), so
     # showing 1276 here as "the frozen baseline" was comparing the pipelines
     # against a config they were never built on top of, understating the gap.
-    ("Single-pass RAG: Qwen think, 3-shot + rerank top 5", "1280_qwen35_9b_rag_3shot_e5_rerank5_think_extractive_mixed_dev", True),
-    ("Structured CoT, our retrieval", "1554_qwen35_9b_think_structured_cot_fewshot_rerank5_extractive_mixed_dev", False),
-    ("Thought-driven retrieval", "1555_qwen35_9b_think_thought_rag_fewshot_rerank5_extractive_mixed_dev", False),
-    ("Thought-driven, iterative", "1556_qwen35_9b_think_thought_rag_iter_fewshot_rerank5_extractive_mixed_dev", False),
-    ("Multi-round agentic (MA-RAG)", "1557_qwen35_9b_think_marag_fewshot_rerank5_extractive_mixed_dev", False),
+    ("Qwen think, 3-shot + rerank top 5", "1280_qwen35_9b_rag_3shot_e5_rerank5_think_extractive_mixed_dev", True, ("8b", "8b'")),
+    ("MedCoT-RAG (our best retrieval)", "1554_qwen35_9b_think_structured_cot_fewshot_rerank5_extractive_mixed_dev", False, None),
+    ("MedCoT-RAG (their top-5 retrieval)", "1340_qwen35_9b_structured_cot_causal_extractive_mixed_dev", False, None),
+    ("RAR$^2$ (parallel scaling)", "1611_qwen35_9b_think_thought_rag_meanq_best_extractive_mixed_dev", False, None),
+    ("RAR$^2$ (iterative scaling)", "1556_qwen35_9b_think_thought_rag_iter_fewshot_rerank5_extractive_mixed_dev", False, None),
+    ("MA-RAG", "1610_qwen35_9b_think_marag_meanq_best_extractive_mixed_dev", False, None),
 ]
 
 # Run stems below are the 2026-07-21 staged-rerun pipelines (config ids
@@ -106,12 +121,12 @@ ES_THINK_ROWS = [
 # thought_rag/thought_rag_iter specifically, only 2 of 3 seeds ever completed)
 # is superseded by these and no longer referenced here.
 EU_ROWS = [
-    (f"Single-pass RAG: {EU_BASELINE_DESC}", "1053_latxa_llama31_8b_rag_e5_topk3_extractive_mixed_eu_dev", True),
-    ("Structured CoT, our retrieval", "1510_latxa_structured_cot_meanq_best_extractive_mixed_eu_dev", False),
-    ("Structured CoT (MedCoT-RAG)", "1343_latxa_llama31_8b_structured_cot_causal_extractive_mixed_eu_dev", False),
-    ("Thought-driven retrieval", "1511_latxa_thought_rag_meanq_best_extractive_mixed_eu_dev", False),
-    ("Thought-driven, iterative", "1512_latxa_thought_rag_iter_meanq_best_extractive_mixed_eu_dev", False),
-    ("Multi-round agentic (MA-RAG)", "1513_latxa_marag_meanq_best_extractive_mixed_eu_dev", False),
+    (EU_BASELINE_DESC, "1053_latxa_llama31_8b_rag_e5_topk3_extractive_mixed_eu_dev", True, ("2d", "2d'")),
+    ("MedCoT-RAG (our best retrieval)", "1510_latxa_structured_cot_meanq_best_extractive_mixed_eu_dev", False, None),
+    ("MedCoT-RAG (their top-5 retrieval)", "1343_latxa_llama31_8b_structured_cot_causal_extractive_mixed_eu_dev", False, None),
+    ("RAR$^2$ (parallel scaling)", "1631_latxa_thought_rag_meanq_best_extractive_mixed_eu_dev", False, None),
+    ("RAR$^2$ (iterative scaling)", "1512_latxa_thought_rag_iter_meanq_best_extractive_mixed_eu_dev", False, None),
+    ("MA-RAG", "1630_latxa_marag_meanq_best_extractive_mixed_eu_dev", False, None),
 ]
 
 # Llama's own reasoning-pipeline family: same retrieve-top-3 base and no
@@ -120,12 +135,12 @@ EU_ROWS = [
 # table (tab:reasoning-eu-llama) rather than appended into EU_ROWS, since the
 # table's baseline/highlight logic assumes one frozen reference row per table.
 EU_LLAMA_ROWS = [
-    ("Single-pass RAG: Llama, retrieve top 3", "1042_llama31_8b_rag_e5_topk3_extractive_mixed_eu_dev", True),
-    ("Structured CoT, our retrieval", "1500_llama31_8b_structured_cot_meanq_best_extractive_mixed_eu_dev", False),
-    ("Structured CoT (MedCoT-RAG)", "1342_llama31_8b_structured_cot_causal_extractive_mixed_eu_dev", False),
-    ("Thought-driven retrieval", "1501_llama31_8b_thought_rag_meanq_best_extractive_mixed_eu_dev", False),
-    ("Thought-driven, iterative", "1502_llama31_8b_thought_rag_iter_meanq_best_extractive_mixed_eu_dev", False),
-    ("Multi-round agentic (MA-RAG)", "1503_llama31_8b_marag_meanq_best_extractive_mixed_eu_dev", False),
+    ("Llama, retrieve top 3", "1042_llama31_8b_rag_e5_topk3_extractive_mixed_eu_dev", True, ("2c", "2c'")),
+    ("MedCoT-RAG (our best retrieval)", "1500_llama31_8b_structured_cot_meanq_best_extractive_mixed_eu_dev", False, None),
+    ("MedCoT-RAG (their top-5 retrieval)", "1342_llama31_8b_structured_cot_causal_extractive_mixed_eu_dev", False, None),
+    ("RAR$^2$ (parallel scaling)", "1621_llama31_8b_thought_rag_meanq_best_extractive_mixed_eu_dev", False, None),
+    ("RAR$^2$ (iterative scaling)", "1502_llama31_8b_thought_rag_iter_meanq_best_extractive_mixed_eu_dev", False, None),
+    ("MA-RAG", "1620_llama31_8b_marag_meanq_best_extractive_mixed_eu_dev", False, None),
 ]
 
 
@@ -238,15 +253,13 @@ def esc(text: str) -> str:
 
 # Labels highlighted with the same blue-bar treatment as the baseline row, per
 # language -- for a reason other than "this is the frozen config everything
-# else is compared against" (that's is_baseline). Currently: "Structured CoT,
-# our retrieval" (config/row 2) in Spanish, the reasoning pipeline with the
+# else is compared against" (that's is_baseline). Currently: "MedCoT-RAG (our
+# best retrieval)" (config/row 2) in Spanish, the reasoning pipeline with the
 # actual highest MeanQ on fresh Qwen no-think numbers (71.11, vs MedCoT-RAG's
-# 67.69 and the single-pass baseline's 69.15) -- worth calling out visually.
-# MedCoT-RAG was highlighted here previously on stale numbers (72.79 vs 69.79)
-# that predate the think-mode parsing fix and the rebuilt dataset/index;
-# config 2 is the genuine winner on the current, verified data.
+# their-top-5-retrieval variant's 67.69 and the single-pass baseline's 69.15)
+# -- worth calling out visually.
 EXTRA_HIGHLIGHT: dict[str, set[str]] = {
-    "ES": {"Structured CoT, our retrieval"},
+    "ES": {"MedCoT-RAG (our best retrieval)"},
 }
 
 # Languages where the baseline row's blue bar is suppressed even though
@@ -257,13 +270,14 @@ EXTRA_HIGHLIGHT: dict[str, set[str]] = {
 SUPPRESS_BASELINE_HIGHLIGHT: set[str] = {"ES"}
 
 
-def build(rows, lang: str, suffix: str, dev: str, *, label_slug: Optional[str] = None) -> str:
+def build(rows, lang: str, suffix: str, dev: str, *, label_slug: Optional[str] = None,
+          caption_model: Optional[str] = None, model_letter: str = "") -> str:
     # MC-acc (and hence MeanQ) on the mixed table comes from the CasiMedicos
     # subset, matching scripts/meanq.py -- undefined on an open-answer-only suffix.
     mc_suffix = "_casimedicos" if suffix == "" else (suffix if suffix == "_casimedicos" else None)
 
     gathered = []
-    for label, stem, has_sf in rows:
+    for label, stem, has_sf, source_row in rows:
         summaries = summaries_for(stem, suffix)
         if not summaries:
             continue
@@ -282,6 +296,11 @@ def build(rows, lang: str, suffix: str, dev: str, *, label_slug: Optional[str] =
                 "sec": cost(summaries, False, use_sf=use_sf),
                 "tok": cost(summaries, True, use_sf=use_sf),
                 "calls": llm_calls(stem),
+                # Row number the baseline carries over from its own ablation
+                # table (e.g. "6a"), not a sequential index -- source_row is
+                # (nosf_label, sf_label); None for every non-baseline row,
+                # which is numbered sequentially starting at 11 instead.
+                "source_row": (source_row[1] if use_sf else source_row[0]) if source_row else None,
             })
         if has_sf and len(rows_this_label) == 2:
             # The baseline is the frozen RAG config this whole table holds
@@ -303,19 +322,32 @@ def build(rows, lang: str, suffix: str, dev: str, *, label_slug: Optional[str] =
         if vals:
             best[m] = max(vals)
 
-    # 2 label columns (#, Pipeline) + quality + cost (sec, tok, calls -- always
-    # shown: a three-round agentic loop and a single-pass baseline both emit
-    # exactly one final answer, so cost without it would make them look equally
-    # expensive and conceal an order-of-magnitude compute difference).
+    # The baseline's own row id (e.g. "6a", "8b", "2c", "2d'") -- gathered[0]
+    # is always the baseline (every *_ROWS list's first entry has has_sf=True
+    # and a source_row), used in the caption below so it names the actual row
+    # printed in the table rather than a stale literal "row 1" left over from
+    # before every table gained per-model row ids.
+    baseline_row_id = gathered[0]["source_row"] if gathered and gathered[0]["is_baseline"] else "?"
+
+    # 3 label columns (#, Pipeline, SF) + quality + cost (sec, tok, calls --
+    # always shown: a three-round agentic loop and a single-pass baseline both
+    # emit exactly one final answer, so cost without it would make them look
+    # equally expensive and conceal an order-of-magnitude compute difference).
+    # SF is a checkmark, same convention as the ablation tables
+    # (write_result_tables.py): every row here already shows exactly one
+    # state (the baseline shows only its better-MeanQ state, pipeline rows
+    # never run self-feedback at all), so the column is a per-row indicator
+    # of which state that is, not a filter -- checked for the baseline when
+    # SF won, blank on every pipeline row.
     n_cost = 3
-    ncol = 2 + len(QUALITY) + n_cost
-    colspec = r"r l " + "c " * len(QUALITY) + "c " * n_cost
+    ncol = 3 + len(QUALITY) + n_cost
+    colspec = r"r l c " + "c " * len(QUALITY) + "c " * n_cost
     header = (
-        r"\# & Pipeline & \multicolumn{%d}{c}{Quality $\uparrow$} & "
+        r"\# & Pipeline & SF & \multicolumn{%d}{c}{Quality $\uparrow$} & "
         r"\multicolumn{%d}{c}{Cost $\downarrow$} \\" % (len(QUALITY), n_cost)
-        + "\n" + r"\cmidrule(lr){3-%d}\cmidrule(lr){%d-%d}" % (
-            2 + len(QUALITY), 3 + len(QUALITY), ncol)
-        + "\n" + r" &  & " + " & ".join(n for _, n in QUALITY) + r" & sec & tok & calls \\"
+        + "\n" + r"\cmidrule(lr){4-%d}\cmidrule(lr){%d-%d}" % (
+            3 + len(QUALITY), 4 + len(QUALITY), ncol)
+        + "\n" + r" &  &  & " + " & ".join(n for _, n in QUALITY) + r" & sec & tok & calls \\"
     )
     lines = [
         r"\begin{scriptsize}",
@@ -323,15 +355,10 @@ def build(rows, lang: str, suffix: str, dev: str, *, label_slug: Optional[str] =
         r"\setlength{\LTcapwidth}{\linewidth}",
         r"\begin{longtable}{" + colspec + r"}",
         r"\caption[Reasoning pipelines (%s)]{Reasoning pipelines on the frozen best "
-        r"RAG configuration (%s, %s dev), row 1. Retrieval is held fixed, so every "
+        r"RAG configuration (%s, %s dev), row %s. Retrieval is held fixed, so every "
         r"difference is attributable to the reasoning procedure. Best value per "
-        r"metric column in bold.%s} \label{tab:reasoning-%s} \\" % (
-            lang, lang, dev,
-            (r" MC-acc's mean$\pm$std can nominally exceed 100 near the ceiling "
-             r"(row 3: two of three seeds score exactly 100), since the standard "
-             r"deviation is a measure of seed-to-seed spread, not a bound on the "
-             r"metric itself; no individual seed ever exceeds 100."
-             if lang == "ES" else ""),
+        r"metric column in bold.} \label{tab:reasoning-%s} \\" % (
+            caption_model or lang, lang, dev, baseline_row_id,
             label_slug or lang.lower()),
         r"\toprule",
         header,
@@ -349,7 +376,25 @@ def build(rows, lang: str, suffix: str, dev: str, *, label_slug: Optional[str] =
     ]
 
     extra_highlight = EXTRA_HIGHLIGHT.get(lang, set())
-    for i, g in enumerate(gathered, start=1):
+    # The baseline row keeps the number it carries over from its own ablation
+    # table (e.g. "6a"), so it is traceable back to that table rather than
+    # colliding with another table's row 1. The actual reasoning-pipeline rows
+    # -- new to this table, not carried from anywhere -- are numbered
+    # sequentially starting at 11, so no reasoning-pipeline row number is ever
+    # reused across the four reasoning tables or collides with an ablation
+    # table's own row numbers (which run 0-10 there). Each also carries the
+    # same model letter as the ablation tables (write_result_tables.py's
+    # MODEL_LETTERS: a=Qwen no-think, b=Qwen think, c=Llama, d=Latxa), since
+    # every row in a given reasoning table is that one model's own pipeline --
+    # the baseline row already has its letter as part of source_row, so only
+    # the newly-numbered pipeline rows need it appended here.
+    next_pipeline_row = 11
+    for g in gathered:
+        if g["is_baseline"] and g["source_row"]:
+            row_num = g["source_row"]
+        else:
+            row_num = f"{next_pipeline_row}{model_letter}"
+            next_pipeline_row += 1
         # The baseline is the frozen RAG config every pipeline below it is
         # compared against -- highlighted the same way a carried-forward
         # reference row is in the ablation tables (scripts/write_result_tables.py):
@@ -357,7 +402,7 @@ def build(rows, lang: str, suffix: str, dev: str, *, label_slug: Optional[str] =
         baseline_highlighted = g["is_baseline"] and lang not in SUPPRESS_BASELINE_HIGHLIGHT
         is_highlighted = baseline_highlighted or g["label"] in extra_highlight
         row_prefix = r"\rowcolor{pinnedrow}" if is_highlighted else ""
-        cells = [str(i), esc(g["label"])]
+        cells = [row_num, esc(g["label"]), r"\checkmark" if g["sf"] else ""]
         for m, _ in QUALITY:
             mean, std = g["quality"][m]
             cell = fmt(mean, std)
@@ -389,13 +434,17 @@ def build(rows, lang: str, suffix: str, dev: str, *, label_slug: Optional[str] =
 
 
 def main() -> None:
-    (OUT / "table_reasoning_es.tex").write_text(build(ES_ROWS, "ES", "", "mixed"))
-    (OUT / "table_reasoning_es_think.tex").write_text(
-        build(ES_THINK_ROWS, "ES, Qwen think", "", "mixed", label_slug="es-think")
+    (OUT / "table_reasoning_es.tex").write_text(
+        build(ES_ROWS, "ES", "", "mixed", caption_model="ES, Qwen no-think", model_letter="a")
     )
-    (OUT / "table_reasoning_eu.tex").write_text(build(EU_ROWS, "EU", "", "mixed"))
+    (OUT / "table_reasoning_es_think.tex").write_text(
+        build(ES_THINK_ROWS, "ES, Qwen think", "", "mixed", label_slug="es-think", model_letter="b")
+    )
+    (OUT / "table_reasoning_eu.tex").write_text(
+        build(EU_ROWS, "EU", "", "mixed", caption_model="EU, Latxa", model_letter="d")
+    )
     (OUT / "table_reasoning_eu_llama.tex").write_text(
-        build(EU_LLAMA_ROWS, "EU, Llama", "", "mixed", label_slug="eu-llama")
+        build(EU_LLAMA_ROWS, "EU, Llama", "", "mixed", label_slug="eu-llama", model_letter="c")
     )
     print("  wrote table_reasoning_es.tex, table_reasoning_es_think.tex, "
           "table_reasoning_eu.tex, table_reasoning_eu_llama.tex")

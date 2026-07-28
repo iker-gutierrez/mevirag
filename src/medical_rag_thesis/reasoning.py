@@ -7,18 +7,37 @@ retriever + reranker as the winning single-pass RAG row of the dev ablation:
                      (wangEtAl2025). Retrieval is unchanged; only the prompt
                      imposes a diagnosis-shaped reasoning scaffold.
 
-    thought_rag      RAR2 zero-shot "reasoning-augmented retrieval"
-                     (xuEtAl2025, the `w/o training` ablation): sample a thought
-                     process first, retrieve with it, then answer with both.
+    thought_rag      RAR2 (xuEtAl2025) Parallel Scaling, tuning-free (Fig. 4):
+                     sample `parallel_thoughts` independent thought processes,
+                     concatenate them into one extended thought, retrieve ONCE
+                     with the concatenation, answer ONCE.
 
     thought_rag_iter RAR2 iterative test-time scaling: thought -> retrieve ->
                      re-think with the retrieved evidence -> retrieve again,
                      for `rounds` rounds, then answer over the union of docs.
 
-    marag            MA-RAG (wuEtAl2026) adapted to generative QA: sample
-                     several candidates, measure their *conflict*, turn that
-                     conflict into a retrieval query, rank the traces, repeat
-                     until consensus, then synthesise a final answer.
+    marag            MA-RAG (wuEtAl2026), re-implemented against the actual
+                     NJU-RL/MA-RAG code (ma_rag_entropy.py), not just the
+                     paper's prose: a Solver samples several candidates each
+                     round; conflict among them is measured; conflicted
+                     records turn that conflict into up to four retrieval
+                     queries (the original's own multi-query retrieval
+                     agent); all candidates, re-sorted by confidence, are
+                     carried into the next round's Solver prompt as history
+                     (the original has no ranking/pruning agent -- an earlier
+                     draft of this pipeline added one, which was not a
+                     faithful reproduction of the original and has been
+                     removed); a final synthesis pass resolves any record
+                     that never reaches unanimity once the round budget is
+                     exhausted (the original instead takes the last round's
+                     plurality vote, which has no equivalent on this thesis's
+                     open-answer half, so synthesis is kept as the
+                     open-answer-compatible resolution mechanism).
+
+thought_rag_iter is the one pipeline still without a from-code faithfulness
+pass: RAR2's Iterative Scaling strategy has no published code (the paper
+gives no repository), so it is implemented directly from Section 4.3's own
+description, and no further deviation was found there worth revising.
 
 The MA-RAG adaptation is the one real deviation from a published method and is
 deliberate: the paper detects conflict as exact disagreement between candidate
@@ -292,10 +311,13 @@ def build_thought_prompt(
     previous_thought: str = "",
     documents: Optional[Sequence[Mapping[str, Any]]] = None,
 ) -> str:
-    """Stage A of RAR2: a thought process, generated *before* any retrieval.
+    """A thought process, generated *before* any retrieval -- shared by both
+    thought_rag (Parallel Scaling: m independent, zero-shot samples of this
+    same prompt) and thought_rag_iter's first round.
 
-    With `previous_thought` and `documents` this becomes the re-think step of the
-    iterative variant (RAR2's "Iterative Scaling").
+    With `previous_thought` and `documents` this becomes thought_rag_iter's
+    re-think step (RAR2's "Iterative Scaling"); thought_rag never calls it
+    that way, since Parallel Scaling never re-thinks with retrieved evidence.
     """
     lab = labels(language)
     refining = bool(previous_thought)
@@ -320,8 +342,9 @@ def build_thought_answer_prompt(
     *,
     examples: Optional[Sequence[Mapping[str, Any]]] = None,
 ) -> str:
-    """Stage C of RAR2: retrieval-augmented reasoning -- answer given the thought
-    process *and* the evidence that thought retrieved."""
+    """Answer given a thought process (thought_rag's concatenation of m
+    parallel thoughts, or thought_rag_iter's final round's thought) *and* the
+    evidence retrieved with it."""
     lab = labels(language)
     if language == "eu":
         header = "Zure ataza galdera medikoari modu justifikatuan erantzutea da."
@@ -352,9 +375,100 @@ def build_thought_answer_prompt(
     return "\n\n".join(sections)
 
 
+def concatenate_thoughts(thoughts: Sequence[str]) -> str:
+    """RAR2 Parallel Scaling (xuEtAl2025 Fig. 4): join m independently-sampled
+    thought processes into the single extended thought thought_rag retrieves
+    with -- the paper's "+" ("Thought 1 + Thought 2 + ... + Thought m")."""
+    return "\n\n".join(t.strip() for t in thoughts if t and t.strip())
+
+
 # --------------------------------------------------------------------------
-# 4. MA-RAG: conflict -> retrieval -> ranking -> consensus
+# 4. MA-RAG: conflict -> retrieval -> ranking-free consensus
 # --------------------------------------------------------------------------
+
+# Matches the original's system_prompt_query (ma_rag_entropy.py /
+# ma_rag_evaluator.py), which asks for "1-4 precise queries", each on its own
+# "[Query N] ..." line, parsed back out with a regex over that exact tag --
+# translated into Spanish and Basque (the original is English-only,
+# mirroring MA-RAG's own MedCorp/BM25 setup, which has no Spanish/Basque
+# equivalent here either).
+CONFLICT_QUERY_INSTRUCTION = {
+    "es": (
+        "Eres un experto médico. Te voy a dar varias respuestas distintas a la misma pregunta médica, "
+        "que pueden ser incorrectas. Tu tarea es identificar contradicciones, ambigüedades y los puntos "
+        "concretos de desacuerdo entre las respuestas, y extraer consultas de conceptos clave para "
+        "buscarlas y verificarlas.\n\n"
+        "Pasos:\n"
+        "1. Analiza las respuestas distintas y resume en qué difieren.\n"
+        "2. Extrae palabras clave de esas diferencias para la búsqueda.\n"
+        "3. Genera de 1 a 4 consultas precisas para la búsqueda.\n\n"
+        "Formato de salida (SOLO las consultas, sin explicaciones):\n"
+        "[Consulta 1] xxx\n"
+        "[Consulta 2] xxx\n"
+        "(más consultas si hacen falta)"
+    ),
+    "eu": (
+        "Aditu medikoa zara. Galdera mediko beraren hainbat erantzun ezberdin emango dizkizut, okerrak "
+        "izan daitezkeenak. Zure zeregina erantzunen arteko kontraesanak, anbiguotasunak eta desadostasun "
+        "puntu zehatzak identifikatzea da, eta kontzeptu gakoen kontsultak erauztea haiek bilatu eta "
+        "egiaztatzeko.\n\n"
+        "Urratsak:\n"
+        "1. Aztertu erantzun ezberdinak eta laburtu zertan desberdintzen diren.\n"
+        "2. Erauzi desberdintasun horietako gako-hitzak bilaketarako.\n"
+        "3. Sortu 1 eta 4 kontsulta zehatz artean bilaketarako.\n\n"
+        "Irteera-formatua (SOILIK kontsultak, azalpenik gabe):\n"
+        "[Kontsulta 1] xxx\n"
+        "[Kontsulta 2] xxx\n"
+        "(kontsulta gehiago behar izanez gero)"
+    ),
+}
+
+QUERY_TAG_RE = re.compile(r"\[(?:Consulta|Kontsulta|Query)\s*\d+\]\s*(.*?)\s*$", re.MULTILINE | re.IGNORECASE)
+
+
+def build_conflict_query_prompt(
+    record: Mapping[str, Any],
+    candidates: Sequence[str],
+    language: str = "es",
+) -> str:
+    """Retrieval agent. Turns *conflict between candidates* into up to four
+    actionable queries -- matches the original's system_prompt_query +
+    user_prompt_query (ma_rag_entropy.py)."""
+    instruction = CONFLICT_QUERY_INSTRUCTION.get(language, CONFLICT_QUERY_INSTRUCTION["es"])
+    candidate_label = "Hautagaia" if language == "eu" else "Candidata"
+    sections = [instruction]
+    sections += _question_and_options(record, language)
+    for idx, candidate in enumerate(candidates, start=1):
+        sections.append(f"{candidate_label} {idx}:\n{candidate.strip()}")
+    return "\n\n".join(sections)
+
+
+def parse_conflict_queries(text: str, *, fallback: str) -> list[str]:
+    """Up to 4 deduplicated queries from the [Consulta N]/[Kontsulta N]/[Query
+    N] tags, mirroring the original's `re.findall(r"\\[Query .*?\\](.*?)$", ...)`
+    + `set()`-dedup. Falls back to the surface question if the model emits no
+    tagged line at all (the original has no such fallback -- it would run
+    retrieval with an empty query list, i.e. skip retrieval that round -- but
+    silently skipping evidence retrieval because of a formatting slip is worse
+    for this thesis's purposes than falling back to the plain question)."""
+    matches = [m.strip() for m in QUERY_TAG_RE.findall(text or "") if m.strip()]
+    queries = list(dict.fromkeys(matches))  # de-dup, order-preserving
+    return queries[:4] if queries else [fallback]
+
+
+# The original's user_prompt_round (ma_rag_entropy.py) feeds back every one of
+# the N previous candidates, each labelled with its confidence, sorted from
+# lowest confidence (highest entropy) to highest -- "sorted by their
+# confidence (low entropy means high confidence)" per the prompt's own text,
+# and the loop `for i, (answer, answer_entropy) in enumerate(zip(...), start=1)`
+# in the source confirms the iteration order is the sort order, ascending
+# confidence. There is no ranking/pruning agent in the original at all.
+SOLVER_HISTORY_LABEL = {
+    "es": "Estas son las respuestas candidatas de la ronda anterior (ordenadas de menor a mayor confianza; "
+          "la confianza no garantiza que la respuesta sea correcta):",
+    "eu": "Hauek dira aurreko txandako erantzun hautagaiak (konfiantza gutxienetik gehienera ordenatuta; "
+          "konfiantzak ez du bermatzen erantzuna zuzena denik):",
+}
 
 
 def build_solver_prompt(
@@ -362,12 +476,13 @@ def build_solver_prompt(
     documents: Sequence[Mapping[str, Any]],
     language: str = "es",
     *,
-    best_previous: str = "",
+    history: Sequence[tuple[str, float]] = (),
     examples: Optional[Sequence[Mapping[str, Any]]] = None,
 ) -> str:
-    """Solver agent. `best_previous` is the top-ranked trace kept from the last
-    round -- MA-RAG's remedy for long-context degradation: history is *pruned to
-    the best candidate* rather than concatenated in full."""
+    """Solver agent. `history` is [(candidate_text, confidence), ...] for ALL
+    of the previous round's candidates, already sorted ascending by
+    confidence (matching the original's own iteration order) -- not a single
+    pruned "best" trace."""
     lab = labels(language)
     if language == "eu":
         header = "Zure ataza galdera medikoari modu justifikatuan erantzutea da."
@@ -379,7 +494,6 @@ def build_solver_prompt(
             f"{option_rule(record, language)}"
             f"- {lab['reply_in']}"
         )
-        previous_label = "Aurreko txandako erantzunik onena (berrikusi eta hobetu, ados ez bazaude aldatu):"
     else:
         header = "Tu tarea es responder a la pregunta médica de forma justificada."
         rules = (
@@ -390,86 +504,42 @@ def build_solver_prompt(
             f"{option_rule(record, language)}"
             f"- {lab['reply_in']}"
         )
-        previous_label = "Mejor respuesta de la ronda anterior (revísala y mejórala; cámbiala si no estás de acuerdo):"
     sections = [header, rules]
     sections += _few_shot_section(examples, language)
     sections += _context_section(documents, language)
     sections += _question_and_options(record, language)
-    if best_previous.strip():
-        sections.append(previous_label + "\n" + best_previous.strip())
+    if history:
+        label = SOLVER_HISTORY_LABEL.get(language, SOLVER_HISTORY_LABEL["es"])
+        entries = [
+            f"{idx}. ({'confianza' if language != 'eu' else 'konfiantza'} {confidence:.2f}) {text.strip()}"
+            for idx, (text, confidence) in enumerate(history, start=1)
+        ]
+        sections.append(label + "\n" + "\n\n".join(entries))
     sections.append(output_format_block(record, language))
     return "\n\n".join(sections)
 
 
-CONFLICT_QUERY_INSTRUCTION = {
-    "es": (
-        "Estas respuestas candidatas a la misma pregunta médica NO coinciden. Tu tarea NO es elegir una, "
-        "sino formular la consulta de búsqueda que permitiría resolver el desacuerdo: identifica el punto "
-        "concreto en el que difieren y escribe una consulta en español, de una o dos frases, con los "
-        "términos médicos que habría que buscar para dirimirlo.\n"
-        "Responde SOLO con la consulta, sin explicaciones."
-    ),
-    "eu": (
-        "Galdera mediko beraren erantzun hautagai hauek EZ datoz bat. Zure zeregina EZ da bat aukeratzea, "
-        "baizik eta desadostasuna ebazteko bilaketa-kontsulta formulatzea: identifikatu zertan desberdintzen "
-        "diren eta idatzi euskarazko kontsulta bat, esaldi bat edo bikoa, hura argitzeko bilatu beharreko "
-        "termino medikoekin.\n"
-        "Erantzun SOILIK kontsultarekin, azalpenik gabe."
-    ),
-}
+def token_confidence(token_logprobs: Sequence[float]) -> float:
+    """Confidence proxy standing in for the original's per-token entropy over
+    the top-20 logprobs (ma_rag_entropy.py's process_response/token_entropies):
+    this thesis's Generator requests only the sampled token's own logprob from
+    vLLM, not a full top-k distribution, so full categorical entropy is not
+    available. Mean per-token log probability of the SAMPLED token is used
+    instead -- both are monotone proxies for "how sure was the model of what
+    it actually said", and higher values mean higher confidence in both."""
+    if not token_logprobs:
+        return 0.0
+    return float(np.mean(token_logprobs))
 
 
-def build_conflict_query_prompt(
-    record: Mapping[str, Any],
-    candidates: Sequence[str],
-    language: str = "es",
-) -> str:
-    """Retrieval agent. Turns *semantic conflict between candidates* into an
-    actionable query -- MA-RAG's core move: inconsistency is a signal, not noise."""
-    lab = labels(language)
-    instruction = CONFLICT_QUERY_INSTRUCTION.get(language, CONFLICT_QUERY_INSTRUCTION["es"])
-    candidate_label = "Hautagaia" if language == "eu" else "Candidata"
-    query_label = "Kontsulta" if language == "eu" else "Consulta"
-    sections = [instruction]
-    sections += _question_and_options(record, language)
-    for idx, candidate in enumerate(candidates, start=1):
-        sections.append(f"{candidate_label} {idx}:\n{candidate.strip()}")
-    sections.append(f"{query_label}:")
-    return "\n\n".join(sections)
-
-
-RANKING_INSTRUCTION = {
-    "es": (
-        "Eres un evaluador clínico. Ordena las respuestas candidatas de mejor a peor según: "
-        "(1) corrección clínica, (2) apoyo en el contexto extraído, (3) ausencia de datos inventados.\n"
-        "Responde SOLO con el número de la mejor candidata, sin explicaciones."
-    ),
-    "eu": (
-        "Ebaluatzaile klinikoa zara. Ordenatu erantzun hautagaiak onenetik okerrenera, irizpide hauen "
-        "arabera: (1) zuzentasun klinikoa, (2) erauzitako testuinguruan oinarritzea, (3) asmatutako daturik ez izatea.\n"
-        "Erantzun SOILIK hautagai onenaren zenbakiarekin, azalpenik gabe."
-    ),
-}
-
-
-def build_ranking_prompt(
-    record: Mapping[str, Any],
-    documents: Sequence[Mapping[str, Any]],
-    candidates: Sequence[str],
-    language: str = "es",
-) -> str:
-    """Ranking agent: returns the index of the best candidate, which becomes the
-    only trace carried into the next round."""
-    instruction = RANKING_INSTRUCTION.get(language, RANKING_INSTRUCTION["es"])
-    candidate_label = "Hautagaia" if language == "eu" else "Candidata"
-    best_label = "Hautagai onenaren zenbakia" if language == "eu" else "Número de la mejor candidata"
-    sections = [instruction]
-    sections += _context_section(documents, language)
-    sections += _question_and_options(record, language)
-    for idx, candidate in enumerate(candidates, start=1):
-        sections.append(f"{candidate_label} {idx}:\n{candidate.strip()}")
-    sections.append(f"{best_label}:")
-    return "\n\n".join(sections)
+def sort_by_confidence(
+    candidates: Sequence[str], confidences: Sequence[float]
+) -> list[tuple[str, float]]:
+    """Ascending by confidence (least to most confident), matching the
+    original's own iteration order in user_prompt_round's construction."""
+    paired = list(zip(candidates, confidences))
+    paired.sort(key=lambda item: item[1])
+    return paired
 
 
 CONSENSUS_INSTRUCTION = {
@@ -494,6 +564,10 @@ def build_consensus_prompt(
     *,
     examples: Optional[Sequence[Mapping[str, Any]]] = None,
 ) -> str:
+    """Final synthesis pass, only for records that never reach unanimity once
+    the round budget is exhausted -- this thesis's open-answer-compatible
+    resolution mechanism (the original instead just takes the last round's
+    plurality vote, which has no equivalent for open-answer records)."""
     lab = labels(language)
     instruction = CONSENSUS_INSTRUCTION.get(language, CONSENSUS_INSTRUCTION["es"])
     candidate_label = "Hautagaia" if language == "eu" else "Candidata"
@@ -631,15 +705,6 @@ def majority_candidate(candidates: Sequence[str], record: Mapping[str, Any]) -> 
         if option == winner:
             return idx
     return 0
-
-
-def parse_ranking_choice(text: str, num_candidates: int) -> int:
-    """0-based index of the ranking agent's pick; falls back to candidate 0."""
-    match = re.search(r"[1-9][0-9]*", text or "")
-    if not match:
-        return 0
-    choice = int(match.group(0)) - 1
-    return choice if 0 <= choice < num_candidates else 0
 
 
 def merge_documents(

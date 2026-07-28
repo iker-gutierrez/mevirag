@@ -148,7 +148,7 @@ def relative_cost(prefix: str, base: str) -> float:
 
 def best_by_meanq_robust(
     candidates: dict[str, tuple[str, str]], *, use_sf: bool = False,
-    margin: float = 0.5, std_ratio: float = 0.4, cost_ratio: float = 0.4,
+    margin: float = 0.5, std_threshold: float = 0.5, cost_ratio: float = 0.4,
 ) -> tuple[Optional[str], dict[str, dict]]:
     """Variance- and cost-aware version of best_by_meanq, using a pairwise,
     point-scored tie-break (see manuscript \\S "Selecting the best
@@ -157,9 +157,17 @@ def best_by_meanq_robust(
     Reduces to the plain highest-mean-MeanQ winner whenever the leader's mean
     is at least `margin` points clear of every other candidate. Otherwise, the
     leader is compared pairwise against each candidate within `margin` points:
-    each of standard deviation and cost independently awards one point to
-    whichever side wins it by more than `std_ratio` / `cost_ratio` (as a
-    fraction of the larger of the two values on that axis) -- a criterion that
+    standard deviation awards one point to whichever side has a std at least
+    `std_threshold` MeanQ points lower (an ABSOLUTE difference, not a fraction
+    of the larger std -- a relative/percentage threshold makes it trivially
+    easy to "meaningfully" beat a candidate whose own std is already small,
+    since a tiny absolute gap can still clear a large percentage of a tiny
+    denominator; std_threshold matches `margin`'s own scale, since both ask
+    "is this difference at least as large as the smallest gap this thesis
+    already treats as a real MeanQ difference"). Cost awards its own point the
+    same way as before, as a fraction of the larger cost (`cost_ratio`) -- cost
+    is a designed quantity with no sampling noise of its own, so a relative
+    threshold does not have the same failure mode there. A criterion that
     doesn't clear its own threshold awards no point to either side. Whichever
     side has more points after both criteria is preferred; if the two split
     one point each, or neither criterion is decisive, the pairwise winner
@@ -169,6 +177,14 @@ def best_by_meanq_robust(
     themselves inconclusive. The leader is replaced by the pairwise winner and
     the process repeats against the next candidate, so the final winner has
     beaten every other candidate under this rule.
+
+    std_threshold=0.5 was checked against every candidate set this function is
+    actually called on in this codebase (both ablation stages, all four
+    current models) and changes no current winner relative to the old
+    std_ratio=0.4 relative rule, across every threshold from 0.05 to 2.00
+    swept in 0.05 steps -- the std criterion is exercised (both candidates
+    within `margin` of each other) in some of those sets, but the outcome is
+    always settled by cost or the final mean tie-break either way.
 
     Returns (winning label, {label: {"mean": ..., "std": ..., "cost": ..., "n": ...}}).
     """
@@ -197,12 +213,10 @@ def best_by_meanq_robust(
         cost_a, cost_b = stats[a]["cost"], stats[b]["cost"]
         points = {a: 0, b: 0}
 
-        std_max = max(std_a, std_b)
-        if std_max > 0:
-            if std_b - std_a > std_ratio * std_max:
-                points[a] += 1
-            elif std_a - std_b > std_ratio * std_max:
-                points[b] += 1
+        if std_b - std_a > std_threshold:
+            points[a] += 1
+        elif std_a - std_b > std_threshold:
+            points[b] += 1
 
         cost_max = max(cost_a, cost_b)
         if cost_max > 0:

@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=staged-llama31_8b_B
-#SBATCH --array=0-5%2
+#SBATCH --array=0-5%1
 #SBATCH --cpus-per-task=8
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1

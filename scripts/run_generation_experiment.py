@@ -31,7 +31,7 @@ from medical_rag_thesis.prompts import (  # noqa: E402
     query_text,
 )
 from medical_rag_thesis.reasoning import parse_pipeline_answer  # noqa: E402
-from medical_rag_thesis.retrieval import EmbeddingRetriever, LeakLoggingEmbeddingRetriever  # noqa: E402
+from medical_rag_thesis.retrieval import EmbeddingRetriever, HitRateLoggingEmbeddingRetriever  # noqa: E402
 from medical_rag_thesis.run_logging import run_with_logs  # noqa: E402
 
 
@@ -72,14 +72,15 @@ def parse_args() -> argparse.Namespace:
     # Evidence-only experiment: used only when the retrieval index was built by
     # indexing solely the evidence column of the corpus, not the full record.
     parser.add_argument(
-        "--log-retrieval-leak", action="store_true",
+        "--log-gold-hit-rate", action="store_true",
         help="Evidence-only runs only (see clone_configs_evidence_only.py): use "
-        "LeakLoggingEmbeddingRetriever instead of the plain EmbeddingRetriever. "
+        "HitRateLoggingEmbeddingRetriever instead of the plain EmbeddingRetriever. "
         "Behaviour is identical (same top-k passages returned), but for every "
         "query it also records whether the query's own gold document would "
-        "have appeared in the naive top-(k+1) absent self-retrieval exclusion, "
-        "written to <output's parent>/retrieval_leak_log.json alongside "
-        "predictions.jsonl.",
+        "have appeared in the naive top-(k+1) absent self-retrieval exclusion "
+        "(a hit-rate@k metric, manuscript appendix 'Retrieval self-exclusion "
+        "hit rate'), written to <output's parent>/retrieval_hit_rate_log.json "
+        "alongside predictions.jsonl.",
     )
     parser.add_argument("--reranker-model", default="", help="Optional CrossEncoder model for reranking retrieved documents.")
     parser.add_argument("--reranker-top-k", type=int, default=0, help="Keep this many documents after reranking.")
@@ -288,9 +289,9 @@ def run(args: argparse.Namespace) -> None:
         records = records[: args.limit]
 
     few_shot_pool = read_jsonl(args.few_shot_file) if args.few_shot_file else []
-    # Evidence-only experiment: LeakLoggingEmbeddingRetriever is only selected
+    # Evidence-only experiment: HitRateLoggingEmbeddingRetriever is only selected
     # for indices built by indexing solely the evidence column of the corpus.
-    retriever_cls = LeakLoggingEmbeddingRetriever if args.log_retrieval_leak else EmbeddingRetriever
+    retriever_cls = HitRateLoggingEmbeddingRetriever if args.log_gold_hit_rate else EmbeddingRetriever
     retriever = retriever_cls(args.retrieval_index) if args.retrieval_index else None
     reranker = None
     if args.reranker_model and not args.dry_run:
@@ -665,21 +666,23 @@ def run(args: argparse.Namespace) -> None:
     metadata_path.write_text(json.dumps(metadata, indent=2, ensure_ascii=False), encoding="utf-8")
     print(json.dumps(metadata, indent=2, ensure_ascii=False))
 
-    # Evidence-only experiment: sidecar leak-log output, only produced for
-    # indices built by indexing solely the evidence column of the corpus.
-    if args.log_retrieval_leak and retriever is not None:
-        leak_log = retriever.leak_log
-        num_present = sum(1 for entry in leak_log if entry["excluded_present"])
-        leak_summary = {
-            "num_queries": len(leak_log),
+    # Evidence-only experiment: sidecar hit-rate-log output (hit-rate@k, the
+    # query's own gold document as the single per-query target), only
+    # produced for indices built by indexing solely the evidence column of
+    # the corpus.
+    if args.log_gold_hit_rate and retriever is not None:
+        hit_log = retriever.hit_log
+        num_present = sum(1 for entry in hit_log if entry["excluded_present"])
+        hit_rate_summary = {
+            "num_queries": len(hit_log),
             "num_gold_present_in_naive_topk_plus_1": num_present,
-            "leak_rate": num_present / len(leak_log) if leak_log else None,
-            "entries": leak_log,
+            "hit_rate": num_present / len(hit_log) if hit_log else None,
+            "entries": hit_log,
         }
-        leak_path = Path(args.output).parent / "retrieval_leak_log.json"
-        leak_path.write_text(json.dumps(leak_summary, indent=2, ensure_ascii=False), encoding="utf-8")
-        print(f"retrieval leak log: {num_present}/{len(leak_log)} queries "
-              f"({leak_summary['leak_rate']:.1%})" if leak_log else "retrieval leak log: no queries"
+        hit_rate_path = Path(args.output).parent / "retrieval_hit_rate_log.json"
+        hit_rate_path.write_text(json.dumps(hit_rate_summary, indent=2, ensure_ascii=False), encoding="utf-8")
+        print(f"retrieval hit-rate log: {num_present}/{len(hit_log)} queries "
+              f"({hit_rate_summary['hit_rate']:.1%})" if hit_log else "retrieval hit-rate log: no queries"
               , flush=True)
 
 

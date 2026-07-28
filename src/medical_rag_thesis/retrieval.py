@@ -193,18 +193,21 @@ class EmbeddingRetriever:
 # evidence column of the corpus (not the full record), a rejected alternative
 # design discussed but not adopted in the manuscript (see manuscript/main.tex,
 # "Corpus and index").
-class LeakLoggingEmbeddingRetriever(EmbeddingRetriever):
+class HitRateLoggingEmbeddingRetriever(EmbeddingRetriever):
     """EmbeddingRetriever variant used ONLY by the evidence-only-index runs
-    (scripts/clone_configs_evidence_only.py's `log_retrieval_leak` config
+    (scripts/clone_configs_evidence_only.py's `log_gold_hit_rate` config
     field), to answer a concrete question raised during that work: how often
     would the query's own gold document have appeared in a naive top-k+1
-    search, absent self-retrieval exclusion?
+    search, absent self-retrieval exclusion? This is a hit-rate@k metric
+    (manuscript \\autoref{app:retrieval-leak}): the query's own gold document
+    is the single target per query, so "hit" is binary presence/absence in
+    the naive top-(k+1), not a graded relevance judgment.
 
     Behaviourally IDENTICAL to EmbeddingRetriever.query() -- same top_k
     passages returned to the generator, same exclusion of the query's own
     document -- this only ADDS bookkeeping: every call over-fetches k+1
     candidates (as the base class already does when exclude_id is set) and
-    records, in self.leak_log, whether the excluded document was actually
+    records, in self.hit_log, whether the excluded document was actually
     present among them. Kept as a separate subclass rather than folded into
     EmbeddingRetriever itself so the shared class used by the live ablation
     grid and reasoning pipelines is untouched.
@@ -216,7 +219,7 @@ class LeakLoggingEmbeddingRetriever(EmbeddingRetriever):
         # exclude_id, "top_k": top_k, "excluded_present": bool,
         # "excluded_rank": int | None (1-indexed position in the naive top
         # k+1 ranking, before exclusion, only set when excluded_present)}.
-        self.leak_log: list[dict[str, Any]] = []
+        self.hit_log: list[dict[str, Any]] = []
 
     def query(
         self, text: str, top_k: int = 3, exclude_id: Optional[str] = None
@@ -246,7 +249,7 @@ class LeakLoggingEmbeddingRetriever(EmbeddingRetriever):
                     excluded_present = True
                     excluded_rank = naive_rank
                     break
-            self.leak_log.append({
+            self.hit_log.append({
                 "query_id": exclude_id,
                 "top_k": top_k,
                 "excluded_present": excluded_present,
