@@ -71,6 +71,12 @@ reports/metrics_archive/
 !reports/metrics/es_dev_ablation_results.md
 !reports/metrics/eu_dev_ablation_results.md
 
+# Dataset construction lives in the SNS1064-dataset repo
+# (https://github.com/iker-gutierrez/SNS1064-dataset), not here -- kept
+# locally as reference/scratch only.
+src/medical_rag_thesis/datasetting.py
+src/medical_rag_thesis/datasetting_post_curation.py
+
 # SNS-1064 paper (dataset not included)
 SNS_1064/
 
