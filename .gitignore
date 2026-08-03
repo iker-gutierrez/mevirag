@@ -13,6 +13,7 @@ data/interim/*
 data/processed/*
 data/external/*
 experiments/runs/*
+experiments/old_runs/*
 experiments/runs_archive*/
 experiments/runs_v2/
 experiments/runs_hf_baseline/
@@ -39,7 +40,22 @@ reports/metrics/*
 reports/metrics_v2/*
 reports/metrics_archive/
 
-# Track processed datasets (exclude smoke test subsets)
+# Track processed datasets (exclude smoke test subsets).
+# The _v1 suffix marks the live split actually used for currently-reported
+# results; sns1064/ etc. (no suffix) is reserved for the re-curated dataset
+# (docs/curated_splits_reproduction.md) once it exists.
+!data/processed/sns1064_v1/
+!data/processed/sns1064_v1/**
+!data/processed/casimedicos_v1/
+!data/processed/casimedicos_v1/**
+!data/processed/sns1064_casimedicos_v1/
+!data/processed/sns1064_casimedicos_v1/**
+!data/processed/sns1064_eu_v1/
+!data/processed/sns1064_eu_v1/**
+!data/processed/casimedicos_eu_v1/
+!data/processed/casimedicos_eu_v1/**
+!data/processed/sns1064_casimedicos_eu_v1/
+!data/processed/sns1064_casimedicos_eu_v1/**
 !data/processed/sns1064/
 !data/processed/sns1064/**
 !data/processed/casimedicos/
@@ -68,6 +84,7 @@ manuscript/
 becoming_autonomous_with_slurm.py
 codex_history_v2.md
 experiments/codex_history.txt
+TODO_curated_rerun.md
 
 # Local machine state
 .env
