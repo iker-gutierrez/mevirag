@@ -1,5 +1,5 @@
 #!/bin/bash
-# Submits the full GuiaSalud dev-experiment chain, for both language tracks,
+# Submits the full mixed-dataset dev-experiment chain, for both language tracks,
 # end to end: retrieval indexing -> staged ablation grid (stage A -> B -> C,
 # 11 configuration rows) -> final selection across the complete grid ->
 # reasoning-pipeline generation and evaluation.
@@ -35,7 +35,7 @@
 #
 # This script only submits jobs; it runs no GPU work itself.
 #
-# Usage: bash slurm/submit_guiasalud_dev_experiments.sh
+# Usage: bash slurm/submit_mixed_dev_experiments.sh
 #
 # To check progress: squeue -u $USER
 # To see a chain's final result once finished: reports/metrics/
@@ -47,7 +47,7 @@
 set -euo pipefail
 cd /home/igutierrez134/med_rag_thesis
 
-echo "Submitting the full GuiaSalud dev-experiment chain (Spanish + Basque, staged ablation + reasoning pipelines)."
+echo "Submitting the full mixed-dataset dev-experiment chain (Spanish + Basque, staged ablation + reasoning pipelines)."
 echo
 
 # ============================================================================
