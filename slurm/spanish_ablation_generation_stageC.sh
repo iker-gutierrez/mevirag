@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=gen-C-es-abl
-#SBATCH --array=0-23%2
+#SBATCH --array=0-11%2
 #SBATCH --cpus-per-task=8
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -15,29 +15,25 @@
 
 # Spanish ablation grid, stage C: rows 9-10, which restrict retrieval to a
 # single source corpus (GuiaSalud only, CasiMedicos-Exp only), for both
-# Qwen3.5-9B variants, each in both a plain and a self-feedback generation
-# variant (2 rows x 2 model variants x 2 generation variants = 8
-# configurations x 3 seeds = 24 tasks). The dev set itself (`input`) stays
-# the full mixed Spanish corpus; only `retrieval_index` is restricted to a
-# single-source index. Must run after spanish_ablation_evaluation_stageB.sh,
-# which scores stages A+B and rewrites these rows' retrieval settings (in
-# both their plain and self-feedback configuration) to match whichever
-# earlier row actually scored best (scripts/rewire_spanish_ablation_stage.py
-# --stage C). Requires the single-source retrieval indices
+# Qwen3.5-9B variants. Every config has self-feedback enabled, so each
+# row's initial and revised answers both come from one generation run (2
+# rows x 2 model variants = 4 configurations x 3 seeds = 12 tasks). The dev
+# set itself (`input`) stays the full mixed Spanish corpus; only
+# `retrieval_index` is restricted to a single-source index. Must run after
+# spanish_ablation_evaluation_stageB.sh, which scores stages A+B and
+# rewrites these rows' retrieval settings to match whichever earlier row
+# actually scored best (scripts/rewire_spanish_ablation_stage.py --stage
+# C). Requires the single-source retrieval indices
 # (guiasalud_only_multilingual_e5_large, casimedicos_only_multilingual_e5_
 # large) to already be built.
 
 set -euo pipefail
 
 CONFIGS=(
-  configs/experiments/7018_qwen35_9b_rag_domain_guiasalud_e5_rerank5_no_think_extractive_guiasalud_dev.json
-  configs/experiments/7019_qwen35_9b_rag_domain_casimedicos_e5_rerank5_no_think_extractive_guiasalud_dev.json
-  configs/experiments/7020_qwen35_9b_rag_domain_guiasalud_e5_rerank5_think_extractive_guiasalud_dev.json
-  configs/experiments/7021_qwen35_9b_rag_domain_casimedicos_e5_rerank5_think_extractive_guiasalud_dev.json
-  configs/experiments/10009_qwen35_9b_rag_domain_guiasalud_e5_rerank5_no_think_extractive_guiasalud_sf_dev.json
-  configs/experiments/10010_qwen35_9b_rag_domain_casimedicos_e5_rerank5_no_think_extractive_guiasalud_sf_dev.json
-  configs/experiments/10020_qwen35_9b_rag_domain_guiasalud_e5_rerank5_think_extractive_guiasalud_sf_dev.json
-  configs/experiments/10021_qwen35_9b_rag_domain_casimedicos_e5_rerank5_think_extractive_guiasalud_sf_dev.json
+  configs/experiments/12009_qwen35_9b_rag_domain_guiasalud_e5_rerank5_no_think_extractive_guiasalud_dev.json
+  configs/experiments/12010_qwen35_9b_rag_domain_casimedicos_e5_rerank5_no_think_extractive_guiasalud_dev.json
+  configs/experiments/12020_qwen35_9b_rag_domain_guiasalud_e5_rerank5_think_extractive_guiasalud_dev.json
+  configs/experiments/12021_qwen35_9b_rag_domain_casimedicos_e5_rerank5_think_extractive_guiasalud_dev.json
 )
 SEEDS=(42 43 44)
 

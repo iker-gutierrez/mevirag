@@ -17,22 +17,24 @@ computes that winner and rewrites the dependent rows' config files to match
 it, run between stages so each stage always starts from a config that
 reflects the previous stage's actual result.
 
-Each row is also generation twice: once as a plain, single-pass generation,
-and once with an added self-feedback (SF) refinement step, where the model
-critiques and revises its own first answer. Both variants are scored and
-both are eligible to win a stage: the "best" configuration for a stage may
-turn out to be a row's self-feedback variant rather than its plain one, and
-the code here always compares both. See scripts/meanq.py's
+Every row is generated with self-feedback enabled (a single run produces
+both an initial answer and a revised one, in one generation pass, exactly
+as the manuscript's own self-feedback pipeline describes -- see
+run_generation_experiment.py's --self-feedback path and
+scripts/evaluate_predictions.py's before_feedback/after_feedback scoring).
+Each row's two readings are independently evaluated and both are eligible
+to win a stage: the "best" configuration for a stage may turn out to be a
+row's self-feedback (revised) reading rather than its plain (initial) one,
+and the code here always compares both. See scripts/meanq.py's
 best_by_meanq_robust for the actual "which configuration wins" rule
 (a decisive-mean-difference check, falling back to a stability/cost
 point-scored tie-break, falling back to a final mean comparison).
 
 This script operates on a specific block of ablation-grid config files
-(configs/experiments/5000-5021 for the plain runs, 9000-9021 for their
-self-feedback clones) reserved for this rerun of the Basque grid, kept
-separate from any earlier round's ablation configs so that no earlier
-round's config file or generated predictions are ever overwritten. It
-therefore does not use the older shared selection module
+(configs/experiments/11000-11021) reserved for this rerun of the Basque
+grid, kept separate from any earlier round's ablation configs so that no
+earlier round's config file or generated predictions are ever overwritten.
+It therefore does not use the older shared selection module
 (scripts/mixed_meanq.py), which is hardcoded to a different, older id block
 and is left untouched.
 
@@ -61,36 +63,26 @@ NON_RETRIEVING_ROWS = {0, 7}
 
 # (family key, display label, name template, start id for rows 0-6).
 # Rows 7-8 and 9-10 use separate explicit id blocks below, since ids
-# 5000-5013 are already fully used by rows 0-6 for both models.
+# 11000-11010 are already fully used by rows 0-6 + 7-8 + 9-10 for
+# llama31_8b (11 ids per family, one per row).
 FAMILIES = [
     ("llama31_8b", "Llama-3.1-8B-Instruct",
-     "llama31_8b_{cell}_extractive_guiasalud_dev", 5000),
+     "llama31_8b_{cell}_extractive_guiasalud_dev", 11000),
     ("latxa_llama31_8b", "Latxa-Llama-3.1-8B-Instruct",
-     "latxa_llama31_8b_{cell}_extractive_guiasalud_dev", 5007),
+     "latxa_llama31_8b_{cell}_extractive_guiasalud_dev", 11011),
 ]
 
 # Explicit config ids for row 7 (few-shot baseline) and row 8 (few-shot +
 # best retrieval), per model.
 ROW_7_8_IDS = {
-    "llama31_8b": {7: 5014, 8: 5015},
-    "latxa_llama31_8b": {7: 5016, 8: 5017},
+    "llama31_8b": {7: 11007, 8: 11008},
+    "latxa_llama31_8b": {7: 11018, 8: 11019},
 }
 
 # Explicit config ids for rows 9-10 (single-corpus domain restriction).
 ROW_9_10_IDS = {
-    "llama31_8b": {9: 5018, 10: 5019},
-    "latxa_llama31_8b": {9: 5020, 10: 5021},
-}
-
-# Config ids for the self-feedback clone of each row, in row order (row 0
-# first, row 10 last). Each clone is identical to its plain counterpart
-# except for enabling the self-feedback refinement step and its own output
-# path; see scripts/create_self_feedback_ablation_configs.py, which
-# generated these clone files from the plain ids above.
-SF_ROW_ORDER = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-SF_START_ID = {
-    "llama31_8b": 9000,
-    "latxa_llama31_8b": 9011,
+    "llama31_8b": {9: 11009, 10: 11010},
+    "latxa_llama31_8b": {9: 11020, 10: 11021},
 }
 
 STAGES = {
@@ -113,14 +105,12 @@ def config_path(prefix: str, base: str) -> Path:
     return CONFIG_DIR / f"{prefix}_{base}.json"
 
 
-def sf_run_id(family_key: str, row: int) -> int:
-    return SF_START_ID[family_key] + SF_ROW_ORDER.index(row)
-
-
 def candidates_for_pool(family_key: str, name_template: str, start_id: int, rows) -> dict:
-    """Build the MeanQ candidate pool for a set of rows: each row contributes
-    both its plain configuration and a "(SF)"-suffixed self-feedback
-    variant, so the comparison can pick whichever actually scores higher."""
+    """Build the MeanQ candidate pool for a set of rows: each row
+    contributes both a plain candidate (its initial answer) and a
+    "(SF)"-suffixed self-feedback candidate (its revised answer), read from
+    the SAME run's before_feedback/after_feedback metric blocks, so the
+    comparison can pick whichever reading actually scores higher."""
     candidates = {}
     for row in rows:
         cell_slug, cell_label, _ = CELLS[row]
@@ -134,11 +124,7 @@ def candidates_for_pool(family_key: str, name_template: str, start_id: int, rows
             raise ValueError(f"unexpected row {row}")
         base = name_template.format(cell=cell_slug)
         candidates[cell_label] = (str(run_id), base)
-
-        sf_id = sf_run_id(family_key, row)
-        assert base.endswith("_dev"), f"expected base to end in _dev, got {base!r}"
-        sf_base = base[: -len("_dev")] + "_sf_dev"
-        candidates[f"{cell_label} (SF)"] = (str(sf_id), sf_base, True)
+        candidates[f"{cell_label} (SF)"] = (str(run_id), base, True)
     return candidates
 
 
@@ -149,7 +135,7 @@ def retrieving_pool(candidates: dict, pool_rows) -> dict:
     prompting with retrieval, cannot sensibly inherit settings from a
     configuration that has no retrieval settings to give it. The
     self-feedback suffix is stripped before checking exclusion, so a row's
-    SF variant is excluded exactly when its plain variant would be."""
+    SF reading is excluded exactly when its plain reading would be."""
     excluded = {CELLS[row][1] for row in pool_rows if row in NON_RETRIEVING_ROWS}
 
     def base_label(label: str) -> str:
@@ -201,10 +187,9 @@ def main() -> None:
         print(f"  winner: {winner} (id {winner_prefix}, MeanQ {stats[winner]['mean']:.2f})")
         fields = base_fields_of(winner_prefix, winner_base)
 
-        # Both the plain and self-feedback config of each dependent row are
-        # rewritten to the winner's retrieval settings, so the next stage's
-        # own candidate pool (which also compares both variants of every
-        # row) has a correctly-based self-feedback candidate to consider.
+        # Each dependent row is a single config file now, so one apply_base
+        # call per target row is enough -- there is no separate
+        # self-feedback config left to rewire in step.
         for target_row in stage["target_rows"]:
             cell_slug, cell_label, _ = CELLS[target_row]
             if target_row in (7, 8):
@@ -214,11 +199,6 @@ def main() -> None:
             target_base = name_template.format(cell=cell_slug)
             changed = apply_base(str(target_id), target_base, fields, dry_run=args.dry_run)
             any_changed = any_changed or changed
-
-            target_sf_id = sf_run_id(family_key, target_row)
-            target_sf_base = target_base[: -len("_dev")] + "_sf_dev"
-            changed_sf = apply_base(str(target_sf_id), target_sf_base, fields, dry_run=args.dry_run)
-            any_changed = any_changed or changed_sf
         print()
 
     if args.dry_run:

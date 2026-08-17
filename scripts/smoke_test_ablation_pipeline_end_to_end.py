@@ -17,11 +17,12 @@ hyperparameters only that family sets), covering:
      confirms no prediction's retrieved-context text contains the literal
      gold answer string of its own record (a leak that would slip past the
      doc_id-based exclusion, e.g. if two records shared identical content).
-  2. Plain and self-feedback generation, run separately (matching the real
-     pipeline: a plain config and its self-feedback clone are two different
-     generation runs, not two fields written by a single run), and confirms
-     the self-feedback run's predictions carry both the initial and the
-     revised answer.
+  2. Self-feedback generation: every config has self_feedback=true, so one
+     generation run produces both an initial answer and a self-feedback
+     revision of it in the same predictions.jsonl (matching the manuscript's
+     own description, sec:sf: "Both the initial and the revised answers are
+     stored for every run"). Confirms the run's predictions carry both
+     texts and that the revision genuinely differs from the initial answer.
   3. Prompt rendering: confirms the actual rendered prompt (recovered via
      --save-prompts) contains real question text, not an empty or
      boilerplate-only prompt (the failure mode of the historical
@@ -51,7 +52,7 @@ Every file this test touches lives at a dedicated smoke-test id block
 (97000s) and output path prefix, distinct from any real experiment id, and
 is cleaned up before and after a run.
 
-Needs a free GPU. Takes several minutes (four small vLLM generation runs).
+Needs a free GPU. Takes several minutes (three small vLLM generation runs).
 
 Usage: python scripts/smoke_test_ablation_pipeline_end_to_end.py
 """
@@ -78,6 +79,8 @@ BASE_MODEL_CONFIG = {
     "prompt_style": "extractive",
     "think": False,
     "backend": "vllm",
+    "self_feedback": True,
+    "feedback_max_new_tokens": 256,
     "max_new_tokens": 256,
     "temperature": 0.6,
     "trust_remote_code": True,
@@ -92,12 +95,12 @@ BASE_MODEL_CONFIG = {
     "save_prompts": True,
 }
 
-# (id, retrieval_top_k, reranker_top_k, self_feedback) -- two plain rows
-# (standing in for two ablation-grid rows) plus one self-feedback clone of
-# the second, mirroring the real grid's own plain/self-feedback pairing.
+# (id, retrieval_top_k, reranker_top_k) -- two rows standing in for two
+# ablation-grid rows. Every config has self_feedback=true (see
+# BASE_MODEL_CONFIG), so each one's single generation run yields both a
+# plain and a self-feedback reading, matching the real grid.
 ROW_A_ID = "97000"   # retrieval_top_k=5, reranker_top_k=1 (row-like: rerank1)
 ROW_B_ID = "97001"   # retrieval_top_k=15, reranker_top_k=5 (row-like: rerank5)
-ROW_B_SF_ID = "97002"  # self-feedback clone of row B
 DEPENDENT_ID = "97003"  # stands in for a dependent row (e.g. row 8)
 
 # Qwen3.5-9B config: the only family that sets top_k/min_p/presence_penalty
@@ -144,17 +147,13 @@ def clean_up() -> None:
         shutil.rmtree(p, ignore_errors=True)
 
 
-def write_config(run_id: str, name_suffix: str, *, retrieval_top_k: int, reranker_top_k: int,
-                  self_feedback: bool) -> tuple[str, str]:
+def write_config(run_id: str, name_suffix: str, *, retrieval_top_k: int, reranker_top_k: int) -> tuple[str, str]:
     name = f"{SMOKE_TAG}_latxa_{name_suffix}"
     cfg = dict(BASE_MODEL_CONFIG)
     cfg["experiment_name"] = name
     cfg["output"] = f"experiments/runs/{run_id}_{name}_dev/predictions.jsonl"
     cfg["retrieval_top_k"] = retrieval_top_k
     cfg["reranker_top_k"] = reranker_top_k
-    cfg["self_feedback"] = self_feedback
-    if self_feedback:
-        cfg["feedback_max_new_tokens"] = 256
     base = f"{name}_dev"
     (CONFIG_DIR / f"{run_id}_{base}.json").write_text(
         json.dumps(cfg, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
@@ -210,17 +209,15 @@ def main() -> None:
     print(f"=== end-to-end smoke test: real generation + retrieval + staged selection ({LIMIT} records/run) ===")
     clean_up()
 
-    # --- 1-3: real generation, retrieval exclusion, self-feedback -------
-    print("\n--- generating: two plain rows + one self-feedback clone ---")
-    row_a = write_config(ROW_A_ID, "rerank1", retrieval_top_k=5, reranker_top_k=1, self_feedback=False)
-    row_b = write_config(ROW_B_ID, "rerank5", retrieval_top_k=15, reranker_top_k=5, self_feedback=False)
-    row_b_sf = write_config(ROW_B_SF_ID, "rerank5_sf", retrieval_top_k=15, reranker_top_k=5, self_feedback=True)
+    # --- 1-3: real generation (with self-feedback), retrieval exclusion -
+    print("\n--- generating: two rows, each with self-feedback enabled ---")
+    row_a = write_config(ROW_A_ID, "rerank1", retrieval_top_k=5, reranker_top_k=1)
+    row_b = write_config(ROW_B_ID, "rerank5", retrieval_top_k=15, reranker_top_k=5)
 
     pred_a = run_generation(*row_a)
     pred_b = run_generation(*row_b)
-    pred_b_sf = run_generation(*row_b_sf)
 
-    for label, pred in (("row A", pred_a), ("row B", pred_b), ("row B self-feedback", pred_b_sf)):
+    for label, pred in (("row A", pred_a), ("row B", pred_b)):
         check(pred.exists() and len(pred.read_text().splitlines()) == LIMIT,
               f"{label}: produced {LIMIT} real predictions ({pred.relative_to(ROOT)})")
 
@@ -251,30 +248,36 @@ def main() -> None:
         empty_or_short = sum(1 for r in records if len(str(r.get("prompt") or "")) < 50)
         check(empty_or_short == 0, f"{label}: no prompt was empty or suspiciously short (<50 chars)")
 
-    print("\n--- checking the self-feedback run produced both an initial and a revised answer ---")
-    sf_records = [json.loads(line) for line in pred_b_sf.read_text().splitlines()]
-    check(
-        all("initial_prediction_text" in r and "prediction_text" in r for r in sf_records),
-        "self-feedback predictions carry both initial_prediction_text and prediction_text",
-    )
-    check(
-        any(r.get("initial_prediction_text") != r.get("prediction_text") for r in sf_records),
-        "at least one self-feedback record's revised answer actually differs from its initial answer",
-    )
+    print("\n--- checking each self-feedback run produced both an initial and a revised answer ---")
+    for label, pred in (("row A", pred_a), ("row B", pred_b)):
+        sf_records = [json.loads(line) for line in pred.read_text().splitlines()]
+        check(
+            all("initial_prediction_text" in r and "prediction_text" in r for r in sf_records),
+            f"{label}: predictions carry both initial_prediction_text and prediction_text",
+        )
+        check(
+            any(r.get("initial_prediction_text") != r.get("prediction_text") for r in sf_records),
+            f"{label}: at least one record's revised answer actually differs from its initial answer",
+        )
 
     # --- 4-5: real (tiny) evaluation + the real staged decision code ----
+    # Each run's predictions.jsonl already has both readings (initial and
+    # revised) from its single self-feedback generation pass, so scoring it
+    # once with the real evaluation script yields both a before_feedback
+    # and an after_feedback metric block -- no second generation run needed
+    # for the self-feedback candidate.
     print("\n--- scoring the tiny generation runs with the real evaluation script ---")
     run_evaluation(*row_a)
     run_evaluation(*row_b)
-    run_evaluation(*row_b_sf)
 
     print("\n--- running the real MeanQ decision + config rewiring on these tiny, real metrics ---")
     from meanq import best_by_meanq_robust  # noqa: E402
 
     pool = {
         "rerank1": (ROW_A_ID, row_a[1]),
+        "rerank1 (SF)": (ROW_A_ID, row_a[1], True),
         "rerank5": (ROW_B_ID, row_b[1]),
-        "rerank5 (SF)": (ROW_B_SF_ID, row_b_sf[1], True),
+        "rerank5 (SF)": (ROW_B_ID, row_b[1], True),
     }
     winner, stats = best_by_meanq_robust(pool)
     check(winner is not None, "the real selection rule produced a winner from real (tiny) metrics")
@@ -286,7 +289,7 @@ def main() -> None:
         k: winner_cfg[k] for k in ("retrieval_top_k", "reranker_model", "reranker_top_k")
     }
 
-    dependent = write_config(DEPENDENT_ID, "dependent", retrieval_top_k=0, reranker_top_k=0, self_feedback=False)
+    dependent = write_config(DEPENDENT_ID, "dependent", retrieval_top_k=0, reranker_top_k=0)
     dep_path = CONFIG_DIR / f"{dependent[0]}_{dependent[1]}.json"
     dep_cfg = json.loads(dep_path.read_text())
     dep_cfg.update(winner_fields)

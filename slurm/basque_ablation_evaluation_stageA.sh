@@ -12,9 +12,12 @@
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=igutierrez134@ikasle.ehu.eus
 
-# Scores every stage-A prediction (rows 0-6, both plain and self-feedback
-# generation variants, for both Basque models), then rewires row 8's
-# retrieval settings to whichever configuration actually scored best.
+# Scores every stage-A prediction (rows 0-6, for both Basque models). Every
+# config has self-feedback enabled, so scoring one run yields both a plain
+# (initial-answer) and a self-feedback (revised-answer) metric block; see
+# scripts/evaluate_predictions.py's before_feedback/after_feedback split.
+# Then rewires row 8's retrieval settings to whichever reading of whichever
+# row actually scored best.
 
 set -euo pipefail
 source /home/igutierrez134/envs/med_rag_thesis/bin/activate
@@ -25,34 +28,20 @@ export TOKENIZERS_PARALLELISM=false
 
 SEEDS=(42 43 44)
 RUN_IDS=(
-  5000_llama31_8b_no_rag_extractive_guiasalud_dev
-  5001_llama31_8b_rag_e5_topk1_extractive_guiasalud_dev
-  5002_llama31_8b_rag_e5_topk3_extractive_guiasalud_dev
-  5003_llama31_8b_rag_e5_topk5_extractive_guiasalud_dev
-  5004_llama31_8b_rag_e5_rerank1_extractive_guiasalud_dev
-  5005_llama31_8b_rag_e5_rerank3_extractive_guiasalud_dev
-  5006_llama31_8b_rag_e5_rerank5_extractive_guiasalud_dev
-  5007_latxa_llama31_8b_no_rag_extractive_guiasalud_dev
-  5008_latxa_llama31_8b_rag_e5_topk1_extractive_guiasalud_dev
-  5009_latxa_llama31_8b_rag_e5_topk3_extractive_guiasalud_dev
-  5010_latxa_llama31_8b_rag_e5_topk5_extractive_guiasalud_dev
-  5011_latxa_llama31_8b_rag_e5_rerank1_extractive_guiasalud_dev
-  5012_latxa_llama31_8b_rag_e5_rerank3_extractive_guiasalud_dev
-  5013_latxa_llama31_8b_rag_e5_rerank5_extractive_guiasalud_dev
-  9000_llama31_8b_no_rag_extractive_guiasalud_sf_dev
-  9001_llama31_8b_rag_e5_topk1_extractive_guiasalud_sf_dev
-  9002_llama31_8b_rag_e5_topk3_extractive_guiasalud_sf_dev
-  9003_llama31_8b_rag_e5_topk5_extractive_guiasalud_sf_dev
-  9004_llama31_8b_rag_e5_rerank1_extractive_guiasalud_sf_dev
-  9005_llama31_8b_rag_e5_rerank3_extractive_guiasalud_sf_dev
-  9006_llama31_8b_rag_e5_rerank5_extractive_guiasalud_sf_dev
-  9011_latxa_llama31_8b_no_rag_extractive_guiasalud_sf_dev
-  9012_latxa_llama31_8b_rag_e5_topk1_extractive_guiasalud_sf_dev
-  9013_latxa_llama31_8b_rag_e5_topk3_extractive_guiasalud_sf_dev
-  9014_latxa_llama31_8b_rag_e5_topk5_extractive_guiasalud_sf_dev
-  9015_latxa_llama31_8b_rag_e5_rerank1_extractive_guiasalud_sf_dev
-  9016_latxa_llama31_8b_rag_e5_rerank3_extractive_guiasalud_sf_dev
-  9017_latxa_llama31_8b_rag_e5_rerank5_extractive_guiasalud_sf_dev
+  11000_llama31_8b_no_rag_extractive_guiasalud_dev
+  11001_llama31_8b_rag_e5_topk1_extractive_guiasalud_dev
+  11002_llama31_8b_rag_e5_topk3_extractive_guiasalud_dev
+  11003_llama31_8b_rag_e5_topk5_extractive_guiasalud_dev
+  11004_llama31_8b_rag_e5_rerank1_extractive_guiasalud_dev
+  11005_llama31_8b_rag_e5_rerank3_extractive_guiasalud_dev
+  11006_llama31_8b_rag_e5_rerank5_extractive_guiasalud_dev
+  11011_latxa_llama31_8b_no_rag_extractive_guiasalud_dev
+  11012_latxa_llama31_8b_rag_e5_topk1_extractive_guiasalud_dev
+  11013_latxa_llama31_8b_rag_e5_topk3_extractive_guiasalud_dev
+  11014_latxa_llama31_8b_rag_e5_topk5_extractive_guiasalud_dev
+  11015_latxa_llama31_8b_rag_e5_rerank1_extractive_guiasalud_dev
+  11016_latxa_llama31_8b_rag_e5_rerank3_extractive_guiasalud_dev
+  11017_latxa_llama31_8b_rag_e5_rerank5_extractive_guiasalud_dev
 )
 
 echo "Basque ablation evaluation (stage A) started on $(hostname) at $(date)"
@@ -87,8 +76,8 @@ for run_id in "${RUN_IDS[@]}"; do
   done
 done
 
-# Stage A -> B: rewire row 8 to whichever stage-A configuration (plain or
-# self-feedback) scored best, for each model.
+# Stage A -> B: rewire row 8 to whichever reading of whichever stage-A row
+# (plain or self-feedback) actually scored best, for each model.
 python scripts/rewire_basque_ablation_stage.py --stage B
 
 echo "Basque ablation evaluation (stage A) finished at $(date)"

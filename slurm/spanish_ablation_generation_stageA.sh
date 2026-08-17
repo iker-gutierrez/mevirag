@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=gen-A-es-abl
-#SBATCH --array=0-83%2
+#SBATCH --array=0-41%2
 #SBATCH --cpus-per-task=8
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -15,46 +15,32 @@
 
 # Spanish ablation grid, stage A: rows 0-6 (no retrieval, dense-retrieval
 # depth 1/3/5, reranking depth 1/3/5) for both Qwen3.5-9B variants
-# (no-think and think). Each row is generated both as a plain single-pass
-# run and with an added self-feedback refinement pass, so both variants are
-# available for the staged selection to compare (7 rows x 2 model variants
-# x 2 generation variants = 28 configurations x 3 seeds = 84 tasks). Output
-# goes into a dedicated configuration id range (7000-7013 plain,
-# 10000-10006/10011-10017 self-feedback) reserved for this rerun of the
-# grid, so no earlier round's configuration or generated predictions are
-# ever overwritten.
+# (no-think and think). Every config has self-feedback enabled: a single
+# generation run produces both an initial answer and a self-feedback
+# revision of it, so each row's two readings (initial and revised) are both
+# available for the staged selection to compare without a second generation
+# pass (7 rows x 2 model variants = 14 configurations x 3 seeds = 42
+# tasks). Output goes into a dedicated configuration id range
+# (12000-12013) reserved for this rerun of the grid, so no earlier round's
+# configuration or generated predictions are ever overwritten.
 
 set -euo pipefail
 
 CONFIGS=(
-  configs/experiments/7000_qwen35_9b_no_rag_no_think_extractive_guiasalud_dev.json
-  configs/experiments/7001_qwen35_9b_rag_e5_topk1_no_think_extractive_guiasalud_dev.json
-  configs/experiments/7002_qwen35_9b_rag_e5_topk3_no_think_extractive_guiasalud_dev.json
-  configs/experiments/7003_qwen35_9b_rag_e5_topk5_no_think_extractive_guiasalud_dev.json
-  configs/experiments/7004_qwen35_9b_rag_e5_rerank1_no_think_extractive_guiasalud_dev.json
-  configs/experiments/7005_qwen35_9b_rag_e5_rerank3_no_think_extractive_guiasalud_dev.json
-  configs/experiments/7006_qwen35_9b_rag_e5_rerank5_no_think_extractive_guiasalud_dev.json
-  configs/experiments/7007_qwen35_9b_no_rag_think_extractive_guiasalud_dev.json
-  configs/experiments/7008_qwen35_9b_rag_e5_topk1_think_extractive_guiasalud_dev.json
-  configs/experiments/7009_qwen35_9b_rag_e5_topk3_think_extractive_guiasalud_dev.json
-  configs/experiments/7010_qwen35_9b_rag_e5_topk5_think_extractive_guiasalud_dev.json
-  configs/experiments/7011_qwen35_9b_rag_e5_rerank1_think_extractive_guiasalud_dev.json
-  configs/experiments/7012_qwen35_9b_rag_e5_rerank3_think_extractive_guiasalud_dev.json
-  configs/experiments/7013_qwen35_9b_rag_e5_rerank5_think_extractive_guiasalud_dev.json
-  configs/experiments/10000_qwen35_9b_no_rag_no_think_extractive_guiasalud_sf_dev.json
-  configs/experiments/10001_qwen35_9b_rag_e5_topk1_no_think_extractive_guiasalud_sf_dev.json
-  configs/experiments/10002_qwen35_9b_rag_e5_topk3_no_think_extractive_guiasalud_sf_dev.json
-  configs/experiments/10003_qwen35_9b_rag_e5_topk5_no_think_extractive_guiasalud_sf_dev.json
-  configs/experiments/10004_qwen35_9b_rag_e5_rerank1_no_think_extractive_guiasalud_sf_dev.json
-  configs/experiments/10005_qwen35_9b_rag_e5_rerank3_no_think_extractive_guiasalud_sf_dev.json
-  configs/experiments/10006_qwen35_9b_rag_e5_rerank5_no_think_extractive_guiasalud_sf_dev.json
-  configs/experiments/10011_qwen35_9b_no_rag_think_extractive_guiasalud_sf_dev.json
-  configs/experiments/10012_qwen35_9b_rag_e5_topk1_think_extractive_guiasalud_sf_dev.json
-  configs/experiments/10013_qwen35_9b_rag_e5_topk3_think_extractive_guiasalud_sf_dev.json
-  configs/experiments/10014_qwen35_9b_rag_e5_topk5_think_extractive_guiasalud_sf_dev.json
-  configs/experiments/10015_qwen35_9b_rag_e5_rerank1_think_extractive_guiasalud_sf_dev.json
-  configs/experiments/10016_qwen35_9b_rag_e5_rerank3_think_extractive_guiasalud_sf_dev.json
-  configs/experiments/10017_qwen35_9b_rag_e5_rerank5_think_extractive_guiasalud_sf_dev.json
+  configs/experiments/12000_qwen35_9b_no_rag_no_think_extractive_guiasalud_dev.json
+  configs/experiments/12001_qwen35_9b_rag_e5_topk1_no_think_extractive_guiasalud_dev.json
+  configs/experiments/12002_qwen35_9b_rag_e5_topk3_no_think_extractive_guiasalud_dev.json
+  configs/experiments/12003_qwen35_9b_rag_e5_topk5_no_think_extractive_guiasalud_dev.json
+  configs/experiments/12004_qwen35_9b_rag_e5_rerank1_no_think_extractive_guiasalud_dev.json
+  configs/experiments/12005_qwen35_9b_rag_e5_rerank3_no_think_extractive_guiasalud_dev.json
+  configs/experiments/12006_qwen35_9b_rag_e5_rerank5_no_think_extractive_guiasalud_dev.json
+  configs/experiments/12011_qwen35_9b_no_rag_think_extractive_guiasalud_dev.json
+  configs/experiments/12012_qwen35_9b_rag_e5_topk1_think_extractive_guiasalud_dev.json
+  configs/experiments/12013_qwen35_9b_rag_e5_topk3_think_extractive_guiasalud_dev.json
+  configs/experiments/12014_qwen35_9b_rag_e5_topk5_think_extractive_guiasalud_dev.json
+  configs/experiments/12015_qwen35_9b_rag_e5_rerank1_think_extractive_guiasalud_dev.json
+  configs/experiments/12016_qwen35_9b_rag_e5_rerank3_think_extractive_guiasalud_dev.json
+  configs/experiments/12017_qwen35_9b_rag_e5_rerank5_think_extractive_guiasalud_dev.json
 )
 SEEDS=(42 43 44)
 

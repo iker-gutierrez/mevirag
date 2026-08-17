@@ -23,7 +23,7 @@ RUN_LIST="experiments/tmp_lists/spanish_reasoning_pipeline_runs.txt"
 mkdir -p experiments/tmp_lists
 python3 -c "
 from pathlib import Path
-manifest = Path('reports/metrics/guiasalud_reasoning_configs_manifest_7000.txt')
+manifest = Path('reports/metrics/guiasalud_reasoning_configs_manifest_12000.txt')
 paths = [l.strip() for l in manifest.read_text().splitlines() if l.strip()]
 bases = [Path(p).stem for p in paths]
 seeds = [42, 43, 44]

@@ -19,24 +19,19 @@ export TRANSFORMERS_CACHE="/home/igutierrez134/.cache/huggingface"
 export HF_HUB_CACHE="/home/igutierrez134/.cache/huggingface"
 export TOKENIZERS_PARALLELISM=false
 
-# Scores every stage-C prediction (rows 9-10, both plain and self-feedback
-# generation variants, for both Qwen3.5-9B variants), closing out the
-# Spanish ablation grid: all 11 rows are now scored for both variants, so
-# this script also runs the final selection across the complete grid and
-# writes the reasoning-pipeline configuration files, frozen to whichever
-# configuration (across all 11 rows, plain or self-feedback) actually
-# scored best for each variant.
+# Scores every stage-C prediction (rows 9-10, for both Qwen3.5-9B
+# variants), closing out the Spanish ablation grid: all 11 rows are now
+# scored for both variants, so this script also runs the final selection
+# across the complete grid and writes the reasoning-pipeline configuration
+# files, frozen to whichever reading (across all 11 rows, plain or
+# self-feedback) actually scored best for each variant.
 
 SEEDS=(42 43 44)
 RUN_IDS=(
-  7018_qwen35_9b_rag_domain_guiasalud_e5_rerank5_no_think_extractive_guiasalud_dev
-  7019_qwen35_9b_rag_domain_casimedicos_e5_rerank5_no_think_extractive_guiasalud_dev
-  7020_qwen35_9b_rag_domain_guiasalud_e5_rerank5_think_extractive_guiasalud_dev
-  7021_qwen35_9b_rag_domain_casimedicos_e5_rerank5_think_extractive_guiasalud_dev
-  10009_qwen35_9b_rag_domain_guiasalud_e5_rerank5_no_think_extractive_guiasalud_sf_dev
-  10010_qwen35_9b_rag_domain_casimedicos_e5_rerank5_no_think_extractive_guiasalud_sf_dev
-  10020_qwen35_9b_rag_domain_guiasalud_e5_rerank5_think_extractive_guiasalud_sf_dev
-  10021_qwen35_9b_rag_domain_casimedicos_e5_rerank5_think_extractive_guiasalud_sf_dev
+  12009_qwen35_9b_rag_domain_guiasalud_e5_rerank5_no_think_extractive_guiasalud_dev
+  12010_qwen35_9b_rag_domain_casimedicos_e5_rerank5_no_think_extractive_guiasalud_dev
+  12020_qwen35_9b_rag_domain_guiasalud_e5_rerank5_think_extractive_guiasalud_dev
+  12021_qwen35_9b_rag_domain_casimedicos_e5_rerank5_think_extractive_guiasalud_dev
 )
 
 echo "Spanish ablation evaluation (stage C) started on $(hostname) at $(date)"
@@ -70,8 +65,8 @@ done
 
 # Final selection across all 11 rows + reasoning-pipeline config write, one
 # set of results per model variant, kept in this run's own output files
-# (mixed_meanq_selection_7000.json, guiasalud_reasoning_configs_manifest_
-# 7000.txt) rather than the shared files other experiment rounds use.
-python scripts/finalize_spanish_ablation_and_write_reasoning_configs.py --base-id 8000
+# (mixed_meanq_selection_12000.json, guiasalud_reasoning_configs_manifest_
+# 12000.txt) rather than the shared files other experiment rounds use.
+python scripts/finalize_spanish_ablation_and_write_reasoning_configs.py --base-id 14000
 
 echo "Spanish ablation evaluation (stage C) finished at $(date)"

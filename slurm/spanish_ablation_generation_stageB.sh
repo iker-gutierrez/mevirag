@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=gen-B-es-abl
-#SBATCH --array=0-23%2
+#SBATCH --array=0-11%2
 #SBATCH --cpus-per-task=8
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -15,25 +15,21 @@
 
 # Spanish ablation grid, stage B: row 7 (few-shot prompting, no retrieval)
 # and row 8 (few-shot prompting combined with the best retrieval setting
-# found in stage A), for both Qwen3.5-9B variants, each in both a plain and
-# a self-feedback generation variant (2 rows x 2 model variants x 2
-# generation variants = 8 configurations x 3 seeds = 24 tasks). Must run
-# after spanish_ablation_evaluation_stageA.sh, which scores stage A and
-# rewrites row 8's retrieval settings (in both its plain and self-feedback
-# configuration) to match whichever stage-A row actually scored best
-# (scripts/rewire_spanish_ablation_stage.py --stage B).
+# found in stage A), for both Qwen3.5-9B variants. Every config has
+# self-feedback enabled, so each row's initial and revised answers both
+# come from one generation run (2 rows x 2 model variants = 4
+# configurations x 3 seeds = 12 tasks). Must run after
+# spanish_ablation_evaluation_stageA.sh, which scores stage A and rewrites
+# row 8's retrieval settings to match whichever stage-A row actually scored
+# best (scripts/rewire_spanish_ablation_stage.py --stage B).
 
 set -euo pipefail
 
 CONFIGS=(
-  configs/experiments/7014_qwen35_9b_3shot_no_rag_no_think_extractive_guiasalud_dev.json
-  configs/experiments/7015_qwen35_9b_rag_3shot_e5_rerank5_no_think_extractive_guiasalud_dev.json
-  configs/experiments/7016_qwen35_9b_3shot_no_rag_think_extractive_guiasalud_dev.json
-  configs/experiments/7017_qwen35_9b_rag_3shot_e5_rerank5_think_extractive_guiasalud_dev.json
-  configs/experiments/10007_qwen35_9b_3shot_no_rag_no_think_extractive_guiasalud_sf_dev.json
-  configs/experiments/10008_qwen35_9b_rag_3shot_e5_rerank5_no_think_extractive_guiasalud_sf_dev.json
-  configs/experiments/10018_qwen35_9b_3shot_no_rag_think_extractive_guiasalud_sf_dev.json
-  configs/experiments/10019_qwen35_9b_rag_3shot_e5_rerank5_think_extractive_guiasalud_sf_dev.json
+  configs/experiments/12007_qwen35_9b_3shot_no_rag_no_think_extractive_guiasalud_dev.json
+  configs/experiments/12008_qwen35_9b_rag_3shot_e5_rerank5_no_think_extractive_guiasalud_dev.json
+  configs/experiments/12018_qwen35_9b_3shot_no_rag_think_extractive_guiasalud_dev.json
+  configs/experiments/12019_qwen35_9b_rag_3shot_e5_rerank5_think_extractive_guiasalud_dev.json
 )
 SEEDS=(42 43 44)
 

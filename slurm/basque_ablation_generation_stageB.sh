@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=gen-B-eu-abl
-#SBATCH --array=0-23%2
+#SBATCH --array=0-11%2
 #SBATCH --cpus-per-task=8
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -15,25 +15,21 @@
 
 # Basque ablation grid, stage B: row 7 (few-shot prompting, no retrieval)
 # and row 8 (few-shot prompting combined with the best retrieval setting
-# found in stage A), for both models, each in both a plain and a
-# self-feedback generation variant (2 rows x 2 models x 2 generation
-# variants = 8 configurations x 3 seeds = 24 tasks). Must run after
-# basque_ablation_evaluation_stageA.sh, which scores stage A and rewrites
-# row 8's retrieval settings (in both its plain and self-feedback
-# configuration) to match whichever stage-A row actually scored best
-# (scripts/rewire_basque_ablation_stage.py --stage B).
+# found in stage A), for both models. Every config has self-feedback
+# enabled, so each row's initial and revised answers both come from one
+# generation run (2 rows x 2 models = 4 configurations x 3 seeds = 12
+# tasks). Must run after basque_ablation_evaluation_stageA.sh, which scores
+# stage A and rewrites row 8's retrieval settings to match whichever
+# stage-A row actually scored best (scripts/rewire_basque_ablation_stage.py
+# --stage B).
 
 set -euo pipefail
 
 CONFIGS=(
-  configs/experiments/5014_llama31_8b_3shot_no_rag_extractive_guiasalud_dev.json
-  configs/experiments/5015_llama31_8b_rag_3shot_e5_rerank5_extractive_guiasalud_dev.json
-  configs/experiments/5016_latxa_llama31_8b_3shot_no_rag_extractive_guiasalud_dev.json
-  configs/experiments/5017_latxa_llama31_8b_rag_3shot_e5_rerank5_extractive_guiasalud_dev.json
-  configs/experiments/9007_llama31_8b_3shot_no_rag_extractive_guiasalud_sf_dev.json
-  configs/experiments/9008_llama31_8b_rag_3shot_e5_rerank5_extractive_guiasalud_sf_dev.json
-  configs/experiments/9018_latxa_llama31_8b_3shot_no_rag_extractive_guiasalud_sf_dev.json
-  configs/experiments/9019_latxa_llama31_8b_rag_3shot_e5_rerank5_extractive_guiasalud_sf_dev.json
+  configs/experiments/11007_llama31_8b_3shot_no_rag_extractive_guiasalud_dev.json
+  configs/experiments/11008_llama31_8b_rag_3shot_e5_rerank5_extractive_guiasalud_dev.json
+  configs/experiments/11018_latxa_llama31_8b_3shot_no_rag_extractive_guiasalud_dev.json
+  configs/experiments/11019_latxa_llama31_8b_rag_3shot_e5_rerank5_extractive_guiasalud_dev.json
 )
 SEEDS=(42 43 44)
 

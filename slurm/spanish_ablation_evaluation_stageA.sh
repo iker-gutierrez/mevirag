@@ -12,9 +12,12 @@
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=igutierrez134@ikasle.ehu.eus
 
-# Scores every stage-A prediction (rows 0-6, both plain and self-feedback
-# generation variants, for both Qwen3.5-9B variants), then rewires row 8's
-# retrieval settings to whichever configuration actually scored best.
+# Scores every stage-A prediction (rows 0-6, for both Qwen3.5-9B variants).
+# Every config has self-feedback enabled, so scoring one run yields both a
+# plain (initial-answer) and a self-feedback (revised-answer) metric block;
+# see scripts/evaluate_predictions.py's before_feedback/after_feedback
+# split. Then rewires row 8's retrieval settings to whichever reading of
+# whichever row actually scored best.
 
 set -euo pipefail
 source /home/igutierrez134/envs/med_rag_thesis/bin/activate
@@ -25,34 +28,20 @@ export TOKENIZERS_PARALLELISM=false
 
 SEEDS=(42 43 44)
 RUN_IDS=(
-  7000_qwen35_9b_no_rag_no_think_extractive_guiasalud_dev
-  7001_qwen35_9b_rag_e5_topk1_no_think_extractive_guiasalud_dev
-  7002_qwen35_9b_rag_e5_topk3_no_think_extractive_guiasalud_dev
-  7003_qwen35_9b_rag_e5_topk5_no_think_extractive_guiasalud_dev
-  7004_qwen35_9b_rag_e5_rerank1_no_think_extractive_guiasalud_dev
-  7005_qwen35_9b_rag_e5_rerank3_no_think_extractive_guiasalud_dev
-  7006_qwen35_9b_rag_e5_rerank5_no_think_extractive_guiasalud_dev
-  7007_qwen35_9b_no_rag_think_extractive_guiasalud_dev
-  7008_qwen35_9b_rag_e5_topk1_think_extractive_guiasalud_dev
-  7009_qwen35_9b_rag_e5_topk3_think_extractive_guiasalud_dev
-  7010_qwen35_9b_rag_e5_topk5_think_extractive_guiasalud_dev
-  7011_qwen35_9b_rag_e5_rerank1_think_extractive_guiasalud_dev
-  7012_qwen35_9b_rag_e5_rerank3_think_extractive_guiasalud_dev
-  7013_qwen35_9b_rag_e5_rerank5_think_extractive_guiasalud_dev
-  10000_qwen35_9b_no_rag_no_think_extractive_guiasalud_sf_dev
-  10001_qwen35_9b_rag_e5_topk1_no_think_extractive_guiasalud_sf_dev
-  10002_qwen35_9b_rag_e5_topk3_no_think_extractive_guiasalud_sf_dev
-  10003_qwen35_9b_rag_e5_topk5_no_think_extractive_guiasalud_sf_dev
-  10004_qwen35_9b_rag_e5_rerank1_no_think_extractive_guiasalud_sf_dev
-  10005_qwen35_9b_rag_e5_rerank3_no_think_extractive_guiasalud_sf_dev
-  10006_qwen35_9b_rag_e5_rerank5_no_think_extractive_guiasalud_sf_dev
-  10011_qwen35_9b_no_rag_think_extractive_guiasalud_sf_dev
-  10012_qwen35_9b_rag_e5_topk1_think_extractive_guiasalud_sf_dev
-  10013_qwen35_9b_rag_e5_topk3_think_extractive_guiasalud_sf_dev
-  10014_qwen35_9b_rag_e5_topk5_think_extractive_guiasalud_sf_dev
-  10015_qwen35_9b_rag_e5_rerank1_think_extractive_guiasalud_sf_dev
-  10016_qwen35_9b_rag_e5_rerank3_think_extractive_guiasalud_sf_dev
-  10017_qwen35_9b_rag_e5_rerank5_think_extractive_guiasalud_sf_dev
+  12000_qwen35_9b_no_rag_no_think_extractive_guiasalud_dev
+  12001_qwen35_9b_rag_e5_topk1_no_think_extractive_guiasalud_dev
+  12002_qwen35_9b_rag_e5_topk3_no_think_extractive_guiasalud_dev
+  12003_qwen35_9b_rag_e5_topk5_no_think_extractive_guiasalud_dev
+  12004_qwen35_9b_rag_e5_rerank1_no_think_extractive_guiasalud_dev
+  12005_qwen35_9b_rag_e5_rerank3_no_think_extractive_guiasalud_dev
+  12006_qwen35_9b_rag_e5_rerank5_no_think_extractive_guiasalud_dev
+  12011_qwen35_9b_no_rag_think_extractive_guiasalud_dev
+  12012_qwen35_9b_rag_e5_topk1_think_extractive_guiasalud_dev
+  12013_qwen35_9b_rag_e5_topk3_think_extractive_guiasalud_dev
+  12014_qwen35_9b_rag_e5_topk5_think_extractive_guiasalud_dev
+  12015_qwen35_9b_rag_e5_rerank1_think_extractive_guiasalud_dev
+  12016_qwen35_9b_rag_e5_rerank3_think_extractive_guiasalud_dev
+  12017_qwen35_9b_rag_e5_rerank5_think_extractive_guiasalud_dev
 )
 
 echo "Spanish ablation evaluation (stage A) started on $(hostname) at $(date)"
@@ -84,8 +73,8 @@ for run_id in "${RUN_IDS[@]}"; do
   done
 done
 
-# Stage A -> B: rewire row 8 to whichever stage-A configuration (plain or
-# self-feedback) scored best, for each model variant.
+# Stage A -> B: rewire row 8 to whichever reading of whichever stage-A row
+# (plain or self-feedback) actually scored best, for each model variant.
 python scripts/rewire_spanish_ablation_stage.py --stage B
 
 echo "Spanish ablation evaluation (stage A) finished at $(date)"

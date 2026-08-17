@@ -5,26 +5,28 @@ reasoning-pipeline experiments.
 
 The ablation grid (see scripts/rewire_basque_ablation_stage.py for how each
 stage's dependent rows get wired) produces, by the time all three stages
-have run, a fully scored set of 11 rows per model, each with both a plain
-and a self-feedback (SF) variant. This script re-runs the same MeanQ
+have run, a fully scored set of 11 rows per model. Every row is generated
+with self-feedback enabled, so each row yields two independently-evaluated
+readings from the same run: a plain (initial-answer) reading and a
+self-feedback (revised-answer) reading. This script re-runs the same MeanQ
 selection rule (scripts/meanq.py's best_by_meanq_robust) one final time
-across the complete set to pick each model's single best configuration, then
-writes reasoning-pipeline configs (structured_cot, thought_rag,
-thought_rag_iter, marag, and a causal-scoring variant of structured_cot)
-whose retrieval settings are frozen to that winner. The reasoning pipelines
-are more expensive, multi-turn generation strategies layered on top of a
-fixed retrieval configuration, so freezing that configuration to the
-ablation grid's actual best result (rather than a guess or a fixed default)
-is the point of this step.
+across the complete set of 22 candidates (11 rows x 2 readings) to pick each
+model's single best configuration, then writes reasoning-pipeline configs
+(structured_cot, thought_rag, thought_rag_iter, marag, and a causal-scoring
+variant of structured_cot) whose retrieval settings are frozen to that
+winner. The reasoning pipelines are more expensive, multi-turn generation
+strategies layered on top of a fixed retrieval configuration, so freezing
+that configuration to the ablation grid's actual best result (rather than a
+guess or a fixed default) is the point of this step.
 
 Writes:
-  - reports/metrics/mixed_meanq_selection_5000.json: the final winning row
+  - reports/metrics/mixed_meanq_selection_11000.json: the final winning row
     per model (own file, kept separate from the shared
     mixed_meanq_selection.json used by earlier experiment rounds, so this
     run's selection never overwrites theirs).
-  - Reasoning-pipeline config files at --base-id (default 6000, a range kept
-    clear of the ablation grid's own 5000-5021 ids), 5 per model.
-  - reports/metrics/guiasalud_reasoning_configs_manifest_5000.txt: the list
+  - Reasoning-pipeline config files at --base-id (default 13000, a range
+    kept clear of the ablation grid's own 11000-11021 ids), 5 per model.
+  - reports/metrics/guiasalud_reasoning_configs_manifest_11000.txt: the list
     of reasoning-pipeline config paths just written, for the generation/
     evaluation scripts to read.
 
@@ -36,7 +38,7 @@ touching the shared selection/manifest files those modules' own callers use.
 
 Usage:
     python scripts/finalize_basque_ablation_and_write_reasoning_configs.py --dry-run
-    python scripts/finalize_basque_ablation_and_write_reasoning_configs.py --base-id 6000
+    python scripts/finalize_basque_ablation_and_write_reasoning_configs.py --base-id 13000
 """
 from __future__ import annotations
 
@@ -56,53 +58,38 @@ from create_mixed_reasoning_configs import (  # noqa: E402
 
 CONFIG_DIR = ROOT / "configs" / "experiments"
 METRICS = ROOT / "reports" / "metrics"
-SELECTION_PATH = METRICS / "mixed_meanq_selection_5000.json"
-MANIFEST_PATH = METRICS / "guiasalud_reasoning_configs_manifest_5000.txt"
+SELECTION_PATH = METRICS / "mixed_meanq_selection_11000.json"
+MANIFEST_PATH = METRICS / "guiasalud_reasoning_configs_manifest_11000.txt"
 
 NON_RETRIEVING_ROWS = {0, 7}
-DEFAULT_BASE_ID = 6000
+DEFAULT_BASE_ID = 13000
 
 # (family key, model tag, name template, start id for rows 0-6, explicit ids
 # for rows 7/8/9/10, id offset used when writing reasoning-pipeline configs,
 # engine-specific sampling fields)
 FAMILIES = [
     ("llama31_8b", "llama31_8b",
-     "llama31_8b_{cell}_extractive_guiasalud_dev", 5000,
-     {7: 5014, 8: 5015, 9: 5018, 10: 5019}, 0, LLAMA_ENGINE_FIELDS),
+     "llama31_8b_{cell}_extractive_guiasalud_dev", 11000,
+     {7: 11007, 8: 11008, 9: 11009, 10: 11010}, 0, LLAMA_ENGINE_FIELDS),
     ("latxa_llama31_8b", "latxa_llama31_8b",
-     "latxa_llama31_8b_{cell}_extractive_guiasalud_dev", 5007,
-     {7: 5016, 8: 5017, 9: 5020, 10: 5021}, 200, LLAMA_ENGINE_FIELDS),
+     "latxa_llama31_8b_{cell}_extractive_guiasalud_dev", 11011,
+     {7: 11018, 8: 11019, 9: 11020, 10: 11021}, 200, LLAMA_ENGINE_FIELDS),
 ]
-
-# Config ids for the self-feedback clone of each row, in row order (row 0
-# first, row 10 last) -- see scripts/create_self_feedback_ablation_configs.py,
-# which generated these clone files from the plain ids above.
-SF_ROW_ORDER = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-SF_START_ID = {
-    "llama31_8b": 9000,
-    "latxa_llama31_8b": 9011,
-}
-
-
-def sf_run_id(family_key: str, row: int) -> int:
-    return SF_START_ID[family_key] + SF_ROW_ORDER.index(row)
 
 
 def candidates_all_rows(family_key: str, name_template: str, start_id: int, explicit_ids: dict) -> dict:
     """Build the MeanQ candidate pool covering all 11 rows: each row
-    contributes both its plain configuration and a "(SF)"-suffixed
-    self-feedback variant, so the final winner can legitimately be either."""
+    contributes both a plain candidate (its initial answer) and a
+    "(SF)"-suffixed self-feedback candidate (its revised answer), read from
+    the SAME run's before_feedback/after_feedback metric blocks, so the
+    final winner can legitimately be either reading of any row."""
     candidates = {}
     for row in range(0, len(CELLS)):
         cell_slug, cell_label, _ = CELLS[row]
         run_id = start_id + row if row <= 6 else explicit_ids[row]
         base = name_template.format(cell=cell_slug)
         candidates[cell_label] = (str(run_id), base)
-
-        sf_id = sf_run_id(family_key, row)
-        assert base.endswith("_dev"), f"expected base to end in _dev, got {base!r}"
-        sf_base = base[: -len("_dev")] + "_sf_dev"
-        candidates[f"{cell_label} (SF)"] = (str(sf_id), sf_base, True)
+        candidates[f"{cell_label} (SF)"] = (str(run_id), base, True)
     return candidates
 
 
@@ -111,8 +98,8 @@ def retrieving_pool(candidates: dict) -> dict:
     the few-shot-no-retrieval row): the reasoning pipelines all use
     retrieval, so a configuration with no retrieval settings cannot serve as
     their base. The self-feedback suffix is stripped before checking
-    exclusion, so a row's SF variant is excluded exactly when its plain
-    variant would be."""
+    exclusion, so a row's SF reading is excluded exactly when its plain
+    reading would be."""
     excluded = {CELLS[row][1] for row in range(0, len(CELLS)) if row in NON_RETRIEVING_ROWS}
 
     def base_label(label: str) -> str:

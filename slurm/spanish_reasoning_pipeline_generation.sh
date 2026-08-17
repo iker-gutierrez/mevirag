@@ -29,7 +29,7 @@ set -euo pipefail
 
 mapfile -t CONFIGS < <(python3 -c "
 from pathlib import Path
-manifest = Path('reports/metrics/guiasalud_reasoning_configs_manifest_7000.txt')
+manifest = Path('reports/metrics/guiasalud_reasoning_configs_manifest_12000.txt')
 print(manifest.read_text().strip())
 " | sed '/^$/d')
 

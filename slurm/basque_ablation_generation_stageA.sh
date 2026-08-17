@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=gen-A-eu-abl
-#SBATCH --array=0-83%2
+#SBATCH --array=0-41%2
 #SBATCH --cpus-per-task=8
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -15,46 +15,32 @@
 
 # Basque ablation grid, stage A: rows 0-6 (no retrieval, dense-retrieval
 # depth 1/3/5, reranking depth 1/3/5) for both Llama-3.1-8B-Instruct and
-# Latxa-Llama-3.1-8B-Instruct. Each row is generated both as a plain
-# single-pass run and with an added self-feedback refinement pass, so both
-# variants are available for the staged selection to compare (7 rows x
-# 2 models x 2 generation variants = 28 configurations x 3 seeds = 84
-# tasks). Output goes into a dedicated configuration id range
-# (5000-5013 plain, 9000-9017 self-feedback) reserved for this rerun of the
-# grid, so no earlier round's configuration or generated predictions are
-# ever overwritten.
+# Latxa-Llama-3.1-8B-Instruct. Every config has self-feedback enabled: a
+# single generation run produces both an initial answer and a self-feedback
+# revision of it, so each row's two readings (initial and revised) are both
+# available for the staged selection to compare without a second generation
+# pass (7 rows x 2 models = 14 configurations x 3 seeds = 42 tasks). Output
+# goes into a dedicated configuration id range (11000-11013) reserved for
+# this rerun of the grid, so no earlier round's configuration or generated
+# predictions are ever overwritten.
 
 set -euo pipefail
 
 CONFIGS=(
-  configs/experiments/5000_llama31_8b_no_rag_extractive_guiasalud_dev.json
-  configs/experiments/5001_llama31_8b_rag_e5_topk1_extractive_guiasalud_dev.json
-  configs/experiments/5002_llama31_8b_rag_e5_topk3_extractive_guiasalud_dev.json
-  configs/experiments/5003_llama31_8b_rag_e5_topk5_extractive_guiasalud_dev.json
-  configs/experiments/5004_llama31_8b_rag_e5_rerank1_extractive_guiasalud_dev.json
-  configs/experiments/5005_llama31_8b_rag_e5_rerank3_extractive_guiasalud_dev.json
-  configs/experiments/5006_llama31_8b_rag_e5_rerank5_extractive_guiasalud_dev.json
-  configs/experiments/5007_latxa_llama31_8b_no_rag_extractive_guiasalud_dev.json
-  configs/experiments/5008_latxa_llama31_8b_rag_e5_topk1_extractive_guiasalud_dev.json
-  configs/experiments/5009_latxa_llama31_8b_rag_e5_topk3_extractive_guiasalud_dev.json
-  configs/experiments/5010_latxa_llama31_8b_rag_e5_topk5_extractive_guiasalud_dev.json
-  configs/experiments/5011_latxa_llama31_8b_rag_e5_rerank1_extractive_guiasalud_dev.json
-  configs/experiments/5012_latxa_llama31_8b_rag_e5_rerank3_extractive_guiasalud_dev.json
-  configs/experiments/5013_latxa_llama31_8b_rag_e5_rerank5_extractive_guiasalud_dev.json
-  configs/experiments/9000_llama31_8b_no_rag_extractive_guiasalud_sf_dev.json
-  configs/experiments/9001_llama31_8b_rag_e5_topk1_extractive_guiasalud_sf_dev.json
-  configs/experiments/9002_llama31_8b_rag_e5_topk3_extractive_guiasalud_sf_dev.json
-  configs/experiments/9003_llama31_8b_rag_e5_topk5_extractive_guiasalud_sf_dev.json
-  configs/experiments/9004_llama31_8b_rag_e5_rerank1_extractive_guiasalud_sf_dev.json
-  configs/experiments/9005_llama31_8b_rag_e5_rerank3_extractive_guiasalud_sf_dev.json
-  configs/experiments/9006_llama31_8b_rag_e5_rerank5_extractive_guiasalud_sf_dev.json
-  configs/experiments/9011_latxa_llama31_8b_no_rag_extractive_guiasalud_sf_dev.json
-  configs/experiments/9012_latxa_llama31_8b_rag_e5_topk1_extractive_guiasalud_sf_dev.json
-  configs/experiments/9013_latxa_llama31_8b_rag_e5_topk3_extractive_guiasalud_sf_dev.json
-  configs/experiments/9014_latxa_llama31_8b_rag_e5_topk5_extractive_guiasalud_sf_dev.json
-  configs/experiments/9015_latxa_llama31_8b_rag_e5_rerank1_extractive_guiasalud_sf_dev.json
-  configs/experiments/9016_latxa_llama31_8b_rag_e5_rerank3_extractive_guiasalud_sf_dev.json
-  configs/experiments/9017_latxa_llama31_8b_rag_e5_rerank5_extractive_guiasalud_sf_dev.json
+  configs/experiments/11000_llama31_8b_no_rag_extractive_guiasalud_dev.json
+  configs/experiments/11001_llama31_8b_rag_e5_topk1_extractive_guiasalud_dev.json
+  configs/experiments/11002_llama31_8b_rag_e5_topk3_extractive_guiasalud_dev.json
+  configs/experiments/11003_llama31_8b_rag_e5_topk5_extractive_guiasalud_dev.json
+  configs/experiments/11004_llama31_8b_rag_e5_rerank1_extractive_guiasalud_dev.json
+  configs/experiments/11005_llama31_8b_rag_e5_rerank3_extractive_guiasalud_dev.json
+  configs/experiments/11006_llama31_8b_rag_e5_rerank5_extractive_guiasalud_dev.json
+  configs/experiments/11011_latxa_llama31_8b_no_rag_extractive_guiasalud_dev.json
+  configs/experiments/11012_latxa_llama31_8b_rag_e5_topk1_extractive_guiasalud_dev.json
+  configs/experiments/11013_latxa_llama31_8b_rag_e5_topk3_extractive_guiasalud_dev.json
+  configs/experiments/11014_latxa_llama31_8b_rag_e5_topk5_extractive_guiasalud_dev.json
+  configs/experiments/11015_latxa_llama31_8b_rag_e5_rerank1_extractive_guiasalud_dev.json
+  configs/experiments/11016_latxa_llama31_8b_rag_e5_rerank3_extractive_guiasalud_dev.json
+  configs/experiments/11017_latxa_llama31_8b_rag_e5_rerank5_extractive_guiasalud_dev.json
 )
 SEEDS=(42 43 44)
 

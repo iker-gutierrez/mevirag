@@ -9,11 +9,11 @@
 # rule: scripts/meanq.py's best_by_meanq_robust, which compares candidates
 # on mean quality, stability across seeds, and computational cost, imported
 # unmodified by every rewire/finalize script this chain calls, never
-# reimplemented. Each ablation-grid row is generated twice per model — once
-# as a plain single-pass run, once with an added self-feedback refinement
-# pass — and both variants are real, separately scored candidates in that
-# comparison, so the winning configuration for a stage may turn out to be
-# either.
+# reimplemented. Every ablation-grid row has self-feedback enabled: one
+# generation run per row produces both an initial answer and a
+# self-feedback revision of it, each scored as its own, independently
+# evaluated candidate, so the winning configuration for a stage may turn
+# out to be either reading.
 #
 # Spanish (Qwen3.5-9B, no-think and think variants) and Basque
 # (Llama-3.1-8B-Instruct and Latxa-Llama-3.1-8B-Instruct) run as two
@@ -21,9 +21,9 @@
 # via each Slurm array's own %2 throttle. Each chain:
 #
 #   indices (parallel, no dependency between them)
-#     -> stage A generation (28 configs x 3 seeds = 84 tasks) -> stage A evaluation + rewire stage B
-#     -> stage B generation (8 configs x 3 seeds = 24 tasks)  -> stage B evaluation + rewire stage C
-#     -> stage C generation (8 configs x 3 seeds = 24 tasks)  -> stage C evaluation + final selection
+#     -> stage A generation (14 configs x 3 seeds = 42 tasks) -> stage A evaluation + rewire stage B
+#     -> stage B generation (4 configs x 3 seeds = 12 tasks)  -> stage B evaluation + rewire stage C
+#     -> stage C generation (4 configs x 3 seeds = 12 tasks)  -> stage C evaluation + final selection
 #        across all 11 rows + reasoning-pipeline configuration write
 #     -> reasoning-pipeline generation (10 configs x 3 seeds = 30 tasks)
 #     -> reasoning-pipeline evaluation
@@ -39,9 +39,9 @@
 #
 # To check progress: squeue -u $USER
 # To see a chain's final result once finished: reports/metrics/
-#   mixed_meanq_selection_5000.json (Basque) / _7000.json (Spanish) hold
+#   mixed_meanq_selection_11000.json (Basque) / _12000.json (Spanish) hold
 #   each model's winning configuration, and
-#   reports/metrics/guiasalud_reasoning_configs_manifest_5000.txt / _7000.txt
+#   reports/metrics/guiasalud_reasoning_configs_manifest_11000.txt / _12000.txt
 #   list the reasoning-pipeline configs frozen to those winners.
 
 set -euo pipefail
@@ -73,7 +73,7 @@ echo
 # ============================================================================
 ES_GEN_A=$(sbatch --parsable --dependency=afterok:"${IDX_ES_MIXED}" \
   slurm/spanish_ablation_generation_stageA.sh)
-echo "  [ES] stage A generation (rows 0-6, 84 tasks) : ${ES_GEN_A}  [after ${IDX_ES_MIXED}]"
+echo "  [ES] stage A generation (rows 0-6, 42 tasks) : ${ES_GEN_A}  [after ${IDX_ES_MIXED}]"
 
 ES_EVAL_A=$(sbatch --parsable --dependency=afterany:"${ES_GEN_A}" \
   slurm/spanish_ablation_evaluation_stageA.sh)
@@ -81,7 +81,7 @@ echo "  [ES] stage A eval + rewire to B              : ${ES_EVAL_A}  [after ${ES
 
 ES_GEN_B=$(sbatch --parsable --dependency=afterok:"${ES_EVAL_A}" \
   slurm/spanish_ablation_generation_stageB.sh)
-echo "  [ES] stage B generation (rows 7-8, 24 tasks) : ${ES_GEN_B}  [after ${ES_EVAL_A}]"
+echo "  [ES] stage B generation (rows 7-8, 12 tasks) : ${ES_GEN_B}  [after ${ES_EVAL_A}]"
 
 ES_EVAL_B=$(sbatch --parsable --dependency=afterany:"${ES_GEN_B}" \
   slurm/spanish_ablation_evaluation_stageB.sh)
@@ -90,7 +90,7 @@ echo "  [ES] stage B eval + rewire to C               : ${ES_EVAL_B}  [after ${E
 ES_GEN_C=$(sbatch --parsable \
   --dependency=afterok:"${ES_EVAL_B}":"${IDX_ES_GS}":"${IDX_ES_CM}" \
   slurm/spanish_ablation_generation_stageC.sh)
-echo "  [ES] stage C generation (rows 9-10, 24 tasks): ${ES_GEN_C}  [after ${ES_EVAL_B}, ${IDX_ES_GS}, ${IDX_ES_CM}]"
+echo "  [ES] stage C generation (rows 9-10, 12 tasks): ${ES_GEN_C}  [after ${ES_EVAL_B}, ${IDX_ES_GS}, ${IDX_ES_CM}]"
 
 ES_EVAL_C=$(sbatch --parsable --dependency=afterany:"${ES_GEN_C}" \
   slurm/spanish_ablation_evaluation_stageC.sh)
@@ -110,7 +110,7 @@ echo
 # ============================================================================
 EU_GEN_A=$(sbatch --parsable --dependency=afterok:"${IDX_EU_MIXED}" \
   slurm/basque_ablation_generation_stageA.sh)
-echo "  [EU] stage A generation (rows 0-6, 84 tasks) : ${EU_GEN_A}  [after ${IDX_EU_MIXED}]"
+echo "  [EU] stage A generation (rows 0-6, 42 tasks) : ${EU_GEN_A}  [after ${IDX_EU_MIXED}]"
 
 EU_EVAL_A=$(sbatch --parsable --dependency=afterany:"${EU_GEN_A}" \
   slurm/basque_ablation_evaluation_stageA.sh)
@@ -118,7 +118,7 @@ echo "  [EU] stage A eval + rewire to B              : ${EU_EVAL_A}  [after ${EU
 
 EU_GEN_B=$(sbatch --parsable --dependency=afterok:"${EU_EVAL_A}" \
   slurm/basque_ablation_generation_stageB.sh)
-echo "  [EU] stage B generation (rows 7-8, 24 tasks) : ${EU_GEN_B}  [after ${EU_EVAL_A}]"
+echo "  [EU] stage B generation (rows 7-8, 12 tasks) : ${EU_GEN_B}  [after ${EU_EVAL_A}]"
 
 EU_EVAL_B=$(sbatch --parsable --dependency=afterany:"${EU_GEN_B}" \
   slurm/basque_ablation_evaluation_stageB.sh)
@@ -127,7 +127,7 @@ echo "  [EU] stage B eval + rewire to C               : ${EU_EVAL_B}  [after ${E
 EU_GEN_C=$(sbatch --parsable \
   --dependency=afterok:"${EU_EVAL_B}":"${IDX_EU_GS}":"${IDX_EU_CM}" \
   slurm/basque_ablation_generation_stageC.sh)
-echo "  [EU] stage C generation (rows 9-10, 24 tasks): ${EU_GEN_C}  [after ${EU_EVAL_B}, ${IDX_EU_GS}, ${IDX_EU_CM}]"
+echo "  [EU] stage C generation (rows 9-10, 12 tasks): ${EU_GEN_C}  [after ${EU_EVAL_B}, ${IDX_EU_GS}, ${IDX_EU_CM}]"
 
 EU_EVAL_C=$(sbatch --parsable --dependency=afterany:"${EU_GEN_C}" \
   slurm/basque_ablation_evaluation_stageC.sh)

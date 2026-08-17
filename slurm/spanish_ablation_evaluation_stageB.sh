@@ -12,10 +12,10 @@
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=igutierrez134@ikasle.ehu.eus
 
-# Scores every stage-B prediction (rows 7-8, both plain and self-feedback
-# generation variants, for both Qwen3.5-9B variants), then rewires rows
-# 9-10's retrieval settings to whichever configuration seen so far actually
-# scored best.
+# Scores every stage-B prediction (rows 7-8, for both Qwen3.5-9B variants).
+# Every config has self-feedback enabled, so scoring one run yields both a
+# plain and a self-feedback metric block. Then rewires rows 9-10's
+# retrieval settings to whichever reading seen so far actually scored best.
 
 set -euo pipefail
 source /home/igutierrez134/envs/med_rag_thesis/bin/activate
@@ -26,14 +26,10 @@ export TOKENIZERS_PARALLELISM=false
 
 SEEDS=(42 43 44)
 RUN_IDS=(
-  7014_qwen35_9b_3shot_no_rag_no_think_extractive_guiasalud_dev
-  7015_qwen35_9b_rag_3shot_e5_rerank5_no_think_extractive_guiasalud_dev
-  7016_qwen35_9b_3shot_no_rag_think_extractive_guiasalud_dev
-  7017_qwen35_9b_rag_3shot_e5_rerank5_think_extractive_guiasalud_dev
-  10007_qwen35_9b_3shot_no_rag_no_think_extractive_guiasalud_sf_dev
-  10008_qwen35_9b_rag_3shot_e5_rerank5_no_think_extractive_guiasalud_sf_dev
-  10018_qwen35_9b_3shot_no_rag_think_extractive_guiasalud_sf_dev
-  10019_qwen35_9b_rag_3shot_e5_rerank5_think_extractive_guiasalud_sf_dev
+  12007_qwen35_9b_3shot_no_rag_no_think_extractive_guiasalud_dev
+  12008_qwen35_9b_rag_3shot_e5_rerank5_no_think_extractive_guiasalud_dev
+  12018_qwen35_9b_3shot_no_rag_think_extractive_guiasalud_dev
+  12019_qwen35_9b_rag_3shot_e5_rerank5_think_extractive_guiasalud_dev
 )
 
 echo "Spanish ablation evaluation (stage B) started on $(hostname) at $(date)"
@@ -65,8 +61,8 @@ for run_id in "${RUN_IDS[@]}"; do
   done
 done
 
-# Stage B -> C: rewire rows 9-10 to whichever configuration seen in stages
-# A+B (plain or self-feedback) scored best, for each model variant.
+# Stage B -> C: rewire rows 9-10 to whichever reading seen in stages A+B
+# (plain or self-feedback) actually scored best, for each model variant.
 python scripts/rewire_spanish_ablation_stage.py --stage C
 
 echo "Spanish ablation evaluation (stage B) finished at $(date)"

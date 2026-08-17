@@ -27,7 +27,7 @@ export TOKENIZERS_PARALLELISM=false
 
 mapfile -t CONFIGS < <(python3 -c "
 from pathlib import Path
-manifest = Path('reports/metrics/guiasalud_reasoning_configs_manifest_5000.txt')
+manifest = Path('reports/metrics/guiasalud_reasoning_configs_manifest_11000.txt')
 print(manifest.read_text().strip())
 " | sed '/^$/d')
 
