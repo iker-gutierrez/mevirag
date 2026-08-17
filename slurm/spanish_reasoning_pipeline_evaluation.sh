@@ -1,13 +1,13 @@
 #!/bin/bash
-#SBATCH --job-name=eval-rp-es-7k
+#SBATCH --job-name=eval-rp-es
 #SBATCH --cpus-per-task=8
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --time=02:00:00
 #SBATCH --mem=48GB
 #SBATCH --gres=gpu:1
-#SBATCH --output=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/qwen7000_reasoning_eval_%j.log
-#SBATCH --error=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/qwen7000_reasoning_eval_%j.err
+#SBATCH --output=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/spanish_reasoning_pipeline_evaluation_%j.log
+#SBATCH --error=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/spanish_reasoning_pipeline_evaluation_%j.err
 #SBATCH --chdir=/home/igutierrez134/med_rag_thesis
 #SBATCH --mail-type=END,FAIL,REQUEUE
 #SBATCH --mail-user=igutierrez134@ikasle.ehu.eus
@@ -19,7 +19,7 @@ export TRANSFORMERS_CACHE="/home/igutierrez134/.cache/huggingface"
 export HF_HUB_CACHE="/home/igutierrez134/.cache/huggingface"
 export TOKENIZERS_PARALLELISM=false
 
-RUN_LIST="experiments/tmp_lists/qwen7000_reasoning_runs.txt"
+RUN_LIST="experiments/tmp_lists/spanish_reasoning_pipeline_runs.txt"
 mkdir -p experiments/tmp_lists
 python3 -c "
 from pathlib import Path
@@ -38,6 +38,6 @@ if [ -f "$FIRST_PRED" ]; then
   python scripts/check_reference_enrichment.py "$FIRST_PRED"
 fi
 
-echo "Qwen 7000-series reasoning-pipeline evaluation started on $(hostname) at $(date)"
+echo "Spanish reasoning-pipeline evaluation started on $(hostname) at $(date)"
 python scripts/evaluate_predictions_by_source_cached.py "$RUN_LIST"
-echo "Qwen 7000-series reasoning-pipeline evaluation finished at $(date)"
+echo "Spanish reasoning-pipeline evaluation finished at $(date)"

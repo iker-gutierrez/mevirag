@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=gen-A-eu-abl-5k
+#SBATCH --job-name=gen-A-eu-abl
 #SBATCH --array=0-83%2
 #SBATCH --cpus-per-task=8
 #SBATCH --nodes=1
@@ -7,28 +7,22 @@
 #SBATCH --time=24:00:00
 #SBATCH --mem=64GB
 #SBATCH --gres=gpu:1
-#SBATCH --output=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/basque5000_ablation_gen_stageA_%A_%a.log
-#SBATCH --error=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/basque5000_ablation_gen_stageA_%A_%a.err
+#SBATCH --output=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/basque_ablation_generation_stageA_%A_%a.log
+#SBATCH --error=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/basque_ablation_generation_stageA_%A_%a.err
 #SBATCH --chdir=/home/igutierrez134/med_rag_thesis
 #SBATCH --mail-type=END,FAIL,REQUEUE
 #SBATCH --mail-user=igutierrez134@ikasle.ehu.eus
 
-# Basque ablation grid, STAGE A = rows 0-6 (no RAG, e5 top-1/3/5, rerank
-# top-1/3/5) for both Llama-3.1-8B-Instruct and Latxa-Llama-3.1-8B-Instruct:
-# 7 rows x 2 models x 2 (noSF+SF) = 28 configs x 3 seeds = 84 tasks. Reruns
-# the original Basque grid (3299-3314) at fresh ids 5000-5013, cloned by a
-# one-off script (not tracked) after fixing format_question()'s
-# language=='eu' guard, which was silently sending every eu mixed-corpus
-# prompt with NO question text at all (topic/subtopic/question/focus don't
-# exist on mixed-corpus records; `query` does, but the guard skipped it for
-# eu). SF clones (self_feedback=true) at 9000-9006/9011-9017, written by
-# scripts/create_5000_7000_sf_configs.py, included here so both noSF and SF
-# predictions exist for the staged MeanQ selection to compare (see
-# scripts/rewire_basque5000_stage.py's own docstring on why omitting SF
-# narrows the candidate pool against the manuscript's own selection rule).
-# The original 3299-3314 configs/predictions are left on disk untouched
-# (known-bad, not overwritten, per standing no-overwrite convention) --
-# fresh ids only.
+# Basque ablation grid, stage A: rows 0-6 (no retrieval, dense-retrieval
+# depth 1/3/5, reranking depth 1/3/5) for both Llama-3.1-8B-Instruct and
+# Latxa-Llama-3.1-8B-Instruct. Each row is generated both as a plain
+# single-pass run and with an added self-feedback refinement pass, so both
+# variants are available for the staged selection to compare (7 rows x
+# 2 models x 2 generation variants = 28 configurations x 3 seeds = 84
+# tasks). Output goes into a dedicated configuration id range
+# (5000-5013 plain, 9000-9017 self-feedback) reserved for this rerun of the
+# grid, so no earlier round's configuration or generated predictions are
+# ever overwritten.
 
 set -euo pipefail
 

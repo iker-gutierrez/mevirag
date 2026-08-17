@@ -1,37 +1,45 @@
 #!/usr/bin/env python
-"""Stage B/C rewiring for the fresh 7000-series Qwen3.5-9B GuiaSalud rerun
-(configs/experiments/7000-7021 noSF, 10000-10021 SF clones), scoped
-standalone rather than editing scripts/mixed_meanq.py's own FAMILIES
-(start_id 3281/3290, hardcoded and used by the Basque/Llama/Latxa path too,
-which must not be disturbed).
+"""Propagate the winning retrieval configuration between stages of the
+Spanish ablation grid (Qwen3.5-9B, no-think and think variants, on the mixed
+GuiaSalud+CasiMedicos-Exp dev set).
 
-Reruns the exact staged procedure of scripts/rewire_guiasalud_stage.py against
-the fresh ids only, after (1) adding dash bullets to format_question()'s
-query composite and prepare_sns1064.py's build_justification() composite, and
-(2) fixing the guiasalud_272 "levopremazina" -> "levomepromazina"
-data-quality bug (a genuine content change to one gold record's evidence/
-justification, not just formatting). The original 3281-3320 configs and
-their predictions are left untouched.
+The ablation grid tests 11 configuration "rows" per model variant, numbered
+0-10: row 0 is a no-retrieval baseline, rows 1-6 sweep dense-retrieval depth
+and cross-encoder reranking depth, row 7 is a few-shot no-retrieval
+baseline, row 8 combines few-shot prompting with the best retrieval setting
+found in rows 1-6, and rows 9-10 restrict retrieval to a single source
+corpus (GuiaSalud only / CasiMedicos-Exp only) using the best retrieval
+setting found so far. Rows 8-10 are therefore *dependent* on an earlier
+stage's result: their retrieval_top_k/reranker_model/reranker_top_k fields
+must be copied from whichever earlier-row configuration scored highest, not
+hardcoded, or the "staged" comparison stops being meaningful. This script
+computes that winner and rewrites the dependent rows' config files to match
+it, run between stages so each stage always starts from a config that
+reflects the previous stage's actual result.
 
-Includes self-feedback candidates in the pool (each row contributes both a
-plain candidate and a "(SF)"-suffixed one, read from the SF-clone config's
-own after_feedback block), mirroring scripts/mixed_meanq.py's
-family_candidates(include_sf=True): omitting SF would let a noSF row win by
-construction whenever it happens to be evaluated first, even if that row's
-own SF variant scores higher, contradicting the manuscript's own stated rule
-that self-feedback is applied only where it is a row's own dev-set MeanQ-
-winning state (sec:results-test).
+Each row is also generated twice: once as a plain, single-pass generation,
+and once with an added self-feedback (SF) refinement step, where the model
+critiques and revises its own first answer. Both variants are scored and
+both are eligible to win a stage: the "best" configuration for a stage may
+turn out to be a row's self-feedback variant rather than its plain one, and
+the code here always compares both. See scripts/meanq.py's
+best_by_meanq_robust for the actual "which configuration wins" rule
+(a decisive-mean-difference check, falling back to a stability/cost
+point-scored tie-break, falling back to a final mean comparison).
 
-id layout (name_template.format(cell=...) + row offset):
-  noSF: qwen35_9b_no_think row 0-6 -> 7000-7006, row 7-8 -> 7014-7015, row 9-10 -> 7018-7019 (explicit)
-        qwen35_9b_think    row 0-6 -> 7007-7013, row 7-8 -> 7016-7017, row 9-10 -> 7020-7021 (explicit)
-  SF:   qwen35_9b_no_think rows 0-10 -> 10000-10010 (row-ordered, one clone per noSF row above)
-        qwen35_9b_think    rows 0-10 -> 10011-10021 (row-ordered)
+This script operates on a specific block of ablation-grid config files
+(configs/experiments/7000-7021 for the plain runs, 10000-10021 for their
+self-feedback clones) reserved for this rerun of the Spanish grid, kept
+separate from any earlier round's ablation configs so that no earlier
+round's config file or generated predictions are ever overwritten. It
+therefore does not use the older shared selection module
+(scripts/mixed_meanq.py), which is hardcoded to a different, older id block
+and is left untouched.
 
 Usage:
-    python scripts/rewire_qwen7000_stage.py --stage B
-    python scripts/rewire_qwen7000_stage.py --stage C
-    python scripts/rewire_qwen7000_stage.py --stage C --dry-run
+    python scripts/rewire_spanish_ablation_stage.py --stage B
+    python scripts/rewire_spanish_ablation_stage.py --stage C
+    python scripts/rewire_spanish_ablation_stage.py --stage C --dry-run
 """
 from __future__ import annotations
 
@@ -51,32 +59,34 @@ CONFIG_DIR = ROOT / "configs" / "experiments"
 BASE_FIELDS = ("retrieval_top_k", "reranker_model", "reranker_top_k")
 NON_RETRIEVING_ROWS = {0, 7}
 
-# (family key, display label, name template, start id [rows 0-6 use
-# start_id+row; rows 7-8/9-10 use SEPARATE explicit ids, since 7000-7013 is
-# already rows 0-6 for both variants back to back])
-FAMILIES_7K = [
+# (family key, display label, name template, start id for rows 0-6).
+# Rows 7-8 and 9-10 use separate explicit id blocks below, since ids
+# 7000-7013 are already fully used by rows 0-6 for both model variants.
+FAMILIES = [
     ("qwen35_9b_no_think", "Qwen3.5-9B (no-think)",
      "qwen35_9b_{cell}_no_think_extractive_guiasalud_dev", 7000),
     ("qwen35_9b_think", "Qwen3.5-9B (think)",
      "qwen35_9b_{cell}_think_extractive_guiasalud_dev", 7007),
 ]
 
-# Row 7-8 explicit ids (can't extend the row-0-6 blocks: 7000-7006/7007-7013
-# are already full, stage-A rows 0-6 only).
+# Explicit config ids for row 7 (few-shot baseline) and row 8 (few-shot +
+# best retrieval), per model variant.
 ROW_7_8_IDS = {
     "qwen35_9b_no_think": {7: 7014, 8: 7015},
     "qwen35_9b_think": {7: 7016, 8: 7017},
 }
 
-# Row 9-10 explicit ids (domain restriction).
+# Explicit config ids for rows 9-10 (single-corpus domain restriction).
 ROW_9_10_IDS = {
     "qwen35_9b_no_think": {9: 7018, 10: 7019},
     "qwen35_9b_think": {9: 7020, 10: 7021},
 }
 
-# SF-clone ids, row-ordered (row 0 first, row 10 last), one block per family
-# -- see scripts/create_5000_7000_sf_configs.py, which wrote these in this
-# exact order from the noSF ids above.
+# Config ids for the self-feedback clone of each row, in row order (row 0
+# first, row 10 last). Each clone is identical to its plain counterpart
+# except for enabling the self-feedback refinement step and its own output
+# path; see scripts/create_self_feedback_ablation_configs.py, which
+# generated these clone files from the plain ids above.
 SF_ROW_ORDER = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 SF_START_ID = {
     "qwen35_9b_no_think": 10000,
@@ -88,13 +98,13 @@ STAGES = {
         "pool_rows": range(0, 7),
         "pool_label": "stage A (rows 0-6)",
         "target_rows": [8],
-        "target_label": "row 8 (3-shot + best RAG)",
+        "target_label": "row 8 (few-shot + best retrieval)",
     },
     "C": {
         "pool_rows": range(0, 9),
         "pool_label": "stages A+B (rows 0-8)",
         "target_rows": [9, 10],
-        "target_label": "rows 9-10 (domain restriction)",
+        "target_label": "rows 9-10 (single-corpus domain restriction)",
     },
 }
 
@@ -107,7 +117,10 @@ def sf_run_id(family_key: str, row: int) -> int:
     return SF_START_ID[family_key] + SF_ROW_ORDER.index(row)
 
 
-def candidates_7k(family_key: str, name_template: str, start_id: int, rows) -> dict:
+def candidates_for_pool(family_key: str, name_template: str, start_id: int, rows) -> dict:
+    """Build the MeanQ candidate pool for a set of rows: each row contributes
+    both its plain configuration and a "(SF)"-suffixed self-feedback
+    variant, so the comparison can pick whichever actually scores higher."""
     candidates = {}
     for row in rows:
         cell_slug, cell_label, _ = CELLS[row]
@@ -130,6 +143,13 @@ def candidates_7k(family_key: str, name_template: str, start_id: int, rows) -> d
 
 
 def retrieving_pool(candidates: dict, pool_rows) -> dict:
+    """Drop rows that never retrieve anything (the no-retrieval baseline and
+    the few-shot-no-retrieval row) from the candidate pool: a dependent row
+    that restricts *which corpus* is retrieved from, or combines few-shot
+    prompting with retrieval, cannot sensibly inherit settings from a
+    configuration that has no retrieval settings to give it. The
+    self-feedback suffix is stripped before checking exclusion, so a row's
+    SF variant is excluded exactly when its plain variant would be."""
     excluded = {CELLS[row][1] for row in pool_rows if row in NON_RETRIEVING_ROWS}
 
     def base_label(label: str) -> str:
@@ -166,9 +186,9 @@ def main() -> None:
     stage = STAGES[args.stage]
     any_changed = False
 
-    for family_key, family_label, name_template, start_id in FAMILIES_7K:
+    for family_key, family_label, name_template, start_id in FAMILIES:
         print(f"=== {family_label} ({stage['pool_label']} -> {stage['target_label']}) ===")
-        candidates = candidates_7k(family_key, name_template, start_id, stage["pool_rows"])
+        candidates = candidates_for_pool(family_key, name_template, start_id, stage["pool_rows"])
         pool = retrieving_pool(candidates, stage["pool_rows"])
 
         winner, stats = best_by_meanq_robust(pool)
@@ -181,6 +201,10 @@ def main() -> None:
         print(f"  winner: {winner} (id {winner_prefix}, MeanQ {stats[winner]['mean']:.2f})")
         fields = base_fields_of(winner_prefix, winner_base)
 
+        # Both the plain and self-feedback config of each dependent row are
+        # rewritten to the winner's retrieval settings, so the next stage's
+        # own candidate pool (which also compares both variants of every
+        # row) has a correctly-based self-feedback candidate to consider.
         for target_row in stage["target_rows"]:
             cell_slug, cell_label, _ = CELLS[target_row]
             if target_row in (7, 8):

@@ -1,13 +1,13 @@
 #!/bin/bash
-#SBATCH --job-name=eval-C-eu-abl-5k
+#SBATCH --job-name=eval-C-eu-abl
 #SBATCH --cpus-per-task=8
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --time=08:00:00
 #SBATCH --mem=48GB
 #SBATCH --gres=gpu:1
-#SBATCH --output=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/basque5000_ablation_eval_stageC_%j.log
-#SBATCH --error=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/basque5000_ablation_eval_stageC_%j.err
+#SBATCH --output=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/basque_ablation_evaluation_stageC_%j.log
+#SBATCH --error=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/basque_ablation_evaluation_stageC_%j.err
 #SBATCH --chdir=/home/igutierrez134/med_rag_thesis
 #SBATCH --mail-type=END,FAIL,REQUEUE
 #SBATCH --mail-user=igutierrez134@ikasle.ehu.eus
@@ -19,16 +19,13 @@ export TRANSFORMERS_CACHE="/home/igutierrez134/.cache/huggingface"
 export HF_HUB_CACHE="/home/igutierrez134/.cache/huggingface"
 export TOKENIZERS_PARALLELISM=false
 
-# STAGE C eval = ablation-grid rows 9-10 (domain restriction) for llama31_8b
-# and latxa_llama31_8b (2 rows x 2 models = 4 runs x 3 seeds), 5000-series
-# rerun. Closes the fresh Basque ablation grid: rows 0-10 are now scored for
-# both models, so the final ALL_ROWS selection + RP config write can run
-# here, via the STANDALONE scripts/finalize_basque5000_and_write_rp_configs.py
-# (NOT the real scripts/guiasalud_meanq.py / create_guiasalud_reasoning_
-# configs.py, which are hardcoded to the ORIGINAL 3299/3308 start_ids and
-# would silently overwrite the real, shared guiasalud_meanq_selection.json /
-# reasoning-configs manifest with data derived from a completely different
-# id range if pointed at the 5000-series by mistake).
+# Scores every stage-C prediction (rows 9-10, both plain and self-feedback
+# generation variants, for both Basque models), closing out the Basque
+# ablation grid: all 11 rows are now scored for both models, so this script
+# also runs the final selection across the complete grid and writes the
+# reasoning-pipeline configuration files, frozen to whichever configuration
+# (across all 11 rows, plain or self-feedback) actually scored best for each
+# model.
 
 SEEDS=(42 43 44)
 RUN_IDS=(
@@ -36,9 +33,13 @@ RUN_IDS=(
   5019_llama31_8b_rag_domain_casimedicos_e5_rerank5_extractive_guiasalud_dev
   5020_latxa_llama31_8b_rag_domain_guiasalud_e5_rerank5_extractive_guiasalud_dev
   5021_latxa_llama31_8b_rag_domain_casimedicos_e5_rerank5_extractive_guiasalud_dev
+  9009_llama31_8b_rag_domain_guiasalud_e5_rerank5_extractive_guiasalud_sf_dev
+  9010_llama31_8b_rag_domain_casimedicos_e5_rerank5_extractive_guiasalud_sf_dev
+  9020_latxa_llama31_8b_rag_domain_guiasalud_e5_rerank5_extractive_guiasalud_sf_dev
+  9021_latxa_llama31_8b_rag_domain_casimedicos_e5_rerank5_extractive_guiasalud_sf_dev
 )
 
-echo "Basque ablation evaluation (stage C, 5000-series) started on $(hostname) at $(date)"
+echo "Basque ablation evaluation (stage C) started on $(hostname) at $(date)"
 
 # Pre-flight: confirm reference-enrichment resolves real gold text before
 # spending time on the full eval sweep (see scripts/check_reference_
@@ -67,11 +68,10 @@ for run_id in "${RUN_IDS[@]}"; do
   done
 done
 
-# Whole-grid post-processing, 5000-series only: final ALL_ROWS (0-10) MeanQ
-# selection + reasoning-pipeline config write for llama31_8b/latxa_llama31_8b,
-# to their OWN files (guiasalud_meanq_selection_5000.json,
-# guiasalud_reasoning_configs_manifest_5000.txt), never touching the real
-# shared ones.
-python scripts/finalize_basque5000_and_write_rp_configs.py --base-id 6000
+# Final selection across all 11 rows + reasoning-pipeline config write, one
+# set of results per Basque model, kept in this run's own output files
+# (mixed_meanq_selection_5000.json, guiasalud_reasoning_configs_manifest_
+# 5000.txt) rather than the shared files other experiment rounds use.
+python scripts/finalize_basque_ablation_and_write_reasoning_configs.py --base-id 6000
 
-echo "Basque ablation evaluation (stage C, 5000-series) finished at $(date)"
+echo "Basque ablation evaluation (stage C) finished at $(date)"

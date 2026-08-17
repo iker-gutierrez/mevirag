@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=gen-rp-es-7k
+#SBATCH --job-name=gen-rp-es
 #SBATCH --array=0-29%2
 #SBATCH --cpus-per-task=8
 #SBATCH --nodes=1
@@ -7,19 +7,23 @@
 #SBATCH --time=24:00:00
 #SBATCH --mem=64GB
 #SBATCH --gres=gpu:1
-#SBATCH --output=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/qwen7000_reasoning_gen_%A_%a.log
-#SBATCH --error=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/qwen7000_reasoning_gen_%A_%a.err
+#SBATCH --output=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/spanish_reasoning_pipeline_generation_%A_%a.log
+#SBATCH --error=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/spanish_reasoning_pipeline_generation_%A_%a.err
 #SBATCH --chdir=/home/igutierrez134/med_rag_thesis
 #SBATCH --mail-type=END,FAIL,REQUEUE
 #SBATCH --mail-user=igutierrez134@ikasle.ehu.eus
 
-# Reasoning-pipeline generation for the 7000-series Qwen rerun: 5 pipeline
-# variants x 2 variants (no_think/think) = 10 configs x 3 seeds = 30 tasks.
-# Configs written by scripts/finalize_qwen7000_and_write_rp_configs.py
-# (--base-id 8000, run automatically at the end of qwen7000_ablation_eval_
-# stageC.sh), each frozen to that variant's own true rows-0-10 MeanQ winner.
-# MUST run after qwen7000_ablation_eval_stageC.sh has written
-# reports/metrics/guiasalud_reasoning_configs_manifest_7000.txt.
+# Runs the reasoning-pipeline generation configs for both Qwen3.5-9B
+# variants: 5 pipeline variants (structured_cot, thought_rag,
+# thought_rag_iter, marag, and a causal-scoring variant of structured_cot)
+# x 2 variants (no-think/think) = 10 configurations x 3 seeds = 30 tasks.
+# The configs themselves are written by
+# scripts/finalize_spanish_ablation_and_write_reasoning_configs.py, run
+# automatically at the end of spanish_ablation_evaluation_stageC.sh, with
+# each configuration's retrieval settings frozen to that variant's own true
+# best-scoring ablation-grid row. Must run after
+# spanish_ablation_evaluation_stageC.sh has written the configuration
+# manifest this script reads from.
 
 set -euo pipefail
 
@@ -49,11 +53,11 @@ export HF_HUB_CACHE="/home/igutierrez134/.cache/huggingface"
 export HF_HUB_OFFLINE=1
 export TOKENIZERS_PARALLELISM=false
 
-echo "Qwen 7000-series reasoning-pipeline generation started on $(hostname) at $(date)"
+echo "Spanish reasoning-pipeline generation started on $(hostname) at $(date)"
 echo "SLURM_ARRAY_TASK_ID=${SLURM_ARRAY_TASK_ID}  (found $N_CFG configs)"
 echo "CONFIG=${CONFIG}  SEED=${SEED}"
 
 scripts/pick_free_gpu.sh 40000 python scripts/run_reasoning_pipeline.py \
   --config "$CONFIG" --seed "$SEED"
 
-echo "Qwen 7000-series reasoning-pipeline generation finished at $(date)"
+echo "Spanish reasoning-pipeline generation finished at $(date)"

@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=gen-B-eu-abl-5k
+#SBATCH --job-name=gen-B-eu-abl
 #SBATCH --array=0-23%2
 #SBATCH --cpus-per-task=8
 #SBATCH --nodes=1
@@ -7,18 +7,21 @@
 #SBATCH --time=24:00:00
 #SBATCH --mem=64GB
 #SBATCH --gres=gpu:1
-#SBATCH --output=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/basque5000_ablation_gen_stageB_%A_%a.log
-#SBATCH --error=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/basque5000_ablation_gen_stageB_%A_%a.err
+#SBATCH --output=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/basque_ablation_generation_stageB_%A_%a.log
+#SBATCH --error=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/basque_ablation_generation_stageB_%A_%a.err
 #SBATCH --chdir=/home/igutierrez134/med_rag_thesis
 #SBATCH --mail-type=END,FAIL,REQUEUE
 #SBATCH --mail-user=igutierrez134@ikasle.ehu.eus
 
-# Basque ablation grid, STAGE B = rows 7-8 (3-shot no RAG, 3-shot + best RAG)
-# for both models: 2 rows x 2 models x 2 (noSF+SF) = 8 configs x 3 seeds =
-# 24 tasks. MUST run after basque5000_ablation_eval_stageA.sh, which
-# rewires row 8's retrieval fields (both noSF and SF variants) to each
-# model's own stage-A MeanQ winner (scripts/rewire_basque5000_stage.py
-# --stage B).
+# Basque ablation grid, stage B: row 7 (few-shot prompting, no retrieval)
+# and row 8 (few-shot prompting combined with the best retrieval setting
+# found in stage A), for both models, each in both a plain and a
+# self-feedback generation variant (2 rows x 2 models x 2 generation
+# variants = 8 configurations x 3 seeds = 24 tasks). Must run after
+# basque_ablation_evaluation_stageA.sh, which scores stage A and rewrites
+# row 8's retrieval settings (in both its plain and self-feedback
+# configuration) to match whichever stage-A row actually scored best
+# (scripts/rewire_basque_ablation_stage.py --stage B).
 
 set -euo pipefail
 

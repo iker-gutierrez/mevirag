@@ -1,16 +1,20 @@
 #!/bin/bash
-#SBATCH --job-name=eval-A-es-abl-7k
+#SBATCH --job-name=eval-A-es-abl
 #SBATCH --cpus-per-task=8
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --time=03:00:00
 #SBATCH --mem=32GB
 #SBATCH --gres=gpu:1
-#SBATCH --output=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/qwen7000_ablation_eval_stageA_%j.log
-#SBATCH --error=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/qwen7000_ablation_eval_stageA_%j.err
+#SBATCH --output=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/spanish_ablation_evaluation_stageA_%j.log
+#SBATCH --error=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/spanish_ablation_evaluation_stageA_%j.err
 #SBATCH --chdir=/home/igutierrez134/med_rag_thesis
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=igutierrez134@ikasle.ehu.eus
+
+# Scores every stage-A prediction (rows 0-6, both plain and self-feedback
+# generation variants, for both Qwen3.5-9B variants), then rewires row 8's
+# retrieval settings to whichever configuration actually scored best.
 
 set -euo pipefail
 source /home/igutierrez134/envs/med_rag_thesis/bin/activate
@@ -35,9 +39,23 @@ RUN_IDS=(
   7011_qwen35_9b_rag_e5_rerank1_think_extractive_guiasalud_dev
   7012_qwen35_9b_rag_e5_rerank3_think_extractive_guiasalud_dev
   7013_qwen35_9b_rag_e5_rerank5_think_extractive_guiasalud_dev
+  10000_qwen35_9b_no_rag_no_think_extractive_guiasalud_sf_dev
+  10001_qwen35_9b_rag_e5_topk1_no_think_extractive_guiasalud_sf_dev
+  10002_qwen35_9b_rag_e5_topk3_no_think_extractive_guiasalud_sf_dev
+  10003_qwen35_9b_rag_e5_topk5_no_think_extractive_guiasalud_sf_dev
+  10004_qwen35_9b_rag_e5_rerank1_no_think_extractive_guiasalud_sf_dev
+  10005_qwen35_9b_rag_e5_rerank3_no_think_extractive_guiasalud_sf_dev
+  10006_qwen35_9b_rag_e5_rerank5_no_think_extractive_guiasalud_sf_dev
+  10011_qwen35_9b_no_rag_think_extractive_guiasalud_sf_dev
+  10012_qwen35_9b_rag_e5_topk1_think_extractive_guiasalud_sf_dev
+  10013_qwen35_9b_rag_e5_topk3_think_extractive_guiasalud_sf_dev
+  10014_qwen35_9b_rag_e5_topk5_think_extractive_guiasalud_sf_dev
+  10015_qwen35_9b_rag_e5_rerank1_think_extractive_guiasalud_sf_dev
+  10016_qwen35_9b_rag_e5_rerank3_think_extractive_guiasalud_sf_dev
+  10017_qwen35_9b_rag_e5_rerank5_think_extractive_guiasalud_sf_dev
 )
 
-echo "Spanish/Qwen ablation evaluation (stage A, 7000-series) started on $(hostname) at $(date)"
+echo "Spanish ablation evaluation (stage A) started on $(hostname) at $(date)"
 
 # Pre-flight: confirm reference-enrichment resolves real gold text before
 # spending time on the full eval sweep (see scripts/check_reference_
@@ -66,7 +84,8 @@ for run_id in "${RUN_IDS[@]}"; do
   done
 done
 
-# Stage A -> B: rewire row 8 to stage A's per-variant MeanQ winner.
-python scripts/rewire_qwen7000_stage.py --stage B
+# Stage A -> B: rewire row 8 to whichever stage-A configuration (plain or
+# self-feedback) scored best, for each model variant.
+python scripts/rewire_spanish_ablation_stage.py --stage B
 
-echo "Spanish/Qwen ablation evaluation (stage A, 7000-series) finished at $(date)"
+echo "Spanish ablation evaluation (stage A) finished at $(date)"

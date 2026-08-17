@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=gen-B-es-abl-7k
+#SBATCH --job-name=gen-B-es-abl
 #SBATCH --array=0-23%2
 #SBATCH --cpus-per-task=8
 #SBATCH --nodes=1
@@ -7,18 +7,21 @@
 #SBATCH --time=24:00:00
 #SBATCH --mem=64GB
 #SBATCH --gres=gpu:1
-#SBATCH --output=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/qwen7000_ablation_gen_stageB_%A_%a.log
-#SBATCH --error=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/qwen7000_ablation_gen_stageB_%A_%a.err
+#SBATCH --output=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/spanish_ablation_generation_stageB_%A_%a.log
+#SBATCH --error=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/spanish_ablation_generation_stageB_%A_%a.err
 #SBATCH --chdir=/home/igutierrez134/med_rag_thesis
 #SBATCH --mail-type=END,FAIL,REQUEUE
 #SBATCH --mail-user=igutierrez134@ikasle.ehu.eus
 
-# Spanish/Qwen ablation grid, STAGE B = rows 7-8 (3-shot no RAG, 3-shot +
-# best RAG) for both variants: 2 rows x 2 variants x 2 (noSF+SF) = 8
-# configs x 3 seeds = 24 tasks. MUST run after
-# qwen7000_ablation_eval_stageA.sh, which rewires row 8's retrieval fields
-# (both noSF and SF variants) to each variant's own stage-A MeanQ winner
-# (scripts/rewire_qwen7000_stage.py --stage B).
+# Spanish ablation grid, stage B: row 7 (few-shot prompting, no retrieval)
+# and row 8 (few-shot prompting combined with the best retrieval setting
+# found in stage A), for both Qwen3.5-9B variants, each in both a plain and
+# a self-feedback generation variant (2 rows x 2 model variants x 2
+# generation variants = 8 configurations x 3 seeds = 24 tasks). Must run
+# after spanish_ablation_evaluation_stageA.sh, which scores stage A and
+# rewrites row 8's retrieval settings (in both its plain and self-feedback
+# configuration) to match whichever stage-A row actually scored best
+# (scripts/rewire_spanish_ablation_stage.py --stage B).
 
 set -euo pipefail
 
@@ -49,7 +52,7 @@ export HF_HUB_CACHE="/home/igutierrez134/.cache/huggingface"
 export HF_HUB_OFFLINE=1
 export TOKENIZERS_PARALLELISM=false
 
-echo "Spanish/Qwen ablation generation (stage B, 7000-series) started on $(hostname)"
+echo "Spanish ablation generation (stage B) started on $(hostname)"
 echo "Date: $(date)"
 echo "SLURM_JOB_ID=${SLURM_JOB_ID:-}"
 echo "SLURM_ARRAY_TASK_ID=${SLURM_ARRAY_TASK_ID:-}"
@@ -62,4 +65,4 @@ nvidia-smi || true
 scripts/pick_free_gpu.sh 40000 python scripts/run_generation_from_config.py \
   --config "$CONFIG" --seed "$SEED" --output "$OUTPUT"
 
-echo "Spanish/Qwen ablation generation (stage B, 7000-series) finished at $(date)"
+echo "Spanish ablation generation (stage B) finished at $(date)"

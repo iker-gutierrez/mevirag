@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=gen-C-eu-abl-5k
+#SBATCH --job-name=gen-C-eu-abl
 #SBATCH --array=0-23%2
 #SBATCH --cpus-per-task=8
 #SBATCH --nodes=1
@@ -7,22 +7,23 @@
 #SBATCH --time=24:00:00
 #SBATCH --mem=64GB
 #SBATCH --gres=gpu:1
-#SBATCH --output=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/basque5000_ablation_gen_stageC_%A_%a.log
-#SBATCH --error=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/basque5000_ablation_gen_stageC_%A_%a.err
+#SBATCH --output=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/basque_ablation_generation_stageC_%A_%a.log
+#SBATCH --error=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/basque_ablation_generation_stageC_%A_%a.err
 #SBATCH --chdir=/home/igutierrez134/med_rag_thesis
 #SBATCH --mail-type=END,FAIL,REQUEUE
 #SBATCH --mail-user=igutierrez134@ikasle.ehu.eus
 
-# Basque ablation grid, STAGE C = rows 9-10 (domain restriction: GuiaSalud-only
-# retrieval, CasiMedicos-only retrieval) for both models: 2 rows x 2 models x
-# 2 (noSF+SF) = 8 configs x 3 seeds = 24 tasks. `input` stays the full mixed
-# Basque dev set (data/processed/guiasalud_casimedicos_eu/dev.jsonl), only
-# `retrieval_index` is restricted -- same mechanism as the Spanish/Qwen
-# stage C (slurm/guiasalud_ablation_gen_stageC.sh). MUST run after
-# basque5000_ablation_eval_stageB.sh, which rewires these configs'
-# retrieval_top_k/reranker_model/reranker_top_k (both noSF and SF variants)
-# to each model's own stage-A+B MeanQ winner
-# (scripts/rewire_basque5000_stage.py --stage C).
+# Basque ablation grid, stage C: rows 9-10, which restrict retrieval to a
+# single source corpus (GuiaSalud only, CasiMedicos-Exp only), for both
+# models, each in both a plain and a self-feedback generation variant
+# (2 rows x 2 models x 2 generation variants = 8 configurations x 3 seeds =
+# 24 tasks). The dev set itself (`input`) stays the full mixed Basque
+# corpus; only `retrieval_index` is restricted to a single-source index, the
+# same mechanism used by the Spanish track's own stage C. Must run after
+# basque_ablation_evaluation_stageB.sh, which scores stages A+B and rewrites
+# these rows' retrieval settings (in both their plain and self-feedback
+# configuration) to match whichever earlier row actually scored best
+# (scripts/rewire_basque_ablation_stage.py --stage C).
 
 set -euo pipefail
 
