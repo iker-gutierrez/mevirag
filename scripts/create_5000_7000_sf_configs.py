@@ -11,7 +11,7 @@ so the staged selection was choosing a winner from a noSF-only candidate
 pool -- a real, meaningful narrowing relative to the manuscript's own stated
 rule (self-feedback is applied only where it is a row's own dev-set
 MeanQ-winning state, so a genuine comparison needs both variants in the
-pool, see scripts/guiasalud_meanq.py's family_candidates() docstring).
+pool, see scripts/mixed_meanq.py's family_candidates() docstring).
 
 New ids: Basque SF clones at 9000+, Spanish SF clones at 10000+, both clear
 of every id used so far. Existing 5000-5021/7000-7021 configs and their

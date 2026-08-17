@@ -98,7 +98,7 @@ def main() -> None:
     print("=== smoke test: SF-aware staged selection (synthetic metrics, no GPU) ===")
     clean_up()
 
-    from guiasalud_meanq import CELLS  # noqa: E402
+    from mixed_meanq import CELLS  # noqa: E402
 
     # Rows 0-6 (stage-A shape), noSF ids 95000-95006, SF-clone ids 96000-96006.
     # Row 8 (stage-B target), noSF id 95015, SF-clone id 96015.

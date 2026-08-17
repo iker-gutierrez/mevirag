@@ -1,25 +1,25 @@
 #!/usr/bin/env python
 """Final ALL_ROWS (0-10) MeanQ selection + reasoning-pipeline config write for
 the fresh 7000-series Qwen3.5-9B GuiaSalud rerun, standalone rather than
-touching scripts/guiasalud_meanq.py / scripts/create_guiasalud_reasoning_
+touching scripts/mixed_meanq.py / scripts/create_mixed_reasoning_
 configs.py's own FAMILIES (hardcoded to start_id 3281/3290, shared with the
 Basque/Llama/Latxa path, which must not be disturbed).
 
-Mirrors create_guiasalud_reasoning_configs.py's own logic (base_config_for,
+Mirrors create_mixed_reasoning_configs.py's own logic (base_config_for,
 retrieval_tag_for, PIPELINES) via direct import, so a future change to the
 common RP-config shape (sampling fields, pipeline overrides) automatically
 applies here too, rather than drifting from a second hardcoded copy.
 
 Writes:
-  - reports/metrics/guiasalud_meanq_selection_7000.json (final rows-0-10
+  - reports/metrics/mixed_meanq_selection_7000.json (final rows-0-10
     winner per variant, own file so it never collides with/overwrites the
-    real guiasalud_meanq_selection.json)
+    real mixed_meanq_selection.json)
   - 10 RP configs at --base-id (default 8000, clear of the 5000-5021/6000-
     6204/7000-7021 ranges already in use), 5 per variant (5 pipelines):
     structured_cot/thought_rag/thought_rag_iter/marag frozen to the true
     rows-0-10 winner (configs 11/13/14/15 per the staged-ablation
     convention), structured_cot-causal (config "12") left independent of
-    the winner (drop_reranker=True, matches create_guiasalud_reasoning_
+    the winner (drop_reranker=True, matches create_mixed_reasoning_
     configs.py's own PIPELINES entry unmodified).
   - reports/metrics/guiasalud_reasoning_configs_manifest_7000.txt (own
     manifest, does not touch the real
@@ -39,15 +39,15 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from guiasalud_meanq import CELLS  # noqa: E402
+from mixed_meanq import CELLS  # noqa: E402
 from meanq import best_by_meanq_robust  # noqa: E402
-from create_guiasalud_reasoning_configs import (  # noqa: E402
+from create_mixed_reasoning_configs import (  # noqa: E402
     PIPELINES, QWEN_ENGINE_FIELDS, base_config_for, retrieval_tag_for,
 )
 
 CONFIG_DIR = ROOT / "configs" / "experiments"
 METRICS = ROOT / "reports" / "metrics"
-SELECTION_PATH = METRICS / "guiasalud_meanq_selection_7000.json"
+SELECTION_PATH = METRICS / "mixed_meanq_selection_7000.json"
 MANIFEST_PATH = METRICS / "guiasalud_reasoning_configs_manifest_7000.txt"
 
 NON_RETRIEVING_ROWS = {0, 7}

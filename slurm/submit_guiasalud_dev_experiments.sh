@@ -38,7 +38,7 @@
 # rewire_basque5000_stage.py / rewire_qwen7000_stage.py / finalize_
 # basque5000_and_write_rp_configs.py / finalize_qwen7000_and_write_rp_
 # configs.py scripts this chain calls) exists because the ORIGINAL staged
-# ablation (scripts/guiasalud_meanq.py, scripts/create_guiasalud_reasoning_
+# ablation (scripts/mixed_meanq.py, scripts/create_mixed_reasoning_
 # configs.py, both hardcoded to start_id 3281/3290/3299/3308) is shared
 # infrastructure also used by earlier rounds; a fresh, freestanding id block
 # with its own rewire/finalize scripts avoids touching that shared state
@@ -50,7 +50,7 @@
 #
 # To check progress:  squeue -u $USER
 # To watch a chain's outcome once finished: see reports/metrics/
-#   guiasalud_meanq_selection_5000.json / _7000.json (final per-model/
+#   mixed_meanq_selection_5000.json / _7000.json (final per-model/
 #   per-variant winners) and reports/metrics/guiasalud_reasoning_configs_
 #   manifest_5000.txt / _7000.txt (the reasoning-pipeline configs frozen to
 #   those winners).

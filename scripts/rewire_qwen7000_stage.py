@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """Stage B/C rewiring for the fresh 7000-series Qwen3.5-9B GuiaSalud rerun
 (configs/experiments/7000-7021 noSF, 10000-10021 SF clones), scoped
-standalone rather than editing scripts/guiasalud_meanq.py's own FAMILIES
+standalone rather than editing scripts/mixed_meanq.py's own FAMILIES
 (start_id 3281/3290, hardcoded and used by the Basque/Llama/Latxa path too,
 which must not be disturbed).
 
@@ -15,7 +15,7 @@ their predictions are left untouched.
 
 Includes self-feedback candidates in the pool (each row contributes both a
 plain candidate and a "(SF)"-suffixed one, read from the SF-clone config's
-own after_feedback block), mirroring scripts/guiasalud_meanq.py's
+own after_feedback block), mirroring scripts/mixed_meanq.py's
 family_candidates(include_sf=True): omitting SF would let a noSF row win by
 construction whenever it happens to be evaluated first, even if that row's
 own SF variant scores higher, contradicting the manuscript's own stated rule
@@ -43,7 +43,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from guiasalud_meanq import CELLS  # noqa: E402
+from mixed_meanq import CELLS  # noqa: E402
 from meanq import best_by_meanq_robust  # noqa: E402
 
 CONFIG_DIR = ROOT / "configs" / "experiments"
