@@ -13,19 +13,89 @@ from medical_rag_thesis.data_io import read_jsonl, write_jsonl
 
 DEFAULT_EMBEDDING_MODEL = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
 FIELD_LABELS = {
+    "guidebook_title": "Guía de práctica clínica",
+    "specialty": "Especialidad",
     "topic": "Tema",
+    "subtopic": "Subtema",
     "question": "Pregunta",
-    "subquestion": "Subpregunta",
+    "focus": "Foco",
+    "judgement": "Juicio",
     "short_answer": "Respuesta corta",
     "evidence": "Evidencia",
+    "considerations": "Consideraciones",
 }
 
 FIELD_LABELS_EU = {
+    "guidebook_title": "Praktika klinikorako gida",
+    "specialty": "Espezialitatea",
     "topic": "Gaia",
+    "subtopic": "Azpigaia",
     "question": "Galdera",
-    "subquestion": "Azpigaldera",
+    "focus": "Foku",
+    "judgement": "Iritzia",
     "short_answer": "Erantzun laburra",
     "evidence": "Ebidentzia",
+    "considerations": "Gogoeta",
+}
+
+# Corpus-side only (never used to build a query, see prompts.query_text):
+# each guidebook's own raw source filename mapped to the official full title
+# of the clinical practice guideline, verbatim (including casing) as printed
+# on the guideline's own cover page (verified against
+# data/raw/clinical_guidebooks_txt/*.txt). Titles are NOT uniformly title
+# case in the source: atencion_paliativa.txt and
+# prevencion_secundaria_ictus.txt use sentence case in their real titles
+# ("... sobre atención paliativa al adulto...", "... sobre prevención
+# secundaria de ictus. Actualización"), while the other four guidebooks
+# genuinely are title case, so this preserves each one's own real casing
+# rather than normalizing all six to one style. Indexing the real title, not
+# the filename, lets a passage's embedding carry genuine document-identity
+# signal instead of an opaque slug like "manejo_ictus.txt".
+GUIDEBOOK_TITLES = {
+    "ansiedad.txt": (
+        "Guía de Práctica Clínica para el Tratamiento del Trastorno de "
+        "Ansiedad Generalizada en Atención Primaria"
+    ),
+    "atencion_paliativa.txt": (
+        "Guía de Práctica Clínica sobre atención paliativa al adulto en "
+        "situación de últimos días"
+    ),
+    "cuidados_paliativos_pediatria.txt": (
+        "Guía de Práctica Clínica sobre Cuidados Paliativos en Pediatría"
+    ),
+    "diabetes.txt": "Guía de Práctica Clínica sobre Diabetes Mellitus Tipo 1",
+    "manejo_ictus.txt": (
+        "Guía de Práctica Clínica sobre el Manejo del Ictus en Atención Primaria"
+    ),
+    "prevencion_secundaria_ictus.txt": (
+        "Guía de Práctica Clínica sobre prevención secundaria de ictus. Actualización"
+    ),
+}
+
+# Basque titles, hand-translated by the thesis author (not machine-translated,
+# unlike the rest of the Basque corpus, see manuscript sec:basque-translation-both).
+# Keyed by data/processed/guiasalud_eu/*.jsonl's own `guidebook` filename
+# values, which are themselves Basque renamings of the Spanish originals
+# (ansiedad.txt -> antsietatea.txt, etc.), not the Spanish filenames above.
+GUIDEBOOK_TITLES_EU = {
+    "antsietatea.txt": (
+        "Lehen Mailako Arretan Antsietate Nahasmendu Orokortuaren "
+        "Tratamendurako Praktika Klinikoko Gida"
+    ),
+    "arreta_aringarria.txt": (
+        "Azken egunetako egoeran dagoen helduaren arreta aringarriari "
+        "buruzko Praktika Klinikoko Gida"
+    ),
+    "zainketa_aringarriak_pediatria.txt": (
+        "Pediatriako Zainketa Paliatiboei buruzko Praktika Klinikoko Gida"
+    ),
+    "diabetes.txt": "1 Motako Diabetes Mellitusari buruzko Praktika Klinikoko Gida",
+    "iktus_kudeaketa.txt": (
+        "Lehen Mailako Arretan Iktusaren Kudeaketari buruzko Praktika Klinikoko Gida"
+    ),
+    "prebentzio_sekundarioa_iktus.txt": (
+        "Iktusaren prebentzio sekundarioari buruzko Praktika Klinikoko Gida. Eguneratzea"
+    ),
 }
 
 
@@ -35,11 +105,46 @@ def field_labels(language: str) -> Mapping[str, str]:
     return FIELD_LABELS
 
 
+def guidebook_title(guidebook: Any, language: str = "es") -> str:
+    """Full guideline title for a raw `guidebook` filename value, falling
+    back to the raw value itself for any guidebook not catalogued for the
+    given language (e.g. a future addition not yet titled)."""
+    key = str(guidebook or "").strip()
+    titles = GUIDEBOOK_TITLES_EU if language == "eu" else GUIDEBOOK_TITLES
+    return titles.get(key, key)
+
+
+# query/justification are already self-labeled composites (e.g. query =
+# "Tema: .../Subtema: .../Pregunta: .../Foco: ...", justification =
+# "Evidencia procedente de la investigación: .../Consideraciones
+# adicionales: ..." for GuiaSalud, see scripts/prepare_sns1064.py's
+# build_justification / prompts.format_question), so indexing them under an
+# ADDITIONAL outer "query: .../justification: ..." label (field_labels has
+# no entry for either, so the raw field name would be used verbatim as the
+# label) would double up labeling redundantly. They're appended to the
+# indexed text as-is instead of going through the field/label loop below.
+_UNLABELED_FIELDS = ("query", "justification")
+
+
 def record_to_document_text(record: Mapping[str, Any], fields: Sequence[str], language: str = "es") -> str:
+    # "guidebook_title" is the field callers should actually pass (not the
+    # raw "guidebook" filename, e.g. "ansiedad.txt", which carries no
+    # embedding signal on its own): resolved here from the record's raw
+    # `guidebook` value via guidebook_title(), since records store only the
+    # filename, not the full title, as their own field.
     parts = []
     labels = field_labels(language)
     for field in fields:
-        value = record.get(field)
+        if field in _UNLABELED_FIELDS:
+            value = record.get(field)
+            if value:
+                parts.append(str(value))
+            continue
+        value = (
+            guidebook_title(record.get("guidebook"), language=language)
+            if field == "guidebook_title"
+            else record.get(field)
+        )
         if value:
             label = labels.get(field, field)
             parts.append(f"{label}: {value}")
@@ -65,7 +170,7 @@ def build_index(
     *,
     model_name: str = DEFAULT_EMBEDDING_MODEL,
     backend: str = "dense",
-    text_fields: Sequence[str] = ("topic", "question", "subquestion", "short_answer", "evidence"),
+    text_fields: Sequence[str] = ("guidebook_title", "topic", "subtopic", "question", "focus", "short_answer", "evidence"),
     batch_size: int = 32,
     language: str = "es",
 ) -> None:
@@ -81,11 +186,35 @@ def build_index(
         doc = {
             "doc_id": record.get("id") or f"doc_{idx:05d}",
             "source": record.get("source", ""),
+            # Raw guidebook filename (e.g. "ansiedad.txt") deliberately NOT
+            # stored: it carries no signal (opaque slug), is never embedded
+            # (record_to_document_text always resolves "guidebook_title"
+            # instead), and nothing downstream reads it (prompts.py's
+            # _CONTEXT_DOCUMENT_FIELDS only ever looks up guidebook_title).
+            "guidebook_title": guidebook_title(record.get("guidebook"), language=language),
             "topic": record.get("topic", ""),
+            "subtopic": record.get("subtopic", ""),
             "question": record.get("question", ""),
-            "subquestion": record.get("subquestion", ""),
+            "focus": record.get("focus", ""),
+            "judgement": record.get("judgement", ""),
             "short_answer": record.get("short_answer", ""),
             "evidence": record.get("evidence", ""),
+            "considerations": record.get("considerations", ""),
+            # query/justification: the trimmed mixed dataset's own two
+            # fields (data/processed/guiasalud_casimedicos/*.jsonl no longer
+            # has topic/subtopic/question/focus/evidence/considerations as
+            # separate fields), kept alongside the individual fields above
+            # rather than replacing them so untrimmed datasets (guiasalud/,
+            # casimedicos/ standalone) still populate both sets consistently.
+            "query": record.get("query", ""),
+            "justification": record.get("justification", ""),
+            # specialty: CasiMedicos' MIR exam-section label (e.g.
+            # "ATENCIÓN PRIMARIA Y REDES SOCIALES"), the CasiMedicos
+            # equivalent of guidebook -- indexed the same way (corpus-side
+            # signal only, deliberately never part of `query`, mirroring how
+            # guidebook_title is indexed but never shown to the model as
+            # part of its own question).
+            "specialty": record.get("specialty", ""),
             "text": text,
         }
         metadata.append(doc)
@@ -203,9 +332,9 @@ class HitRateLoggingEmbeddingRetriever(EmbeddingRetriever):
     is the single target per query, so "hit" is binary presence/absence in
     the naive top-(k+1), not a graded relevance judgment.
 
-    Behaviourally IDENTICAL to EmbeddingRetriever.query() -- same top_k
+    Behaviourally IDENTICAL to EmbeddingRetriever.query(), same top_k
     passages returned to the generator, same exclusion of the query's own
-    document -- this only ADDS bookkeeping: every call over-fetches k+1
+    document, this only ADDS bookkeeping: every call over-fetches k+1
     candidates (as the base class already does when exclude_id is set) and
     records, in self.hit_log, whether the excluded document was actually
     present among them. Kept as a separate subclass rather than folded into

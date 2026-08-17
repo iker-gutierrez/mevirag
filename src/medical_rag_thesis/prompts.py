@@ -3,6 +3,8 @@ from __future__ import annotations
 import re
 from typing import Any, Mapping, Optional, Sequence
 
+from medical_rag_thesis.retrieval import field_labels
+
 
 SYSTEM_PROMPT_ES = "Eres un experto médico."
 
@@ -13,10 +15,10 @@ SYSTEM_PROMPTS = {"es": SYSTEM_PROMPT_ES, "eu": SYSTEM_PROMPT_EU}
 # mistralai/Ministral-3-8B-Reasoning-2512's own recommended system prompt
 # (its SYSTEM_PROMPT.txt / chat_template.jinja default), verbatim. The model
 # card recommends appending it to a custom system prompt rather than
-# replacing either one; since this project builds prompts as a flat text
+# replacing either one. Since this project builds prompts as a flat text
 # string rather than through the tokenizer's chat template (see
 # generation.build_chat_prompt, which only reaches for apply_chat_template
-# when a system message is present -- passing OUR OWN system message means
+# when a system message is present, passing OUR OWN system message means
 # the template's own default reasoning-instructions text, which only fires
 # when no system role is supplied, never appears at all unless appended
 # explicitly here), this has to be added by hand for that model specifically.
@@ -36,15 +38,27 @@ PROMPT_STYLES = ("extractive",)
 
 
 def format_reference_answer(record: Mapping[str, Any], language: str = "es") -> str:
+    # Renders few-shot example answers. Now shows "Justificación"/backed by
+    # the `justification` field (falling back to `evidence` for records
+    # without it) rather than "Evidencia"/`evidence`, so the few-shot
+    # exemplar the model sees matches what it's actually being scored
+    # against (evaluation.reference_sections now reads justification, see
+    # that function's docstring): showing the model examples of a field
+    # different from the one it's graded on would be the more surprising
+    # choice. The prompt's own OUTPUT label the model must answer under
+    # (the "Evidencia:" section header in build_extractive_user_prompt) is
+    # unchanged, this only affects how gold reference answers are rendered
+    # as few-shot examples.
+    justification = record.get("justification") or record.get("evidence", "")
     if language == "eu":
         parts = [
             ("Erantzun laburra", record.get("short_answer", "")),
-            ("Ebidentzia", record.get("evidence", "")),
+            ("Justifikazioa", justification),
         ]
     else:
         parts = [
             ("Respuesta corta", record.get("short_answer", "")),
-            ("Evidencia", record.get("evidence", "")),
+            ("Justificación", justification),
         ]
     return "\n".join(f"{label}: {value}".strip() for label, value in parts if value)
 
@@ -60,21 +74,70 @@ def format_options(record: Mapping[str, Any]) -> str:
     return str(options)
 
 
-QUESTION_FIELDS = ("topic", "question", "subquestion")
+# Flat concatenation ("Pregunta: <topic> <subtopic> <question> <focus>")
+# leaves the model no signal for what each fragment is: three question
+# marks in a row read as three separate questions to answer, the GRADE
+# letter prefix ("b) ") and focus prefix ("b.1. ") are source-document
+# labels with no meaning to the model, and there's no indication that
+# topic/subtopic/question/focus narrow down to ONE answer, not four. Each
+# field is instead given its own labeled line, stripping the source's own
+# lettering (GRADE letter, "letter.number." focus prefix) since that
+# labeling is redundant once the field has its own name here. "Foco" is
+# used for both of the two things this field actually holds (a population
+# subgroup, e.g. "Niños y adolescentes", or a comparison arm, e.g.
+# "Recuento de hidratos de carbono... frente a ..."): no single short
+# label describes both grammatically, but "Foco" (what this row's
+# judgement/evidence narrows down to) reads naturally for either.
+_GRADE_LETTER_PREFIX_PATTERN = re.compile(r'^[a-z]\)\s*')
+_FOCUS_PREFIX_PATTERN = re.compile(r'^[a-z]\.\d+\.\s*')
+
+QUESTION_FIELD_LABELS = {
+    "es": {"topic": "Tema", "subtopic": "Subtema", "question": "Pregunta", "focus": "Foco"},
+    "eu": {"topic": "Gaia", "subtopic": "Azpigaia", "question": "Galdera", "focus": "Foku"},
+}
 
 
 def format_question(record: Mapping[str, Any], language: str = "es") -> str:
-    question = " ".join(
-        str(record.get(field, "") or "").strip()
-        for field in QUESTION_FIELDS
-        if str(record.get(field, "") or "").strip()
-    )
-    label = "Galdera" if language == "eu" else "Pregunta"
-    return f"{label}: {question}"
+    # Both GuiaSalud and CasiMedicos records now carry a pre-built `query`
+    # field (GuiaSalud: the same Tema/Subtema/Pregunta/Foco composite this
+    # function builds live below; CasiMedicos: the bare self-contained
+    # question, no composite needed), in both Spanish and Basque. Prefer it
+    # directly when present, so both datasets' prompts are ultimately built
+    # from their own `query` field without duplicating the composition logic
+    # here. Any record without `query` at all (older datasets, records
+    # missing the field) degrades gracefully to the live per-field composite
+    # below instead of crashing.
+    query = str(record.get("query", "") or "").strip()
+    if query:
+        return query
+
+    labels = QUESTION_FIELD_LABELS[language]
+    topic = str(record.get("topic", "") or "").strip()
+    subtopic = str(record.get("subtopic", "") or "").strip()
+    question = _GRADE_LETTER_PREFIX_PATTERN.sub("", str(record.get("question", "") or "").strip())
+    focus = _FOCUS_PREFIX_PATTERN.sub("", str(record.get("focus", "") or "").strip())
+
+    # Dash-bulleted so each line reads as a component of the single
+    # Consulta/Kontsulta block above it, not as its own independent
+    # top-level field: the prompt's other multi-line labeled blocks (e.g.
+    # "Respuesta corta:"/"Evidencia:") also stack without a blank line
+    # between them, so proximity alone does not tell the model these lines
+    # nest under one parent rather than sitting at the same level.
+    lines = []
+    if topic:
+        lines.append(f"- {labels['topic']}: {topic}")
+    if subtopic:
+        lines.append(f"- {labels['subtopic']}: {subtopic}")
+    if question:
+        lines.append(f"- {labels['question']}: {question}")
+    if focus:
+        lines.append(f"- {labels['focus']}: {focus}")
+    return "\n".join(lines)
 
 
 def query_text(record: Mapping[str, Any], language: str = "es") -> str:
-    return format_question(record, language=language)
+    header = "Kontsulta" if language == "eu" else "Consulta"
+    return f"{header}:\n" + format_question(record, language=language)
 
 
 def format_examples(examples: Sequence[Mapping[str, Any]], language: str = "es") -> str:
@@ -93,11 +156,61 @@ def format_examples(examples: Sequence[Mapping[str, Any]], language: str = "es")
 
 
 
-def format_context_text(documents: Sequence[Mapping[str, Any]]) -> str:
+# Retrieved documents used to only surface their pre-joined index `text`
+# (guidebook/topic/subtopic/question/focus/short_answer/evidence, see
+# retrieval.build_index's text_fields), which silently dropped `judgement`
+# and `considerations` even though both are indexed in each document's own
+# metadata (retrieval.build_index's `doc` dict). This renders the full
+# retrieved row instead (every field except `id`/`source`/`split`, which
+# carry no content the model should reason over), one labeled line per
+# field, the same label set and per-field-line format format_question
+# already uses for the query itself, so retrieved context and the query
+# read consistently. `short_answer` is skipped: it's always identical to
+# `judgement` (prepare_sns1064.py sets short_answer = judgement), so
+# showing both would just repeat the same text under two labels.
+_CONTEXT_DOCUMENT_FIELDS = (
+    "guidebook_title",
+    "topic",
+    "subtopic",
+    "question",
+    "focus",
+    "judgement",
+    "evidence",
+    "considerations",
+)
+
+
+def format_context_document(document: Mapping[str, Any], language: str = "es") -> str:
+    labels = field_labels(language)
+    lines = []
+    for field in _CONTEXT_DOCUMENT_FIELDS:
+        value = str(document.get(field, "") or "").strip()
+        if value:
+            label = labels.get(field, field)
+            lines.append(f"{label}: {value}")
+    if lines:
+        return "\n".join(lines)
+    # Trimmed datasets (e.g. data/processed/guiasalud_casimedicos/*.jsonl,
+    # id/query/short_answer/justification(/options) only) carry none of the
+    # individual fields above, only their own pre-composed query/
+    # justification pair (retrieval.build_index's own `doc` dict indexes
+    # both alongside the individual fields, for exactly this case). Both
+    # are already self-labeled composites (query = "Tema: .../Pregunta:
+    # ...", justification = "Evidencia procedente de la investigación:
+    # ..."), so they're appended as-is rather than wrapped in another label.
+    fallback_lines = []
+    for field in ("query", "justification"):
+        value = str(document.get(field, "") or "").strip()
+        if value:
+            fallback_lines.append(value)
+    return "\n".join(fallback_lines)
+
+
+def format_context_text(documents: Sequence[Mapping[str, Any]], language: str = "es") -> str:
     return "\n\n".join(
-        str(document.get("text") or document.get("evidence") or document.get("short_answer") or "").strip()
+        formatted
         for document in documents
-        if str(document.get("text") or document.get("evidence") or document.get("short_answer") or "").strip()
+        if (formatted := format_context_document(document, language=language))
     )
 
 
@@ -160,7 +273,7 @@ def build_extractive_user_prompt(
     context_text = format_context_text(documents or [])
     has_context = bool(context_text)
     options = format_options(record)
-    question = format_question(record).removeprefix("Pregunta: ").strip()
+    question = format_question(record).strip()
     short_answer = short_answer_placeholder(record)
     mc_format_rule = f"{MC_FORMAT_RULE_ES}\n" if options else ""
 
@@ -191,7 +304,7 @@ def build_extractive_user_prompt(
         sections.append("Usa estos ejemplos solo para aprender el formato de salida:\n\n" + format_examples(examples))
     if has_context:
         sections.append("Contexto extraído:\n" + context_text)
-    sections.append("Pregunta:\n" + question)
+    sections.append("Consulta:\n" + question)
     if options:
         sections.append("Opciones:\n" + options)
     evidence_placeholder = (
@@ -216,10 +329,10 @@ def build_extractive_user_prompt_eu(
     examples: Optional[Sequence[Mapping[str, Any]]] = None,
     documents: Optional[Sequence[Mapping[str, Any]]] = None,
 ) -> str:
-    context_text = format_context_text(documents or [])
+    context_text = format_context_text(documents or [], language="eu")
     has_context = bool(context_text)
     options = format_options(record)
-    question = format_question(record, language="eu").removeprefix("Galdera: ").strip()
+    question = format_question(record, language="eu").strip()
     short_answer = short_answer_placeholder(record, language="eu")
     mc_format_rule = f"{MC_FORMAT_RULE_EU}\n" if options else ""
 
@@ -253,7 +366,7 @@ def build_extractive_user_prompt_eu(
         )
     if has_context:
         sections.append("Erauzitako testuingurua:\n" + context_text)
-    sections.append("Galdera:\n" + question)
+    sections.append("Kontsulta:\n" + question)
     if options:
         sections.append("Aukerak:\n" + options)
     evidence_placeholder = (
@@ -296,7 +409,7 @@ def build_extractive_self_feedback_prompt(
     context_text = format_context_text(documents or [])
     has_context = bool(context_text)
     options = format_options(record)
-    question = format_question(record).removeprefix("Pregunta: ").strip()
+    question = format_question(record).strip()
     short_answer = short_answer_placeholder(record)
     mc_format_rule = f"{MC_FORMAT_RULE_ES}\n" if options else ""
     if has_context:
@@ -339,7 +452,7 @@ def build_extractive_self_feedback_prompt(
     sections = ["Revisa la siguiente respuesta.", checks, rules]
     if has_context:
         sections.append("Contexto extraído:\n" + context_text)
-    sections.append("Pregunta:\n" + question)
+    sections.append("Consulta:\n" + question)
     if options:
         sections.append("Opciones:\n" + options)
     sections.append("Respuesta inicial:\n" + answer)
@@ -361,10 +474,10 @@ def build_extractive_self_feedback_prompt_eu(
     answer: str,
     documents: Optional[Sequence[Mapping[str, Any]]] = None,
 ) -> str:
-    context_text = format_context_text(documents or [])
+    context_text = format_context_text(documents or [], language="eu")
     has_context = bool(context_text)
     options = format_options(record)
-    question = format_question(record, language="eu").removeprefix("Galdera: ").strip()
+    question = format_question(record, language="eu").strip()
     short_answer = short_answer_placeholder(record, language="eu")
     mc_format_rule = f"{MC_FORMAT_RULE_EU}\n" if options else ""
     if has_context:
@@ -409,7 +522,7 @@ def build_extractive_self_feedback_prompt_eu(
     sections = ["Ondorengo erantzuna berrikusi.", checks, rules]
     if has_context:
         sections.append("Erauzitako testuingurua:\n" + context_text)
-    sections.append("Galdera:\n" + question)
+    sections.append("Kontsulta:\n" + question)
     if options:
         sections.append("Aukerak:\n" + options)
     sections.append("Hasierako erantzuna:\n" + answer)

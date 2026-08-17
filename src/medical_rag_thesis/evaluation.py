@@ -274,11 +274,28 @@ def parsed_prediction_sections(
     parsed_key: str = "parsed_prediction",
     text_key: str = "prediction_text",
 ) -> dict[str, str]:
+    # Predictions are never instructed to produce GuiaSalud's own
+    # "Evidencia procedente de la investigación:"/"Consideraciones
+    # adicionales:" section labels, but the prompt DOES tell the model it
+    # "puede copiar frases exactas" from retrieved context, and for the
+    # mixed corpus's trimmed fallback (format_context_document), that
+    # context is the raw justification field WITH those labels still
+    # attached to the start of the text (no boundary marker separates
+    # label from content). A minority of predictions (confirmed by
+    # inspection, ~1-2% of records in spot-checked runs) do copy the label
+    # verbatim as part of an otherwise-legitimate exact-phrase copy. Since
+    # reference_sections() strips the same labels from the gold side (the
+    # model is never ASKED to reproduce them, so leaving them unstripped
+    # only on the gold side would deflate every prediction's score by
+    # unmatchable boilerplate), the two sides must be stripped
+    # symmetrically here too, or the rare predictions that DID copy a
+    # label would be penalized for following the copy-exact-phrases
+    # instruction correctly.
     parsed = record.get(parsed_key) or {}
     if isinstance(parsed, Mapping):
         return {
             "short_answer": str(parsed.get("short_answer") or ""),
-            "evidence": str(parsed.get("evidence") or ""),
+            "evidence": strip_justification_labels(str(parsed.get("evidence") or "")),
         }
     return {
         "short_answer": prediction_text(record, parsed_key=parsed_key, text_key=text_key),
@@ -299,9 +316,9 @@ def extract_option_number(short_answer: str) -> Optional[str]:
 
 def resolve_predicted_option(prediction: str, options: Mapping[str, Any]) -> Optional[str]:
     """The answer contract asks for a leading option number ("3. ..."), which
-    most predictions provide -- use it directly when present. Some generators
+    most predictions provide. Use it directly when present. Some generators
     (observed for Mistral-7B) instead answer in free text with no leading
-    digit; for those, fall back to whichever option's text the prediction
+    digit. For those, fall back to whichever option's text the prediction
     overlaps with most by token F1 (reusing the same token_prf scorer already
     used for ROUGE/BERT-adjacent quality metrics elsewhere in this module).
     Verified against 376 already-published mc_accuracy values across every
@@ -322,7 +339,7 @@ def mc_accuracy(
 ) -> Optional[float]:
     """1.0 if the predicted option (see resolve_predicted_option) matches the
     gold option, 0.0 if it names a different one, None if no option could be
-    resolved at all (a genuine format failure -- an empty prediction) or no
+    resolved at all (a genuine format failure, an empty prediction) or no
     gold option is available to compare against."""
     if not options or correct_option is None:
         return None
@@ -332,14 +349,63 @@ def mc_accuracy(
     return 1.0 if str(predicted) == str(correct_option) else 0.0
 
 
+# GuiaSalud's justification field is a labeled composite of its own two
+# source components (evidence + considerations), built by joining them with
+# these fixed section labels (scripts/prepare_sns1064.py for Spanish,
+# scripts/translate_to_basque.py for Basque, where both labels are
+# machine-translated ONCE up front and reused for every record, so the
+# Basque phrasing below is stable, not per-record variable -- confirmed by
+# scanning the full guiasalud_casimedicos_eu dev split for GuiaSalud-only
+# records, only these two phrases ever appear). The model is never asked to
+# reproduce these labels (its own "Evidencia:"/"Ebidentzia:" placeholder is
+# generic free text), so leaving them in the gold reference text scored
+# against the model's prediction would deflate every overlap-based metric
+# (ROUGE-L, token F1) by a fixed amount of unmatchable boilerplate,
+# independent of the prediction's actual content quality. Stripped here,
+# not at construction time, so the raw justification field (used elsewhere,
+# e.g. the schema-normalization figure/retrieval index) keeps its labels.
+_JUSTIFICATION_LABEL_PATTERNS = [
+    re.compile(r"(?:^|(?<=\n))-?[ \t]*Evidencia procedente de la investigación:[ \t]*", re.IGNORECASE | re.MULTILINE),
+    re.compile(r"(?:^|(?<=\n))-?[ \t]*Consideraciones adicionales:[ \t]*", re.IGNORECASE | re.MULTILINE),
+    re.compile(r"(?:^|(?<=\n))-?[ \t]*Ikerketatik datorren ebidentzia:[ \t]*", re.IGNORECASE | re.MULTILINE),
+    re.compile(r"(?:^|(?<=\n))-?[ \t]*Gogoeta gehigarriak:[ \t]*", re.IGNORECASE | re.MULTILINE),
+]
+
+
+def strip_justification_labels(text: str) -> str:
+    for pattern in _JUSTIFICATION_LABEL_PATTERNS:
+        text = pattern.sub("", text)
+    return text.strip()
+
+
 def reference_sections(record: Mapping[str, Any]) -> dict[str, str]:
+    # The "evidence" section name is kept as-is (see SECTION_NAMES): it's tied
+    # to the model's own prompt-output label "Evidencia:" (prompts.py's
+    # build_extractive_user_prompt), which is unchanged. Only the SOURCE of
+    # the gold reference value for that section changes here: justification
+    # (GuiaSalud's "Evidencia procedente de la investigación: .../
+    # Consideraciones adicionales: ..." composite, CasiMedicos's full_answer)
+    # is now the scored reference, falling back through reference_justification
+    # (run-time snapshot) -> justification (dataset field) -> reference_evidence
+    # / evidence (older runs/datasets without justification) for backward
+    # compatibility, mirroring reference_short_answer's existing fallback style.
+    # GuiaSalud's own section labels are stripped (see
+    # strip_justification_labels) since the model is never asked to
+    # reproduce them; CasiMedicos's justification (doctors' free-text
+    # explanation) has no such labels, so stripping is a no-op there.
     return {
         "short_answer": str(
             record.get("reference_short_answer")
             or record.get("short_answer")
             or ""
         ),
-        "evidence": str(record.get("reference_evidence") or record.get("evidence") or ""),
+        "evidence": strip_justification_labels(str(
+            record.get("reference_justification")
+            or record.get("justification")
+            or record.get("reference_evidence")
+            or record.get("evidence")
+            or ""
+        )),
     }
 
 
@@ -349,6 +415,24 @@ def reference_text(record: Mapping[str, Any]) -> str:
         or record.get("short_answer")
         or ""
     )
+
+
+def reference_options_and_correct(record: Mapping[str, Any]) -> tuple[dict, Any]:
+    """(options, correct_option) for a multiple-choice record, or ({}, None)
+    for an open-answer one. Mirrors reference_sections' fallback style:
+    evaluate_predictions.py's enrich_records_with_references attaches
+    reference_options/reference_correct_option freshly at evaluation time
+    (the trimmed mixed dataset, data/processed/guiasalud_casimedicos/*.jsonl,
+    no longer carries a standalone correct_option field, it is folded into
+    short_answer as "<option key>. <option text>" instead, see that
+    function's own comment), falling back to a record that already carries
+    options/correct_option directly (e.g. scripts/patch_mc_accuracy.py's own
+    older ref_index-merge convention, or a dataset predating this schema)."""
+    options = record.get("reference_options") or record.get("options") or {}
+    correct_option = record.get("reference_correct_option")
+    if correct_option is None:
+        correct_option = record.get("correct_option") or record.get("correct_answer")
+    return options, correct_option
 
 
 SECTION_NAMES = ("short_answer", "evidence")
@@ -462,6 +546,7 @@ def evaluate_records(
                 warnings.append(f"{prefix}bertscore_f1 skipped: {exc}")
 
         scored_rows = []
+        mc_scores: list[Optional[float]] = []
         for idx, record in enumerate(records):
             context = context_text(record)
             row: dict[str, Any] = {"id": record.get("id")}
@@ -485,9 +570,21 @@ def evaluate_records(
                     metrics["bertscore_f1"] = None
                 section_metrics[name] = metrics
                 row[name] = metrics
+            # mc_accuracy is only meaningful for the short_answer section (an
+            # option choice, not free text) and only defined for records that
+            # carry options (CasiMedicos, via reference_options_and_correct's
+            # own fallback chain); it is None for open-answer (GuiaSalud)
+            # records, the same "undefined, not 0" convention every other
+            # per-record metric here already uses when a section is empty.
+            options, correct_option = reference_options_and_correct(record)
+            row_mc = mc_accuracy(prediction_sections[idx].get("short_answer", ""), options, correct_option)
+            row["short_answer"]["mc_accuracy"] = percent(row_mc) if row_mc is not None else None
+            row["evidence"]["mc_accuracy"] = None
+            mc_scores.append(row_mc)
             row["overall"] = {
                 metric: overall_section_score(section_metrics, metric) for metric in metric_names
             }
+            row["overall"]["mc_accuracy"] = percent(row_mc) if row_mc is not None else None
             scored_rows.append(row)
 
         scored_summary: dict[str, Any] = {"num_examples": len(records)}
@@ -495,6 +592,10 @@ def evaluate_records(
             scored_summary[name] = {
                 metric: mean_or_none(row[name][metric] for row in scored_rows) for metric in metric_names
             }
+        mc_summary_value = percent(mean_or_none(mc_scores)) if any(v is not None for v in mc_scores) else None
+        scored_summary["short_answer"]["mc_accuracy"] = mc_summary_value
+        scored_summary["evidence"]["mc_accuracy"] = None
+        scored_summary["overall"]["mc_accuracy"] = mc_summary_value
         return scored_summary, scored_rows
 
     final_prediction_sections = [parsed_prediction_sections(record) for record in records]

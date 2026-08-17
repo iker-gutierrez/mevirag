@@ -22,7 +22,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--text-fields",
         nargs="+",
-        default=["topic", "question", "subquestion", "short_answer", "evidence"],
+        default=["guidebook_title", "topic", "subtopic", "question", "focus", "short_answer", "evidence"],
     )
     parser.add_argument("--batch-size", type=int, default=32)
     parser.add_argument("--language", default="es", choices=["es", "eu"])
