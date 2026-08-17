@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=gen-C-eu-abl-5k
-#SBATCH --array=0-11%2
+#SBATCH --array=0-23%2
 #SBATCH --cpus-per-task=8
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -14,14 +14,15 @@
 #SBATCH --mail-user=igutierrez134@ikasle.ehu.eus
 
 # Basque ablation grid, STAGE C = rows 9-10 (domain restriction: GuiaSalud-only
-# retrieval, CasiMedicos-only retrieval) for both models: 2 rows x 2 models =
-# 4 configs x 3 seeds = 12 tasks. `input` stays the full mixed Basque dev set
-# (data/processed/guiasalud_casimedicos_eu/dev.jsonl), only `retrieval_index`
-# is restricted -- same mechanism as the Spanish/Qwen stage C
-# (slurm/guiasalud_ablation_gen_stageC.sh). MUST run after
-# basque5000_ablation_eval_stageB.sh, which rewires these four configs'
-# retrieval_top_k/reranker_model/reranker_top_k to each model's own
-# stage-A+B MeanQ winner (scripts/rewire_basque5000_stage.py --stage C).
+# retrieval, CasiMedicos-only retrieval) for both models: 2 rows x 2 models x
+# 2 (noSF+SF) = 8 configs x 3 seeds = 24 tasks. `input` stays the full mixed
+# Basque dev set (data/processed/guiasalud_casimedicos_eu/dev.jsonl), only
+# `retrieval_index` is restricted -- same mechanism as the Spanish/Qwen
+# stage C (slurm/guiasalud_ablation_gen_stageC.sh). MUST run after
+# basque5000_ablation_eval_stageB.sh, which rewires these configs'
+# retrieval_top_k/reranker_model/reranker_top_k (both noSF and SF variants)
+# to each model's own stage-A+B MeanQ winner
+# (scripts/rewire_basque5000_stage.py --stage C).
 
 set -euo pipefail
 
@@ -30,6 +31,10 @@ CONFIGS=(
   configs/experiments/5019_llama31_8b_rag_domain_casimedicos_e5_rerank5_extractive_guiasalud_dev.json
   configs/experiments/5020_latxa_llama31_8b_rag_domain_guiasalud_e5_rerank5_extractive_guiasalud_dev.json
   configs/experiments/5021_latxa_llama31_8b_rag_domain_casimedicos_e5_rerank5_extractive_guiasalud_dev.json
+  configs/experiments/9009_llama31_8b_rag_domain_guiasalud_e5_rerank5_extractive_guiasalud_sf_dev.json
+  configs/experiments/9010_llama31_8b_rag_domain_casimedicos_e5_rerank5_extractive_guiasalud_sf_dev.json
+  configs/experiments/9020_latxa_llama31_8b_rag_domain_guiasalud_e5_rerank5_extractive_guiasalud_sf_dev.json
+  configs/experiments/9021_latxa_llama31_8b_rag_domain_casimedicos_e5_rerank5_extractive_guiasalud_sf_dev.json
 )
 SEEDS=(42 43 44)
 

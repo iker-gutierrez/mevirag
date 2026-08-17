@@ -64,20 +64,42 @@ FAMILIES_7K = [
      {7: 7016, 8: 7017, 9: 7020, 10: 7021}, 100, QWEN_ENGINE_FIELDS),
 ]
 
+# SF-clone ids, row-ordered (row 0 first, row 10 last) -- see
+# scripts/create_5000_7000_sf_configs.py, which wrote these in this exact
+# order from the noSF ids above.
+SF_ROW_ORDER = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+SF_START_ID = {
+    "qwen35_9b_no_think": 10000,
+    "qwen35_9b_think": 10011,
+}
 
-def candidates_all_rows(name_template: str, start_id: int, explicit_ids: dict) -> dict:
+
+def sf_run_id(family_key: str, row: int) -> int:
+    return SF_START_ID[family_key] + SF_ROW_ORDER.index(row)
+
+
+def candidates_all_rows(family_key: str, name_template: str, start_id: int, explicit_ids: dict) -> dict:
     candidates = {}
     for row in range(0, len(CELLS)):
         cell_slug, cell_label, _ = CELLS[row]
         run_id = start_id + row if row <= 6 else explicit_ids[row]
         base = name_template.format(cell=cell_slug)
         candidates[cell_label] = (str(run_id), base)
+
+        sf_id = sf_run_id(family_key, row)
+        assert base.endswith("_dev"), f"expected base to end in _dev, got {base!r}"
+        sf_base = base[: -len("_dev")] + "_sf_dev"
+        candidates[f"{cell_label} (SF)"] = (str(sf_id), sf_base, True)
     return candidates
 
 
 def retrieving_pool(candidates: dict) -> dict:
     excluded = {CELLS[row][1] for row in range(0, len(CELLS)) if row in NON_RETRIEVING_ROWS}
-    return {k: v for k, v in candidates.items() if k not in excluded}
+
+    def base_label(label: str) -> str:
+        return label[: -len(" (SF)")] if label.endswith(" (SF)") else label
+
+    return {k: v for k, v in candidates.items() if base_label(k) not in excluded}
 
 
 def config_path(prefix: str, base: str) -> Path:
@@ -93,7 +115,7 @@ def main() -> None:
     selection = {}
     for family_key, model_tag, name_template, start_id, explicit_ids, id_offset, engine_fields in FAMILIES_7K:
         print(f"=== {family_key} (ALL_ROWS 0-10 final selection) ===")
-        candidates = candidates_all_rows(name_template, start_id, explicit_ids)
+        candidates = candidates_all_rows(family_key, name_template, start_id, explicit_ids)
         pool = retrieving_pool(candidates)
 
         winner, stats = best_by_meanq_robust(pool)
@@ -101,7 +123,7 @@ def main() -> None:
             print(f"  SKIP {family_key}: no metrics for any retrieving candidate yet")
             continue
 
-        winner_prefix, winner_base = pool[winner]
+        winner_prefix, winner_base = pool[winner][0], pool[winner][1]
         print(f"  winner: {winner} (id {winner_prefix}, MeanQ {stats[winner]['mean']:.2f})")
 
         winning_config_path = config_path(winner_prefix, winner_base)

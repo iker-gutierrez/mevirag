@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 """Stage B/C rewiring for the fresh 7000-series Qwen3.5-9B GuiaSalud rerun
-(configs/experiments/7000-7021), scoped standalone rather than editing
-scripts/guiasalud_meanq.py's own FAMILIES (start_id 3281/3290, hardcoded and
-used by the Basque/Llama/Latxa path too, which must not be disturbed).
+(configs/experiments/7000-7021 noSF, 10000-10021 SF clones), scoped
+standalone rather than editing scripts/guiasalud_meanq.py's own FAMILIES
+(start_id 3281/3290, hardcoded and used by the Basque/Llama/Latxa path too,
+which must not be disturbed).
 
 Reruns the exact staged procedure of scripts/rewire_guiasalud_stage.py against
 the fresh ids only, after (1) adding dash bullets to format_question()'s
@@ -12,13 +13,20 @@ data-quality bug (a genuine content change to one gold record's evidence/
 justification, not just formatting). The original 3281-3320 configs and
 their predictions are left untouched.
 
-id layout (name_template.format(cell=...) + row offset, no SF yet):
-  qwen35_9b_no_think  row 0-6  -> 7000-7006
-  qwen35_9b_think     row 0-6  -> 7007-7013
-  qwen35_9b_no_think  row 7-8  -> 7014-7015
-  qwen35_9b_think     row 7-8  -> 7016-7017
-  qwen35_9b_no_think  row 9-10 -> 7018-7019 (explicit, not start_id+row)
-  qwen35_9b_think     row 9-10 -> 7020-7021 (explicit, not start_id+row)
+Includes self-feedback candidates in the pool (each row contributes both a
+plain candidate and a "(SF)"-suffixed one, read from the SF-clone config's
+own after_feedback block), mirroring scripts/guiasalud_meanq.py's
+family_candidates(include_sf=True): omitting SF would let a noSF row win by
+construction whenever it happens to be evaluated first, even if that row's
+own SF variant scores higher, contradicting the manuscript's own stated rule
+that self-feedback is applied only where it is a row's own dev-set MeanQ-
+winning state (sec:results-test).
+
+id layout (name_template.format(cell=...) + row offset):
+  noSF: qwen35_9b_no_think row 0-6 -> 7000-7006, row 7-8 -> 7014-7015, row 9-10 -> 7018-7019 (explicit)
+        qwen35_9b_think    row 0-6 -> 7007-7013, row 7-8 -> 7016-7017, row 9-10 -> 7020-7021 (explicit)
+  SF:   qwen35_9b_no_think rows 0-10 -> 10000-10010 (row-ordered, one clone per noSF row above)
+        qwen35_9b_think    rows 0-10 -> 10011-10021 (row-ordered)
 
 Usage:
     python scripts/rewire_qwen7000_stage.py --stage B
@@ -66,6 +74,15 @@ ROW_9_10_IDS = {
     "qwen35_9b_think": {9: 7020, 10: 7021},
 }
 
+# SF-clone ids, row-ordered (row 0 first, row 10 last), one block per family
+# -- see scripts/create_5000_7000_sf_configs.py, which wrote these in this
+# exact order from the noSF ids above.
+SF_ROW_ORDER = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+SF_START_ID = {
+    "qwen35_9b_no_think": 10000,
+    "qwen35_9b_think": 10011,
+}
+
 STAGES = {
     "B": {
         "pool_rows": range(0, 7),
@@ -86,6 +103,10 @@ def config_path(prefix: str, base: str) -> Path:
     return CONFIG_DIR / f"{prefix}_{base}.json"
 
 
+def sf_run_id(family_key: str, row: int) -> int:
+    return SF_START_ID[family_key] + SF_ROW_ORDER.index(row)
+
+
 def candidates_7k(family_key: str, name_template: str, start_id: int, rows) -> dict:
     candidates = {}
     for row in rows:
@@ -100,12 +121,21 @@ def candidates_7k(family_key: str, name_template: str, start_id: int, rows) -> d
             raise ValueError(f"unexpected row {row}")
         base = name_template.format(cell=cell_slug)
         candidates[cell_label] = (str(run_id), base)
+
+        sf_id = sf_run_id(family_key, row)
+        assert base.endswith("_dev"), f"expected base to end in _dev, got {base!r}"
+        sf_base = base[: -len("_dev")] + "_sf_dev"
+        candidates[f"{cell_label} (SF)"] = (str(sf_id), sf_base, True)
     return candidates
 
 
 def retrieving_pool(candidates: dict, pool_rows) -> dict:
     excluded = {CELLS[row][1] for row in pool_rows if row in NON_RETRIEVING_ROWS}
-    return {k: v for k, v in candidates.items() if k not in excluded}
+
+    def base_label(label: str) -> str:
+        return label[: -len(" (SF)")] if label.endswith(" (SF)") else label
+
+    return {k: v for k, v in candidates.items() if base_label(k) not in excluded}
 
 
 def base_fields_of(prefix: str, base: str) -> dict:
@@ -146,7 +176,8 @@ def main() -> None:
             print(f"  SKIP {family_label}: no metrics for any retrieving candidate yet")
             continue
 
-        winner_prefix, winner_base = pool[winner]
+        winner_spec = pool[winner]
+        winner_prefix, winner_base = winner_spec[0], winner_spec[1]
         print(f"  winner: {winner} (id {winner_prefix}, MeanQ {stats[winner]['mean']:.2f})")
         fields = base_fields_of(winner_prefix, winner_base)
 
@@ -159,6 +190,11 @@ def main() -> None:
             target_base = name_template.format(cell=cell_slug)
             changed = apply_base(str(target_id), target_base, fields, dry_run=args.dry_run)
             any_changed = any_changed or changed
+
+            target_sf_id = sf_run_id(family_key, target_row)
+            target_sf_base = target_base[: -len("_dev")] + "_sf_dev"
+            changed_sf = apply_base(str(target_sf_id), target_sf_base, fields, dry_run=args.dry_run)
+            any_changed = any_changed or changed_sf
         print()
 
     if args.dry_run:

@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=gen-B-es-abl-7k
-#SBATCH --array=0-11%2
+#SBATCH --array=0-23%2
 #SBATCH --cpus-per-task=8
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -14,9 +14,10 @@
 #SBATCH --mail-user=igutierrez134@ikasle.ehu.eus
 
 # Spanish/Qwen ablation grid, STAGE B = rows 7-8 (3-shot no RAG, 3-shot +
-# best RAG) for both variants: 2 rows x 2 variants = 4 configs x 3 seeds =
-# 12 tasks. MUST run after qwen7000_ablation_eval_stageA.sh, which rewires
-# row 8's retrieval fields to each variant's own stage-A MeanQ winner
+# best RAG) for both variants: 2 rows x 2 variants x 2 (noSF+SF) = 8
+# configs x 3 seeds = 24 tasks. MUST run after
+# qwen7000_ablation_eval_stageA.sh, which rewires row 8's retrieval fields
+# (both noSF and SF variants) to each variant's own stage-A MeanQ winner
 # (scripts/rewire_qwen7000_stage.py --stage B).
 
 set -euo pipefail
@@ -26,6 +27,10 @@ CONFIGS=(
   configs/experiments/7015_qwen35_9b_rag_3shot_e5_rerank5_no_think_extractive_guiasalud_dev.json
   configs/experiments/7016_qwen35_9b_3shot_no_rag_think_extractive_guiasalud_dev.json
   configs/experiments/7017_qwen35_9b_rag_3shot_e5_rerank5_think_extractive_guiasalud_dev.json
+  configs/experiments/10007_qwen35_9b_3shot_no_rag_no_think_extractive_guiasalud_sf_dev.json
+  configs/experiments/10008_qwen35_9b_rag_3shot_e5_rerank5_no_think_extractive_guiasalud_sf_dev.json
+  configs/experiments/10018_qwen35_9b_3shot_no_rag_think_extractive_guiasalud_sf_dev.json
+  configs/experiments/10019_qwen35_9b_rag_3shot_e5_rerank5_think_extractive_guiasalud_sf_dev.json
 )
 SEEDS=(42 43 44)
 

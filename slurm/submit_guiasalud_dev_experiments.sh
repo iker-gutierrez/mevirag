@@ -11,21 +11,28 @@
 # Spanish (Qwen3.5-9B no-think/think) and Basque (Llama-3.1-8B-Instruct /
 # Latxa-Llama-3.1-8B-Instruct) run as two independent, parallel chains, both
 # sharing the account's 2-GPU cap via each Slurm array's own %2 throttle.
-# Each chain is fully self-contained:
+# Each chain is fully self-contained. Every stage's generation step includes
+# BOTH the noSF config and its self_feedback=true clone for each row, so the
+# MeanQ selection at the end of each stage is choosing from a pool where
+# every row's noSF and SF variant both have real predictions to compare
+# (the manuscript's own rule: the best config per stage is whichever variant
+# -- noSF or SF -- of any row actually wins the decision algorithm, not
+# necessarily the noSF one; see scripts/rewire_basque5000_stage.py /
+# rewire_qwen7000_stage.py / finalize_*_and_write_rp_configs.py docstrings):
 #
 #   indices (parallel, no deps)
-#     -> stage A gen (14 configs x 3 seeds = 42) -> stage A eval + rewire B
-#     -> stage B gen (4 configs x 3 seeds = 12)  -> stage B eval + rewire C
-#     -> stage C gen (4 configs x 3 seeds = 12)  -> stage C eval + final
-#        ALL_ROWS (0-10) MeanQ selection + reasoning-pipeline config write
+#     -> stage A gen (14 configs x 2 [noSF+SF] x 3 seeds = 84) -> stage A eval + rewire B
+#     -> stage B gen (4 configs x 2 [noSF+SF] x 3 seeds = 24)  -> stage B eval + rewire C
+#     -> stage C gen (4 configs x 2 [noSF+SF] x 3 seeds = 24)  -> stage C eval + final
+#        ALL_ROWS (0-10, noSF+SF) MeanQ selection + reasoning-pipeline config write
 #     -> reasoning-pipeline gen (10 configs x 3 seeds = 30)
 #     -> reasoning-pipeline eval
 #
 # Every config/prediction is written at a dedicated id block (5000-5021 +
-# 6000-6204 Basque, 7000-7021 + 8000-8104 Qwen), distinct from any prior
-# round's ids, so nothing here ever overwrites an existing config or
-# prediction file -- safe to run alongside, or after, earlier experiment
-# rounds.
+# 9000-9021 SF clones + 6000-6204 Basque, 7000-7021 + 10000-10021 SF clones
+# + 8000-8104 Qwen), distinct from any prior round's ids, so nothing here
+# ever overwrites an existing config or prediction file -- safe to run
+# alongside, or after, earlier experiment rounds.
 #
 # The Basque/Qwen "5000-series"/"7000-series" naming (and the standalone
 # rewire_basque5000_stage.py / rewire_qwen7000_stage.py / finalize_

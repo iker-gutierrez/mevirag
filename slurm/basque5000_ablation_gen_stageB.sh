@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=gen-B-eu-abl-5k
-#SBATCH --array=0-11%2
+#SBATCH --array=0-23%2
 #SBATCH --cpus-per-task=8
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -14,10 +14,11 @@
 #SBATCH --mail-user=igutierrez134@ikasle.ehu.eus
 
 # Basque ablation grid, STAGE B = rows 7-8 (3-shot no RAG, 3-shot + best RAG)
-# for both models: 2 rows x 2 models = 4 configs x 3 seeds = 12 tasks.
-# MUST run after basque5000_ablation_eval_stageA.sh, which rewires row 8's
-# retrieval fields to each model's own stage-A MeanQ winner
-# (scripts/rewire_basque5000_stage.py --stage B).
+# for both models: 2 rows x 2 models x 2 (noSF+SF) = 8 configs x 3 seeds =
+# 24 tasks. MUST run after basque5000_ablation_eval_stageA.sh, which
+# rewires row 8's retrieval fields (both noSF and SF variants) to each
+# model's own stage-A MeanQ winner (scripts/rewire_basque5000_stage.py
+# --stage B).
 
 set -euo pipefail
 
@@ -26,6 +27,10 @@ CONFIGS=(
   configs/experiments/5015_llama31_8b_rag_3shot_e5_rerank5_extractive_guiasalud_dev.json
   configs/experiments/5016_latxa_llama31_8b_3shot_no_rag_extractive_guiasalud_dev.json
   configs/experiments/5017_latxa_llama31_8b_rag_3shot_e5_rerank5_extractive_guiasalud_dev.json
+  configs/experiments/9007_llama31_8b_3shot_no_rag_extractive_guiasalud_sf_dev.json
+  configs/experiments/9008_llama31_8b_rag_3shot_e5_rerank5_extractive_guiasalud_sf_dev.json
+  configs/experiments/9018_latxa_llama31_8b_3shot_no_rag_extractive_guiasalud_sf_dev.json
+  configs/experiments/9019_latxa_llama31_8b_rag_3shot_e5_rerank5_extractive_guiasalud_sf_dev.json
 )
 SEEDS=(42 43 44)
 
