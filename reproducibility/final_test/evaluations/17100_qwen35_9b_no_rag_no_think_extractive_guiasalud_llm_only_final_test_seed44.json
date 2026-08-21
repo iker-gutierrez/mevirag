@@ -9,29 +9,29 @@
       "cosine_similarity": null,
       "answer_context_token_f1": null,
       "gold_context_token_f1": null,
-      "bertscore_f1": 74.21633462905884,
+      "bertscore_f1": 74.21633431911468,
       "mc_accuracy": 76.0
     },
     "evidence": {
       "token_precision": 20.434026363364616,
-      "token_recall": 44.36177350686694,
-      "token_overlap_f1": 24.24854454859537,
-      "rouge_l_f1": 12.925367843800801,
+      "token_recall": 44.36183970926805,
+      "token_overlap_f1": 24.248623949828634,
+      "rouge_l_f1": 12.925407544417434,
       "cosine_similarity": null,
       "answer_context_token_f1": null,
       "gold_context_token_f1": null,
-      "bertscore_f1": 67.6717411518097,
+      "bertscore_f1": 67.67174112796783,
       "mc_accuracy": null
     },
     "overall": {
       "token_precision": 27.22857073451358,
-      "token_recall": 49.783590321202254,
-      "token_overlap_f1": 30.915359553858607,
-      "rouge_l_f1": 25.04841606784589,
+      "token_recall": 49.78362342240281,
+      "token_overlap_f1": 30.91539925447524,
+      "rouge_l_f1": 25.048435918154205,
       "cosine_similarity": null,
       "answer_context_token_f1": null,
       "gold_context_token_f1": null,
-      "bertscore_f1": 70.94403789043426,
+      "bertscore_f1": 70.94403772354126,
       "mc_accuracy": 76.0
     },
     "cost": {
@@ -138,29 +138,29 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 75.04501054286956,
+        "bertscore_f1": 75.04501035213471,
         "mc_accuracy": 76.0
       },
       "evidence": {
         "token_precision": 20.19161261810078,
-        "token_recall": 45.98859716389517,
-        "token_overlap_f1": 24.165351660120955,
-        "rouge_l_f1": 12.859819267716874,
+        "token_recall": 45.98865742505516,
+        "token_overlap_f1": 24.165430554269452,
+        "rouge_l_f1": 12.85986260393929,
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 67.65407221317291,
+        "bertscore_f1": 67.65407218933106,
         "mc_accuracy": null
       },
       "overall": {
         "token_precision": 27.560057830119515,
-        "token_recall": 50.35548846211573,
-        "token_overlap_f1": 31.371683800886675,
-        "rouge_l_f1": 25.449382349300357,
+        "token_recall": 50.355518592695724,
+        "token_overlap_f1": 31.371723247960922,
+        "rouge_l_f1": 25.449404017411563,
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 71.34954137802124,
+        "bertscore_f1": 71.34954127073289,
         "mc_accuracy": 76.0
       }
     },
@@ -174,29 +174,29 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 74.21633462905884,
+        "bertscore_f1": 74.21633431911468,
         "mc_accuracy": 76.0
       },
       "evidence": {
         "token_precision": 20.434026363364616,
-        "token_recall": 44.36177350686694,
-        "token_overlap_f1": 24.24854454859537,
-        "rouge_l_f1": 12.925367843800801,
+        "token_recall": 44.36183970926805,
+        "token_overlap_f1": 24.248623949828634,
+        "rouge_l_f1": 12.925407544417434,
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 67.6717411518097,
+        "bertscore_f1": 67.67174112796783,
         "mc_accuracy": null
       },
       "overall": {
         "token_precision": 27.22857073451358,
-        "token_recall": 49.783590321202254,
-        "token_overlap_f1": 30.915359553858607,
-        "rouge_l_f1": 25.04841606784589,
+        "token_recall": 49.78362342240281,
+        "token_overlap_f1": 30.91539925447524,
+        "rouge_l_f1": 25.048435918154205,
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 70.94403789043426,
+        "bertscore_f1": 70.94403772354126,
         "mc_accuracy": 76.0
       }
     },
@@ -209,27 +209,27 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": -0.8286759138107271
+        "bertscore_f1": -0.8286760330200309
       },
       "evidence": {
         "token_precision": 0.24241374526383552,
-        "token_recall": -1.6268236570282326,
-        "token_overlap_f1": 0.08319288847441442,
-        "rouge_l_f1": 0.06554857608392695,
+        "token_recall": -1.6268177157871122,
+        "token_overlap_f1": 0.08319339555918148,
+        "rouge_l_f1": 0.0655449404781443,
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 0.01766893863678831
+        "bertscore_f1": 0.0176689386367741
       },
       "overall": {
         "token_precision": -0.3314870956059366,
-        "token_recall": -0.5718981409134756,
-        "token_overlap_f1": -0.45632424702806773,
-        "rouge_l_f1": -0.400966281454469,
+        "token_recall": -0.5718951702929118,
+        "token_overlap_f1": -0.4563239934856824,
+        "rouge_l_f1": -0.40096809925735855,
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": -0.4055034875869836
+        "bertscore_f1": -0.4055035471916284
       }
     }
   },
@@ -604,7 +604,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 64.3543004989624,
+        "bertscore_f1": 64.35429453849792,
         "mc_accuracy": null
       },
       "evidence": {
@@ -626,7 +626,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 65.52449464797974,
+        "bertscore_f1": 65.5244916677475,
         "mc_accuracy": null
       },
       "cost": {
@@ -690,7 +690,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -2.9097437858581543
+          "bertscore_f1": -2.909749746322632
         },
         "evidence": {
           "token_precision": 1.6328011611030497,
@@ -710,7 +710,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -1.8040388822555542
+          "bertscore_f1": -1.804041862487793
         }
       }
     },
@@ -775,7 +775,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 63.19241523742676,
+          "bertscore_f1": 63.192421197891235,
           "mc_accuracy": null
         },
         "evidence": {
@@ -797,7 +797,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 66.15577638149261,
+          "bertscore_f1": 66.15577936172485,
           "mc_accuracy": null
         }
       },
@@ -810,7 +810,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -0.7441341876983643
+          "bertscore_f1": -0.7441401481628418
         },
         "evidence": {
           "token_precision": 0.9428387235414206,
@@ -830,7 +830,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -1.7336905002593994
+          "bertscore_f1": -1.7336934804916382
         }
       }
     },
@@ -844,7 +844,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 59.85953211784363,
+        "bertscore_f1": 59.85954999923706,
         "mc_accuracy": null
       },
       "evidence": {
@@ -866,7 +866,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 63.43791484832764,
+        "bertscore_f1": 63.43792378902435,
         "mc_accuracy": null
       },
       "cost": {
@@ -930,7 +930,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -1.5562474727630615
+          "bertscore_f1": -1.556229591369629
         },
         "evidence": {
           "token_precision": -1.3605442176870763,
@@ -950,7 +950,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -0.8276849985122681
+          "bertscore_f1": -0.8276760578155518
         }
       }
     },
@@ -1015,7 +1015,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 60.20830273628235,
+          "bertscore_f1": 60.208314657211304,
           "mc_accuracy": null
         },
         "evidence": {
@@ -1037,7 +1037,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 63.661691546440125,
+          "bertscore_f1": 63.6616975069046,
           "mc_accuracy": null
         }
       },
@@ -1050,7 +1050,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -1.4447808265686035
+          "bertscore_f1": -1.4447927474975586
         },
         "evidence": {
           "token_precision": 1.60818713450292,
@@ -1070,7 +1070,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -0.9051978588104248
+          "bertscore_f1": -0.9052038192749023
         }
       }
     },
@@ -2575,7 +2575,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 57.028841972351074,
+          "bertscore_f1": 57.0288360118866,
           "mc_accuracy": null
         },
         "evidence": {
@@ -2597,7 +2597,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 61.46636605262756,
+          "bertscore_f1": 61.466363072395325,
           "mc_accuracy": null
         }
       },
@@ -2610,7 +2610,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 1.5802383422851562
+          "bertscore_f1": 1.5802443027496338
         },
         "evidence": {
           "token_precision": -1.8885306310456018,
@@ -2630,7 +2630,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -0.40245354175567627
+          "bertscore_f1": -0.4024505615234375
         }
       }
     },
@@ -2764,7 +2764,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 57.105833292007446,
+        "bertscore_f1": 57.105857133865356,
         "mc_accuracy": null
       },
       "evidence": {
@@ -2786,7 +2786,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 61.47531867027283,
+        "bertscore_f1": 61.47533059120178,
         "mc_accuracy": null
       },
       "cost": {
@@ -2815,7 +2815,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 57.210469245910645,
+          "bertscore_f1": 57.21047520637512,
           "mc_accuracy": null
         },
         "evidence": {
@@ -2837,7 +2837,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 63.03490400314331,
+          "bertscore_f1": 63.03490698337555,
           "mc_accuracy": null
         }
       },
@@ -2850,7 +2850,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -0.10463595390319824
+          "bertscore_f1": -0.10461807250976562
         },
         "evidence": {
           "token_precision": 0.6521739130434767,
@@ -2870,7 +2870,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -1.5595853328704834
+          "bertscore_f1": -1.559576392173767
         }
       }
     },
@@ -2884,7 +2884,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 73.89177083969116,
+        "bertscore_f1": 73.89177680015564,
         "mc_accuracy": null
       },
       "evidence": {
@@ -2906,7 +2906,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 70.03510296344757,
+        "bertscore_f1": 70.03510594367981,
         "mc_accuracy": null
       },
       "cost": {
@@ -2970,7 +2970,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -0.3386080265045166
+          "bertscore_f1": -0.33860206604003906
         },
         "evidence": {
           "token_precision": -1.2458471760797334,
@@ -2990,7 +2990,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -0.6186425685882568
+          "bertscore_f1": -0.6186395883560181
         }
       }
     },
@@ -3004,7 +3004,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 62.3718798160553,
+        "bertscore_f1": 62.37187385559082,
         "mc_accuracy": null
       },
       "evidence": {
@@ -3026,7 +3026,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 62.9662811756134,
+        "bertscore_f1": 62.966278195381165,
         "mc_accuracy": null
       },
       "cost": {
@@ -3090,7 +3090,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -0.12819170951843262
+          "bertscore_f1": -0.12819766998291016
         },
         "evidence": {
           "token_precision": -4.928404928404927,
@@ -3110,7 +3110,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -0.9357213973999023
+          "bertscore_f1": -0.9357243776321411
         }
       }
     },
@@ -3124,7 +3124,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 73.94830584526062,
+        "bertscore_f1": 73.94829988479614,
         "mc_accuracy": null
       },
       "evidence": {
@@ -3146,7 +3146,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 70.23863196372986,
+        "bertscore_f1": 70.23862898349762,
         "mc_accuracy": null
       },
       "cost": {
@@ -3210,7 +3210,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 1.9970417022705078
+          "bertscore_f1": 1.9970357418060303
         },
         "evidence": {
           "token_precision": -1.3447919153338113,
@@ -3230,7 +3230,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -0.5330264568328857
+          "bertscore_f1": -0.5330294370651245
         }
       }
     },
@@ -3484,7 +3484,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 58.3942711353302,
+        "bertscore_f1": 58.39427709579468,
         "mc_accuracy": null
       },
       "evidence": {
@@ -3506,7 +3506,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 60.73288023471832,
+        "bertscore_f1": 60.73288321495056,
         "mc_accuracy": null
       },
       "cost": {
@@ -3570,7 +3570,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -1.6101062297821045
+          "bertscore_f1": -1.610100269317627
         },
         "evidence": {
           "token_precision": 0.12055455093429757,
@@ -3590,7 +3590,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -0.8631229400634766
+          "bertscore_f1": -0.8631199598312378
         }
       }
     },
@@ -3604,7 +3604,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 55.05684018135071,
+        "bertscore_f1": 55.05683422088623,
         "mc_accuracy": null
       },
       "evidence": {
@@ -3626,7 +3626,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 60.11165380477905,
+        "bertscore_f1": 60.111650824546814,
         "mc_accuracy": null
       },
       "cost": {
@@ -3690,7 +3690,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -2.0068764686584473
+          "bertscore_f1": -2.006882429122925
         },
         "evidence": {
           "token_precision": -1.9393939393939394,
@@ -3710,7 +3710,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -0.4056185483932495
+          "bertscore_f1": -0.4056215286254883
         }
       }
     },
@@ -3775,7 +3775,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 66.68597459793091,
+          "bertscore_f1": 66.68598055839539,
           "mc_accuracy": null
         },
         "evidence": {
@@ -3797,7 +3797,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 67.21722483634949,
+          "bertscore_f1": 67.21722781658173,
           "mc_accuracy": null
         }
       },
@@ -3810,7 +3810,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 0.3155231475830078
+          "bertscore_f1": 0.3155171871185303
         },
         "evidence": {
           "token_precision": 0.5172413793103452,
@@ -3830,7 +3830,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 0.023540854454040527
+          "bertscore_f1": 0.023537874221801758
         }
       }
     },
@@ -3964,7 +3964,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 76.47851705551147,
+        "bertscore_f1": 76.478511095047,
         "mc_accuracy": null
       },
       "evidence": {
@@ -3986,7 +3986,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 73.13893437385559,
+        "bertscore_f1": 73.13893139362335,
         "mc_accuracy": null
       },
       "cost": {
@@ -4050,7 +4050,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 5.9604644775390625e-06
+          "bertscore_f1": 0.0
         },
         "evidence": {
           "token_precision": -2.005380288579115,
@@ -4070,7 +4070,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -0.14100074768066406
+          "bertscore_f1": -0.14100372791290283
         }
       }
     },
@@ -4266,7 +4266,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 70.80981135368347,
+          "bertscore_f1": 70.809805393219,
           "mc_accuracy": null
         },
         "overall": {
@@ -4277,7 +4277,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 63.469380140304565,
+          "bertscore_f1": 63.46937716007233,
           "mc_accuracy": null
         }
       },
@@ -4300,7 +4300,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -1.5240073204040527
+          "bertscore_f1": -1.5240013599395752
         },
         "overall": {
           "token_precision": -0.12738853503184622,
@@ -4310,7 +4310,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -0.6731927394866943
+          "bertscore_f1": -0.6731897592544556
         }
       }
     },
@@ -4324,7 +4324,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 77.54055857658386,
+        "bertscore_f1": 77.54055261611938,
         "mc_accuracy": null
       },
       "evidence": {
@@ -4346,7 +4346,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 70.0868159532547,
+        "bertscore_f1": 70.08681297302246,
         "mc_accuracy": null
       },
       "cost": {
@@ -4410,7 +4410,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 0.0
+          "bertscore_f1": -5.9604644775390625e-06
         },
         "evidence": {
           "token_precision": -1.2457451661578416,
@@ -4430,7 +4430,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -0.8613705635070801
+          "bertscore_f1": -0.8613735437393188
         }
       }
     },
@@ -4444,7 +4444,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 77.54055857658386,
+        "bertscore_f1": 77.54055261611938,
         "mc_accuracy": null
       },
       "evidence": {
@@ -4466,7 +4466,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 74.0427166223526,
+        "bertscore_f1": 74.04271364212036,
         "mc_accuracy": null
       },
       "cost": {
@@ -4530,7 +4530,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 0.0
+          "bertscore_f1": -5.9604644775390625e-06
         },
         "evidence": {
           "token_precision": -8.631308810949538,
@@ -4550,7 +4550,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -0.4369884729385376
+          "bertscore_f1": -0.43699145317077637
         }
       }
     },
@@ -4615,7 +4615,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 74.17359948158264,
+          "bertscore_f1": 74.17359352111816,
           "mc_accuracy": null
         },
         "evidence": {
@@ -4637,7 +4637,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 72.3728209733963,
+          "bertscore_f1": 72.37281799316406,
           "mc_accuracy": null
         }
       },
@@ -4650,7 +4650,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -7.309317588806152
+          "bertscore_f1": -7.309311628341675
         },
         "evidence": {
           "token_precision": -3.308080808080806,
@@ -4670,7 +4670,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -5.320554971694946
+          "bertscore_f1": -5.3205519914627075
         }
       }
     },
@@ -4975,7 +4975,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 66.57983660697937,
+          "bertscore_f1": 66.57982468605042,
           "mc_accuracy": null
         },
         "evidence": {
@@ -4997,7 +4997,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 67.38662719726562,
+          "bertscore_f1": 67.38662123680115,
           "mc_accuracy": null
         }
       },
@@ -5010,7 +5010,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -5.212545394897461
+          "bertscore_f1": -5.212533473968506
         },
         "evidence": {
           "token_precision": 1.9263698630136972,
@@ -5030,7 +5030,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -3.553369641304016
+          "bertscore_f1": -3.5533636808395386
         }
       }
     },
@@ -5164,7 +5164,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 58.86939764022827,
+        "bertscore_f1": 58.869385719299316,
         "mc_accuracy": null
       },
       "evidence": {
@@ -5186,7 +5186,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 64.13040459156036,
+        "bertscore_f1": 64.13039863109589,
         "mc_accuracy": null
       },
       "cost": {
@@ -5250,7 +5250,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -1.7740190029144287
+          "bertscore_f1": -1.7740309238433838
         },
         "evidence": {
           "token_precision": -2.9182556789918763,
@@ -5270,7 +5270,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -0.79689621925354
+          "bertscore_f1": -0.7969021797180176
         }
       }
     },
@@ -5455,7 +5455,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 56.41314387321472,
+          "bertscore_f1": 56.41313195228577,
           "mc_accuracy": null
         },
         "evidence": {
@@ -5477,7 +5477,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 61.66801154613495,
+          "bertscore_f1": 61.66800558567047,
           "mc_accuracy": null
         }
       },
@@ -5490,7 +5490,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 0.7733047008514404
+          "bertscore_f1": 0.7733166217803955
         },
         "evidence": {
           "token_precision": -3.8561847988077496,
@@ -5510,7 +5510,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -0.7204622030258179
+          "bertscore_f1": -0.7204562425613403
         }
       }
     },
@@ -5529,9 +5529,9 @@
       },
       "evidence": {
         "token_precision": 39.0,
-        "token_recall": 11.353711790393014,
-        "token_overlap_f1": 17.587373167981962,
-        "rouge_l_f1": 8.793686583990981,
+        "token_recall": 11.370262390670554,
+        "token_overlap_f1": 17.60722347629797,
+        "rouge_l_f1": 8.803611738148986,
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
@@ -5540,9 +5540,9 @@
       },
       "overall": {
         "token_precision": 19.5,
-        "token_recall": 5.676855895196507,
-        "token_overlap_f1": 8.793686583990981,
-        "rouge_l_f1": 4.3968432919954905,
+        "token_recall": 5.685131195335277,
+        "token_overlap_f1": 8.803611738148986,
+        "rouge_l_f1": 4.401805869074493,
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
@@ -5575,14 +5575,14 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 60.646629333496094,
+          "bertscore_f1": 60.646623373031616,
           "mc_accuracy": null
         },
         "evidence": {
           "token_precision": 43.82716049382716,
-          "token_recall": 10.334788937409025,
-          "token_overlap_f1": 16.725559481743225,
-          "rouge_l_f1": 9.187279151943462,
+          "token_recall": 10.349854227405247,
+          "token_overlap_f1": 16.745283018867923,
+          "rouge_l_f1": 9.19811320754717,
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
@@ -5591,13 +5591,13 @@
         },
         "overall": {
           "token_precision": 21.91358024691358,
-          "token_recall": 5.167394468704512,
-          "token_overlap_f1": 8.362779740871613,
-          "rouge_l_f1": 4.593639575971731,
+          "token_recall": 5.174927113702624,
+          "token_overlap_f1": 8.372641509433961,
+          "rouge_l_f1": 4.599056603773585,
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 62.281930446624756,
+          "bertscore_f1": 62.28192746639252,
           "mc_accuracy": null
         }
       },
@@ -5610,13 +5610,13 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -1.5991687774658203
+          "bertscore_f1": -1.5991628170013428
         },
         "evidence": {
           "token_precision": -4.827160493827158,
-          "token_recall": 1.018922852983989,
-          "token_overlap_f1": 0.8618136862387367,
-          "rouge_l_f1": -0.39359256795248143,
+          "token_recall": 1.0204081632653068,
+          "token_overlap_f1": 0.8619404574300482,
+          "rouge_l_f1": -0.3945014693981843,
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
@@ -5624,13 +5624,13 @@
         },
         "overall": {
           "token_precision": -2.413580246913579,
-          "token_recall": 0.5094614264919946,
-          "token_overlap_f1": 0.43090684311936833,
-          "rouge_l_f1": -0.19679628397624072,
+          "token_recall": 0.5102040816326534,
+          "token_overlap_f1": 0.4309702287150241,
+          "rouge_l_f1": -0.19725073469909216,
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -1.6362637281417847
+          "bertscore_f1": -1.636260747909546
         }
       }
     },
@@ -5644,7 +5644,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 56.90585970878601,
+        "bertscore_f1": 56.90586566925049,
         "mc_accuracy": null
       },
       "evidence": {
@@ -5666,7 +5666,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 62.20993399620056,
+        "bertscore_f1": 62.2099369764328,
         "mc_accuracy": null
       },
       "cost": {
@@ -5730,7 +5730,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 0.16453266143798828
+          "bertscore_f1": 0.16453862190246582
         },
         "evidence": {
           "token_precision": 3.6966539771588884,
@@ -5750,7 +5750,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 0.8354634046554565
+          "bertscore_f1": 0.8354663848876953
         }
       }
     },
@@ -6175,7 +6175,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 60.29399037361145,
+          "bertscore_f1": 60.29398441314697,
           "mc_accuracy": null
         },
         "evidence": {
@@ -6197,7 +6197,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 64.65327441692352,
+          "bertscore_f1": 64.65327143669128,
           "mc_accuracy": null
         }
       },
@@ -6210,7 +6210,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -2.3740172386169434
+          "bertscore_f1": -2.374011278152466
         },
         "evidence": {
           "token_precision": -0.41920834117109607,
@@ -6230,7 +6230,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -0.42877197265625
+          "bertscore_f1": -0.42876899242401123
         }
       }
     },
@@ -6295,7 +6295,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 50.661492347717285,
+          "bertscore_f1": 50.66148042678833,
           "mc_accuracy": null
         },
         "evidence": {
@@ -6317,7 +6317,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 57.07971453666687,
+          "bertscore_f1": 57.07970857620239,
           "mc_accuracy": null
         }
       },
@@ -6330,7 +6330,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 6.844204664230347
+          "bertscore_f1": 6.844216585159302
         },
         "evidence": {
           "token_precision": -0.15352139704471313,
@@ -6350,7 +6350,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 3.239130973815918
+          "bertscore_f1": 3.2391369342803955
         }
       }
     },
@@ -6775,7 +6775,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 61.061644554138184,
+          "bertscore_f1": 61.06163263320923,
           "mc_accuracy": null
         },
         "evidence": {
@@ -6797,7 +6797,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 60.314080119132996,
+          "bertscore_f1": 60.31407415866852,
           "mc_accuracy": null
         }
       },
@@ -6810,7 +6810,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -3.7301182746887207
+          "bertscore_f1": -3.7301063537597656
         },
         "evidence": {
           "token_precision": -2.388250319284804,
@@ -6830,7 +6830,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -1.5433579683303833
+          "bertscore_f1": -1.5433520078659058
         }
       }
     },
@@ -6964,7 +6964,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 59.15812849998474,
+        "bertscore_f1": 59.158122539520264,
         "mc_accuracy": null
       },
       "evidence": {
@@ -6986,7 +6986,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 63.045480847358704,
+        "bertscore_f1": 63.045477867126465,
         "mc_accuracy": null
       },
       "cost": {
@@ -7050,7 +7050,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 0.04056096076965332
+          "bertscore_f1": 0.04055500030517578
         },
         "evidence": {
           "token_precision": 0.6535947712418295,
@@ -7070,7 +7070,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 0.7662266492843628
+          "bertscore_f1": 0.766223669052124
         }
       }
     },
@@ -7255,7 +7255,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 60.41690707206726,
+          "bertscore_f1": 60.416918992996216,
           "mc_accuracy": null
         },
         "evidence": {
@@ -7277,7 +7277,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 61.828890442848206,
+          "bertscore_f1": 61.82889640331268,
           "mc_accuracy": null
         }
       },
@@ -7290,7 +7290,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -0.4962801933288574
+          "bertscore_f1": -0.4962921142578125
         },
         "evidence": {
           "token_precision": 0.26206520999251204,
@@ -7310,7 +7310,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 0.02472102642059326
+          "bertscore_f1": 0.024715065956115723
         }
       }
     },
@@ -7684,7 +7684,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 61.93633675575256,
+        "bertscore_f1": 61.936330795288086,
         "mc_accuracy": null
       },
       "evidence": {
@@ -7706,7 +7706,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 65.70169925689697,
+        "bertscore_f1": 65.70169627666473,
         "mc_accuracy": null
       },
       "cost": {
@@ -7770,7 +7770,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -3.169846534729004
+          "bertscore_f1": -3.1698524951934814
         },
         "evidence": {
           "token_precision": -3.6554281079828534,
@@ -7790,7 +7790,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -1.2373626232147217
+          "bertscore_f1": -1.2373656034469604
         }
       }
     },
@@ -8284,7 +8284,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 64.96575474739075,
+        "bertscore_f1": 64.96576070785522,
         "mc_accuracy": null
       },
       "evidence": {
@@ -8306,7 +8306,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 66.47267639636993,
+        "bertscore_f1": 66.47267937660217,
         "mc_accuracy": null
       },
       "cost": {
@@ -8370,7 +8370,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -0.6677806377410889
+          "bertscore_f1": -0.6677746772766113
         },
         "evidence": {
           "token_precision": -1.916555534387502,
@@ -8390,7 +8390,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -0.3211170434951782
+          "bertscore_f1": -0.32111406326293945
         }
       }
     },
@@ -8404,7 +8404,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 62.70827054977417,
+        "bertscore_f1": 62.708258628845215,
         "mc_accuracy": null
       },
       "evidence": {
@@ -8426,7 +8426,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 65.84604680538177,
+        "bertscore_f1": 65.8460408449173,
         "mc_accuracy": null
       },
       "cost": {
@@ -8490,7 +8490,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -3.338468074798584
+          "bertscore_f1": -3.338479995727539
         },
         "evidence": {
           "token_precision": -1.5502736857573183,
@@ -8510,7 +8510,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -1.7887324094772339
+          "bertscore_f1": -1.7887383699417114
         }
       }
     },
@@ -8644,7 +8644,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 56.836485862731934,
+        "bertscore_f1": 56.836479902267456,
         "mc_accuracy": null
       },
       "evidence": {
@@ -8666,7 +8666,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 61.92084550857544,
+        "bertscore_f1": 61.9208425283432,
         "mc_accuracy": null
       },
       "cost": {
@@ -8695,7 +8695,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 58.64218473434448,
+          "bertscore_f1": 58.642178773880005,
           "mc_accuracy": null
         },
         "evidence": {
@@ -8717,7 +8717,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 62.49710023403168,
+          "bertscore_f1": 62.49709725379944,
           "mc_accuracy": null
         }
       },
@@ -8764,7 +8764,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 64.15684819221497,
+        "bertscore_f1": 64.15685415267944,
         "mc_accuracy": null
       },
       "evidence": {
@@ -8786,7 +8786,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 66.74639582633972,
+        "bertscore_f1": 66.74639880657196,
         "mc_accuracy": null
       },
       "cost": {
@@ -8815,7 +8815,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 70.37182450294495,
+          "bertscore_f1": 70.37181854248047,
           "mc_accuracy": null
         },
         "evidence": {
@@ -8837,7 +8837,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 69.59419548511505,
+          "bertscore_f1": 69.59419250488281,
           "mc_accuracy": null
         }
       },
@@ -8850,7 +8850,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -6.2149763107299805
+          "bertscore_f1": -6.214964389801025
         },
         "evidence": {
           "token_precision": -1.5355960264900688,
@@ -8870,7 +8870,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -2.8477996587753296
+          "bertscore_f1": -2.847793698310852
         }
       }
     },
@@ -8935,7 +8935,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 71.49648666381836,
+          "bertscore_f1": 71.49648070335388,
           "mc_accuracy": null
         },
         "evidence": {
@@ -8957,7 +8957,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 70.04890143871307,
+          "bertscore_f1": 70.04889845848083,
           "mc_accuracy": null
         }
       },
@@ -8970,7 +8970,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -0.6901204586029053
+          "bertscore_f1": -0.6901144981384277
         },
         "evidence": {
           "token_precision": -7.172227839568592,
@@ -8990,7 +8990,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -0.4358142614364624
+          "bertscore_f1": -0.43581128120422363
         }
       }
     },
@@ -9004,7 +9004,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 56.21991753578186,
+        "bertscore_f1": 56.21991157531738,
         "mc_accuracy": null
       },
       "evidence": {
@@ -9026,7 +9026,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 60.697317123413086,
+        "bertscore_f1": 60.69731414318085,
         "mc_accuracy": null
       },
       "cost": {
@@ -9055,7 +9055,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 59.07317399978638,
+          "bertscore_f1": 59.07318592071533,
           "mc_accuracy": null
         },
         "evidence": {
@@ -9077,7 +9077,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 62.719979882240295,
+          "bertscore_f1": 62.71998584270477,
           "mc_accuracy": null
         }
       },
@@ -9090,7 +9090,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -2.8532564640045166
+          "bertscore_f1": -2.853274345397949
         },
         "evidence": {
           "token_precision": -7.184210526315788,
@@ -9110,7 +9110,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -2.0226627588272095
+          "bertscore_f1": -2.022671699523926
         }
       }
     },
@@ -9124,7 +9124,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 58.05719494819641,
+        "bertscore_f1": 58.05720090866089,
         "mc_accuracy": null
       },
       "evidence": {
@@ -9146,7 +9146,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 62.206509709358215,
+        "bertscore_f1": 62.206512689590454,
         "mc_accuracy": null
       },
       "cost": {
@@ -9175,7 +9175,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 60.9183669090271,
+          "bertscore_f1": 60.91837286949158,
           "mc_accuracy": null
         },
         "evidence": {
@@ -9197,7 +9197,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 64.13304507732391,
+          "bertscore_f1": 64.13304805755615,
           "mc_accuracy": null
         }
       },
@@ -9244,7 +9244,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 56.91395401954651,
+        "bertscore_f1": 56.913942098617554,
         "mc_accuracy": null
       },
       "evidence": {
@@ -9266,7 +9266,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 60.95359921455383,
+        "bertscore_f1": 60.953593254089355,
         "mc_accuracy": null
       },
       "cost": {
@@ -9330,7 +9330,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -2.876526117324829
+          "bertscore_f1": -2.876538038253784
         },
         "evidence": {
           "token_precision": -2.1771771771771746,
@@ -9350,7 +9350,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -1.4501988887786865
+          "bertscore_f1": -1.450204849243164
         }
       }
     },
@@ -9364,7 +9364,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 58.61960053443909,
+        "bertscore_f1": 58.61959457397461,
         "mc_accuracy": null
       },
       "evidence": {
@@ -9386,7 +9386,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 62.710803747177124,
+        "bertscore_f1": 62.710800766944885,
         "mc_accuracy": null
       },
       "cost": {
@@ -9450,7 +9450,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -0.5538761615753174
+          "bertscore_f1": -0.5538821220397949
         },
         "evidence": {
           "token_precision": -2.462184873949578,
@@ -9470,7 +9470,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -0.18274188041687012
+          "bertscore_f1": -0.1827448606491089
         }
       }
     },
@@ -9484,7 +9484,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 58.04641842842102,
+        "bertscore_f1": 58.04641246795654,
         "mc_accuracy": null
       },
       "evidence": {
@@ -9506,7 +9506,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 61.27912402153015,
+        "bertscore_f1": 61.27912104129791,
         "mc_accuracy": null
       },
       "cost": {
@@ -9570,7 +9570,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 0.475388765335083
+          "bertscore_f1": 0.47538280487060547
         },
         "evidence": {
           "token_precision": -2.518579686209744,
@@ -9590,7 +9590,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 0.24180710315704346
+          "bertscore_f1": 0.2418041229248047
         }
       }
     },
@@ -9724,7 +9724,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 64.83288407325745,
+        "bertscore_f1": 64.83287811279297,
         "mc_accuracy": null
       },
       "evidence": {
@@ -9746,7 +9746,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 64.13037776947021,
+        "bertscore_f1": 64.13037478923798,
         "mc_accuracy": null
       },
       "cost": {
@@ -9810,7 +9810,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 0.9317517280578613
+          "bertscore_f1": 0.9317457675933838
         },
         "evidence": {
           "token_precision": -2.2359206302888825,
@@ -9830,7 +9830,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 0.01131296157836914
+          "bertscore_f1": 0.011309981346130371
         }
       }
     },
@@ -10015,7 +10015,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 56.638771295547485,
+          "bertscore_f1": 56.63876533508301,
           "mc_accuracy": null
         },
         "evidence": {
@@ -10037,7 +10037,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 59.94596779346466,
+          "bertscore_f1": 59.94596481323242,
           "mc_accuracy": null
         }
       },
@@ -10050,7 +10050,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 0.5470812320709229
+          "bertscore_f1": 0.5470871925354004
         },
         "evidence": {
           "token_precision": 1.2742248062015502,
@@ -10070,7 +10070,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -0.13274848461151123
+          "bertscore_f1": -0.13274550437927246
         }
       }
     },
@@ -10564,7 +10564,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 68.12783479690552,
+        "bertscore_f1": 68.12782883644104,
         "mc_accuracy": null
       },
       "evidence": {
@@ -10586,7 +10586,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 65.52486717700958,
+        "bertscore_f1": 65.52486419677734,
         "mc_accuracy": null
       },
       "cost": {
@@ -10650,7 +10650,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 3.793203830718994
+          "bertscore_f1": 3.7931978702545166
         },
         "evidence": {
           "token_precision": 0.30692139054181045,
@@ -10670,7 +10670,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 2.492406964302063
+          "bertscore_f1": 2.492403984069824
         }
       }
     },
@@ -11524,7 +11524,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 66.38967990875244,
+        "bertscore_f1": 66.3896918296814,
         "mc_accuracy": null
       },
       "evidence": {
@@ -11546,7 +11546,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 67.89849102497101,
+        "bertscore_f1": 67.89849698543549,
         "mc_accuracy": null
       },
       "cost": {
@@ -11610,7 +11610,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -0.25109052658081055
+          "bertscore_f1": -0.25107860565185547
         },
         "evidence": {
           "token_precision": 5.147540983606557,
@@ -11630,7 +11630,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 0.7735282182693481
+          "bertscore_f1": 0.7735341787338257
         }
       }
     },
@@ -11884,7 +11884,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 64.17819261550903,
+        "bertscore_f1": 64.17819857597351,
         "mc_accuracy": null
       },
       "evidence": {
@@ -11906,7 +11906,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 62.268152832984924,
+        "bertscore_f1": 62.26815581321716,
         "mc_accuracy": null
       },
       "cost": {
@@ -11935,7 +11935,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 65.78373908996582,
+          "bertscore_f1": 65.78373312950134,
           "mc_accuracy": null
         },
         "evidence": {
@@ -11957,7 +11957,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 63.67698311805725,
+          "bertscore_f1": 63.67698013782501,
           "mc_accuracy": null
         }
       },
@@ -11970,7 +11970,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -1.605546474456787
+          "bertscore_f1": -1.605534553527832
         },
         "evidence": {
           "token_precision": -1.3505578391074557,
@@ -11990,7 +11990,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -1.4088302850723267
+          "bertscore_f1": -1.4088243246078491
         }
       }
     },
@@ -12004,7 +12004,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 67.73807406425476,
+        "bertscore_f1": 67.73808002471924,
         "mc_accuracy": null
       },
       "evidence": {
@@ -12026,7 +12026,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 68.83710026741028,
+        "bertscore_f1": 68.83710324764252,
         "mc_accuracy": null
       },
       "cost": {
@@ -12090,7 +12090,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -1.9021093845367432
+          "bertscore_f1": -1.9021034240722656
         },
         "evidence": {
           "token_precision": -3.318214370971589,
@@ -12110,7 +12110,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -1.6135036945343018
+          "bertscore_f1": -1.613500714302063
         }
       }
     },
@@ -12415,7 +12415,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 64.9415910243988,
+          "bertscore_f1": 64.94160294532776,
           "mc_accuracy": null
         },
         "evidence": {
@@ -12437,7 +12437,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 65.50007462501526,
+          "bertscore_f1": 65.50008058547974,
           "mc_accuracy": null
         }
       },
@@ -12450,7 +12450,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -3.221195936203003
+          "bertscore_f1": -3.221207857131958
         },
         "evidence": {
           "token_precision": 1.3924606410336828,
@@ -12470,7 +12470,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -1.823592185974121
+          "bertscore_f1": -1.8235981464385986
         }
       }
     },
@@ -12546,7 +12546,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 64.04768228530884,
+          "bertscore_f1": 64.04768824577332,
           "mc_accuracy": null
         },
         "overall": {
@@ -12557,7 +12557,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 65.42777419090271,
+          "bertscore_f1": 65.42777717113495,
           "mc_accuracy": null
         }
       },
@@ -12580,7 +12580,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -0.9629547595977783
+          "bertscore_f1": -0.9629607200622559
         },
         "overall": {
           "token_precision": 1.7382924484197337,
@@ -12590,7 +12590,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 0.7987737655639648
+          "bertscore_f1": 0.7987707853317261
         }
       }
     },
@@ -12735,7 +12735,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 65.37760496139526,
+        "bertscore_f1": 65.37759304046631,
         "mc_accuracy": null
       },
       "overall": {
@@ -12746,7 +12746,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 66.45529270172119,
+        "bertscore_f1": 66.45528674125671,
         "mc_accuracy": null
       },
       "cost": {
@@ -12820,7 +12820,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 0.9226083755493164
+          "bertscore_f1": 0.9225964546203613
         },
         "overall": {
           "token_precision": -5.926456786047563,
@@ -12830,7 +12830,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -3.0974537134170532
+          "bertscore_f1": -3.0974596738815308
         }
       }
     },
@@ -13135,7 +13135,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 67.03079342842102,
+          "bertscore_f1": 67.0307993888855,
           "mc_accuracy": null
         },
         "evidence": {
@@ -13157,7 +13157,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 65.56411385536194,
+          "bertscore_f1": 65.56411683559418,
           "mc_accuracy": null
         }
       },
@@ -13170,7 +13170,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -2.4432122707366943
+          "bertscore_f1": -2.443218231201172
         },
         "evidence": {
           "token_precision": 1.837378307966544,
@@ -13190,7 +13190,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -1.418277621269226
+          "bertscore_f1": -1.4182806015014648
         }
       }
     },
@@ -13444,7 +13444,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 67.64802932739258,
+        "bertscore_f1": 67.64801740646362,
         "mc_accuracy": null
       },
       "evidence": {
@@ -13466,7 +13466,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 68.40451657772064,
+        "bertscore_f1": 68.40451061725616,
         "mc_accuracy": null
       },
       "cost": {
@@ -13530,7 +13530,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -2.3498952388763428
+          "bertscore_f1": -2.349907159805298
         },
         "evidence": {
           "token_precision": -4.003930238270698,
@@ -13550,7 +13550,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -1.7481982707977295
+          "bertscore_f1": -1.748204231262207
         }
       }
     },
@@ -13564,7 +13564,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 63.224637508392334,
+        "bertscore_f1": 63.22464346885681,
         "mc_accuracy": null
       },
       "evidence": {
@@ -13586,7 +13586,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 63.041695952415466,
+        "bertscore_f1": 63.041698932647705,
         "mc_accuracy": null
       },
       "cost": {
@@ -13615,7 +13615,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 64.46606516838074,
+          "bertscore_f1": 64.46605920791626,
           "mc_accuracy": null
         },
         "evidence": {
@@ -13637,7 +13637,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 63.666656613349915,
+          "bertscore_f1": 63.666653633117676,
           "mc_accuracy": null
         }
       },
@@ -13650,7 +13650,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -1.2414276599884033
+          "bertscore_f1": -1.2414157390594482
         },
         "evidence": {
           "token_precision": 0.5500072369373274,
@@ -13670,7 +13670,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -0.6249606609344482
+          "bertscore_f1": -0.6249547004699707
         }
       }
     },
@@ -13735,7 +13735,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 66.92696213722229,
+          "bertscore_f1": 66.92696809768677,
           "mc_accuracy": null
         },
         "evidence": {
@@ -13757,7 +13757,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 68.05494427680969,
+          "bertscore_f1": 68.05494725704193,
           "mc_accuracy": null
         }
       },
@@ -13770,7 +13770,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -2.463144063949585
+          "bertscore_f1": -2.4631500244140625
         },
         "evidence": {
           "token_precision": -1.186188051173767,
@@ -13790,7 +13790,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -2.325424551963806
+          "bertscore_f1": -2.325427532196045
         }
       }
     },
@@ -13804,7 +13804,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 57.669663429260254,
+        "bertscore_f1": 57.669657468795776,
         "mc_accuracy": null
       },
       "evidence": {
@@ -13826,7 +13826,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 61.96477711200714,
+        "bertscore_f1": 61.9647741317749,
         "mc_accuracy": null
       },
       "cost": {
@@ -13890,7 +13890,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -0.6584584712982178
+          "bertscore_f1": -0.6584644317626953
         },
         "evidence": {
           "token_precision": -4.710198258585358,
@@ -13910,7 +13910,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -0.6166994571685791
+          "bertscore_f1": -0.6167024374008179
         }
       }
     },
@@ -14095,7 +14095,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 70.03839612007141,
+          "bertscore_f1": 70.03839015960693,
           "mc_accuracy": null
         },
         "evidence": {
@@ -14117,7 +14117,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 66.41118824481964,
+          "bertscore_f1": 66.4111852645874,
           "mc_accuracy": null
         }
       },
@@ -14130,7 +14130,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -2.867382764816284
+          "bertscore_f1": -2.8673768043518066
         },
         "evidence": {
           "token_precision": -1.0399375061029161,
@@ -14150,7 +14150,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -1.6562491655349731
+          "bertscore_f1": -1.6562461853027344
         }
       }
     },
@@ -14404,7 +14404,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 55.808717012405396,
+        "bertscore_f1": 55.80872893333435,
         "mc_accuracy": null
       },
       "evidence": {
@@ -14426,7 +14426,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 62.25031316280365,
+        "bertscore_f1": 62.25031912326813,
         "mc_accuracy": null
       },
       "cost": {
@@ -14490,7 +14490,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -4.427933692932129
+          "bertscore_f1": -4.427921772003174
         },
         "evidence": {
           "token_precision": -2.3598820058997028,
@@ -14510,7 +14510,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -3.2135963439941406
+          "bertscore_f1": -3.213590383529663
         }
       }
     },
@@ -14884,7 +14884,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 59.27131772041321,
+        "bertscore_f1": 59.27132964134216,
         "mc_accuracy": null
       },
       "evidence": {
@@ -14906,7 +14906,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 63.527846336364746,
+        "bertscore_f1": 63.527852296829224,
         "mc_accuracy": null
       },
       "cost": {
@@ -14970,7 +14970,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 0.1307666301727295
+          "bertscore_f1": 0.13077855110168457
         },
         "evidence": {
           "token_precision": 4.234074383328114,
@@ -14990,7 +14990,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 0.9412497282028198
+          "bertscore_f1": 0.9412556886672974
         }
       }
     },
@@ -15124,7 +15124,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 57.980579137802124,
+        "bertscore_f1": 57.98059701919556,
         "mc_accuracy": null
       },
       "evidence": {
@@ -15146,7 +15146,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 62.325483560562134,
+        "bertscore_f1": 62.32549250125885,
         "mc_accuracy": null
       },
       "cost": {
@@ -15210,7 +15210,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -1.567220687866211
+          "bertscore_f1": -1.5672028064727783
         },
         "evidence": {
           "token_precision": 2.883147853736089,
@@ -15230,7 +15230,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -0.9305894374847412
+          "bertscore_f1": -0.9305804967880249
         }
       }
     },
@@ -15244,7 +15244,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 87.93275952339172,
+        "bertscore_f1": 87.93275356292725,
         "mc_accuracy": 100.0
       },
       "evidence": {
@@ -15266,7 +15266,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 77.0161360502243,
+        "bertscore_f1": 77.01613306999207,
         "mc_accuracy": 100.0
       },
       "cost": {
@@ -15295,7 +15295,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 87.93275952339172,
+          "bertscore_f1": 87.93275356292725,
           "mc_accuracy": 100.0
         },
         "evidence": {
@@ -15317,7 +15317,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 76.91888511180878,
+          "bertscore_f1": 76.91888213157654,
           "mc_accuracy": 100.0
         }
       },
@@ -15484,7 +15484,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 84.71726775169373,
+        "bertscore_f1": 84.71726179122925,
         "mc_accuracy": 100.0
       },
       "evidence": {
@@ -15506,7 +15506,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 77.25867629051208,
+        "bertscore_f1": 77.25867331027985,
         "mc_accuracy": 100.0
       },
       "cost": {
@@ -15535,7 +15535,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 84.71726775169373,
+          "bertscore_f1": 84.71726179122925,
           "mc_accuracy": 100.0
         },
         "evidence": {
@@ -15557,7 +15557,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 77.03462839126587,
+          "bertscore_f1": 77.03462541103363,
           "mc_accuracy": 100.0
         }
       },
@@ -15655,7 +15655,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 96.59845232963562,
+          "bertscore_f1": 96.5984582901001,
           "mc_accuracy": 100.0
         },
         "evidence": {
@@ -15677,7 +15677,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 83.59155654907227,
+          "bertscore_f1": 83.5915595293045,
           "mc_accuracy": 100.0
         }
       },
@@ -15690,7 +15690,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 5.9604644775390625e-06
+          "bertscore_f1": 0.0
         },
         "evidence": {
           "token_precision": 1.122612354321035,
@@ -15710,7 +15710,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -0.4190593957901001
+          "bertscore_f1": -0.41906237602233887
         }
       }
     },
@@ -15895,7 +15895,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 70.57185173034668,
+          "bertscore_f1": 70.57185769081116,
           "mc_accuracy": 0.0
         },
         "evidence": {
@@ -15917,7 +15917,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 70.02584040164948,
+          "bertscore_f1": 70.02584338188171,
           "mc_accuracy": 0.0
         }
       },
@@ -15930,7 +15930,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 0.0
+          "bertscore_f1": -5.9604644775390625e-06
         },
         "evidence": {
           "token_precision": -3.525835866261403,
@@ -15950,7 +15950,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -0.4427880048751831
+          "bertscore_f1": -0.4427909851074219
         }
       }
     },
@@ -16084,7 +16084,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 94.44540143013,
+        "bertscore_f1": 94.44539546966553,
         "mc_accuracy": 100.0
       },
       "evidence": {
@@ -16106,7 +16106,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 83.41496288776398,
+        "bertscore_f1": 83.41495990753174,
         "mc_accuracy": 100.0
       },
       "cost": {
@@ -16170,7 +16170,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 5.9604644775390625e-06
+          "bertscore_f1": 0.0
         },
         "evidence": {
           "token_precision": -2.4158684411291027,
@@ -16190,7 +16190,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -0.36507248878479004
+          "bertscore_f1": -0.3650754690170288
         }
       }
     },
@@ -16444,7 +16444,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 96.50804996490479,
+        "bertscore_f1": 96.50804400444031,
         "mc_accuracy": 100.0
       },
       "evidence": {
@@ -16466,7 +16466,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 83.94776582717896,
+        "bertscore_f1": 83.94776284694672,
         "mc_accuracy": 100.0
       },
       "cost": {
@@ -16530,7 +16530,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 0.0
+          "bertscore_f1": -5.9604644775390625e-06
         },
         "evidence": {
           "token_precision": 8.120584079133305,
@@ -16550,7 +16550,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 0.3982722759246826
+          "bertscore_f1": 0.39826929569244385
         }
       }
     },
@@ -16615,7 +16615,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 97.10807204246521,
+          "bertscore_f1": 97.10806608200073,
           "mc_accuracy": 100.0
         },
         "evidence": {
@@ -16637,7 +16637,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 79.19211387634277,
+          "bertscore_f1": 79.19211089611053,
           "mc_accuracy": 100.0
         }
       },
@@ -16650,7 +16650,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -5.9604644775390625e-06
+          "bertscore_f1": 0.0
         },
         "evidence": {
           "token_precision": 0.08658008658008676,
@@ -16670,7 +16670,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 0.054001808166503906
+          "bertscore_f1": 0.054004788398742676
         }
       }
     },
@@ -16684,7 +16684,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 96.48631811141968,
+        "bertscore_f1": 96.48632407188416,
         "mc_accuracy": 100.0
       },
       "evidence": {
@@ -16706,7 +16706,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 81.45780563354492,
+        "bertscore_f1": 81.45780861377716,
         "mc_accuracy": 100.0
       },
       "cost": {
@@ -16770,7 +16770,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -5.9604644775390625e-06
+          "bertscore_f1": 0.0
         },
         "evidence": {
           "token_precision": -1.4832949308755765,
@@ -16790,7 +16790,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -0.17383098602294922
+          "bertscore_f1": -0.17382800579071045
         }
       }
     },
@@ -16804,7 +16804,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 92.98099279403687,
+        "bertscore_f1": 92.98098087310791,
         "mc_accuracy": 100.0
       },
       "evidence": {
@@ -16826,7 +16826,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 81.1790943145752,
+        "bertscore_f1": 81.17908835411072,
         "mc_accuracy": 100.0
       },
       "cost": {
@@ -16890,7 +16890,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -1.5944838523864746
+          "bertscore_f1": -1.5944957733154297
         },
         "evidence": {
           "token_precision": 4.624781849912738,
@@ -16910,7 +16910,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -0.46480894088745117
+          "bertscore_f1": -0.4648149013519287
         }
       }
     },
@@ -16935,7 +16935,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 62.6670241355896,
+        "bertscore_f1": 62.66703009605408,
         "mc_accuracy": null
       },
       "overall": {
@@ -16946,7 +16946,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 77.99644470214844,
+        "bertscore_f1": 77.99644768238068,
         "mc_accuracy": 100.0
       },
       "cost": {
@@ -17020,7 +17020,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 1.7334282398223877
+          "bertscore_f1": 1.7334342002868652
         },
         "overall": {
           "token_precision": 0.582343349638947,
@@ -17030,7 +17030,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 0.8667141199111938
+          "bertscore_f1": 0.8667171001434326
         }
       }
     },
@@ -17044,7 +17044,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 67.83218383789062,
+        "bertscore_f1": 67.83217787742615,
         "mc_accuracy": 0.0
       },
       "evidence": {
@@ -17066,7 +17066,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 68.98408830165863,
+        "bertscore_f1": 68.98408532142639,
         "mc_accuracy": 0.0
       },
       "cost": {
@@ -17130,7 +17130,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 0.0
+          "bertscore_f1": -5.9604644775390625e-06
         },
         "evidence": {
           "token_precision": -3.504672897196258,
@@ -17150,7 +17150,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 0.7082462310791016
+          "bertscore_f1": 0.7082432508468628
         }
       }
     },
@@ -17164,7 +17164,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 94.662344455719,
+        "bertscore_f1": 94.66235041618347,
         "mc_accuracy": 100.0
       },
       "evidence": {
@@ -17186,7 +17186,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 84.38083231449127,
+        "bertscore_f1": 84.38083529472351,
         "mc_accuracy": 100.0
       },
       "cost": {
@@ -17250,7 +17250,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 0.0
+          "bertscore_f1": 5.9604644775390625e-06
         },
         "evidence": {
           "token_precision": 4.320754716981133,
@@ -17270,7 +17270,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 1.0379910469055176
+          "bertscore_f1": 1.0379940271377563
         }
       }
     },
@@ -17524,7 +17524,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 73.12862873077393,
+        "bertscore_f1": 73.12864661216736,
         "mc_accuracy": 0.0
       },
       "evidence": {
@@ -17546,7 +17546,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 70.3754186630249,
+        "bertscore_f1": 70.37542760372162,
         "mc_accuracy": 0.0
       },
       "cost": {
@@ -17575,7 +17575,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 73.12862873077393,
+          "bertscore_f1": 73.12864065170288,
           "mc_accuracy": 0.0
         },
         "evidence": {
@@ -17597,7 +17597,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 70.26674449443817,
+          "bertscore_f1": 70.26675045490265,
           "mc_accuracy": 0.0
         }
       },
@@ -17610,7 +17610,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 0.0
+          "bertscore_f1": 5.9604644775390625e-06
         },
         "evidence": {
           "token_precision": -1.3947079306556436,
@@ -17630,7 +17630,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 0.10867416858673096
+          "bertscore_f1": 0.10867714881896973
         }
       }
     },
@@ -18124,7 +18124,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 70.53844928741455,
+        "bertscore_f1": 70.53844332695007,
         "mc_accuracy": 0.0
       },
       "evidence": {
@@ -18146,7 +18146,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 68.5605138540268,
+        "bertscore_f1": 68.56051087379456,
         "mc_accuracy": 0.0
       },
       "cost": {
@@ -18210,7 +18210,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 0.0
+          "bertscore_f1": -5.9604644775390625e-06
         },
         "evidence": {
           "token_precision": -4.1108028972106645,
@@ -18230,7 +18230,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -0.6408780813217163
+          "bertscore_f1": -0.6408810615539551
         }
       }
     },
@@ -18964,7 +18964,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 94.15493607521057,
+        "bertscore_f1": 94.15494203567505,
         "mc_accuracy": 100.0
       },
       "evidence": {
@@ -18986,7 +18986,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 82.12708830833435,
+        "bertscore_f1": 82.12709128856659,
         "mc_accuracy": 100.0
       },
       "cost": {
@@ -19050,7 +19050,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 0.0
+          "bertscore_f1": 5.9604644775390625e-06
         },
         "evidence": {
           "token_precision": 2.602570619417616,
@@ -19070,7 +19070,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -0.0025600194931030273
+          "bertscore_f1": -0.002557039260864258
         }
       }
     },
@@ -19255,7 +19255,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 94.86451148986816,
+          "bertscore_f1": 94.86450552940369,
           "mc_accuracy": 100.0
         },
         "evidence": {
@@ -19277,7 +19277,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 82.17577934265137,
+          "bertscore_f1": 82.17577636241913,
           "mc_accuracy": 100.0
         }
       },
@@ -19290,7 +19290,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -1.2105107307434082
+          "bertscore_f1": -1.2105047702789307
         },
         "evidence": {
           "token_precision": 0.08700870087008639,
@@ -19310,7 +19310,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -0.7148146629333496
+          "bertscore_f1": -0.7148116827011108
         }
       }
     },
@@ -19324,7 +19324,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 90.547776222229,
+        "bertscore_f1": 90.54776430130005,
         "mc_accuracy": 100.0
       },
       "evidence": {
@@ -19346,7 +19346,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 79.83209490776062,
+        "bertscore_f1": 79.83208894729614,
         "mc_accuracy": 100.0
       },
       "cost": {
@@ -19375,7 +19375,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 90.547776222229,
+          "bertscore_f1": 90.54776430130005,
           "mc_accuracy": 100.0
         },
         "evidence": {
@@ -19397,7 +19397,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 78.95901799201965,
+          "bertscore_f1": 78.95901203155518,
           "mc_accuracy": 100.0
         }
       },
@@ -19564,7 +19564,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 97.1015989780426,
+        "bertscore_f1": 97.10160493850708,
         "mc_accuracy": 100.0
       },
       "evidence": {
@@ -19586,7 +19586,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 82.84034430980682,
+        "bertscore_f1": 82.84034729003906,
         "mc_accuracy": 100.0
       },
       "cost": {
@@ -19650,7 +19650,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 0.0
+          "bertscore_f1": 5.9604644775390625e-06
         },
         "evidence": {
           "token_precision": 4.5016131771098635,
@@ -19670,7 +19670,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -1.9238591194152832
+          "bertscore_f1": -1.9238561391830444
         }
       }
     },
@@ -19975,7 +19975,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 89.11046385765076,
+          "bertscore_f1": 89.11046981811523,
           "mc_accuracy": 100.0
         },
         "evidence": {
@@ -19997,7 +19997,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 77.81070172786713,
+          "bertscore_f1": 77.81070470809937,
           "mc_accuracy": 100.0
         }
       },
@@ -20010,7 +20010,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 0.0
+          "bertscore_f1": -5.9604644775390625e-06
         },
         "evidence": {
           "token_precision": -0.08004098098226287,
@@ -20030,7 +20030,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 1.5766113996505737
+          "bertscore_f1": 1.576608419418335
         }
       }
     },
@@ -20164,7 +20164,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 81.95561170578003,
+        "bertscore_f1": 81.95560574531555,
         "mc_accuracy": 100.0
       },
       "evidence": {
@@ -20186,7 +20186,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 76.66287422180176,
+        "bertscore_f1": 76.66287124156952,
         "mc_accuracy": 100.0
       },
       "cost": {
@@ -20215,7 +20215,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 81.95561170578003,
+          "bertscore_f1": 81.95560574531555,
           "mc_accuracy": 100.0
         },
         "evidence": {
@@ -20237,7 +20237,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 75.62773823738098,
+          "bertscore_f1": 75.62773525714874,
           "mc_accuracy": 100.0
         }
       },
@@ -20284,7 +20284,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 93.31943392753601,
+        "bertscore_f1": 93.31942796707153,
         "mc_accuracy": 100.0
       },
       "evidence": {
@@ -20306,7 +20306,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 82.74204134941101,
+        "bertscore_f1": 82.74203836917877,
         "mc_accuracy": 100.0
       },
       "cost": {
@@ -20370,7 +20370,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 5.9604644775390625e-06
+          "bertscore_f1": 0.0
         },
         "evidence": {
           "token_precision": 6.006696827952858,
@@ -20390,7 +20390,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 0.8511096239089966
+          "bertscore_f1": 0.8511066436767578
         }
       }
     },
@@ -20644,7 +20644,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 91.02206826210022,
+        "bertscore_f1": 91.02206230163574,
         "mc_accuracy": 100.0
       },
       "evidence": {
@@ -20666,7 +20666,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 77.29632258415222,
+        "bertscore_f1": 77.29631960391998,
         "mc_accuracy": 100.0
       },
       "cost": {
@@ -20730,7 +20730,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 5.9604644775390625e-06
+          "bertscore_f1": 0.0
         },
         "evidence": {
           "token_precision": 6.663673438844615,
@@ -20750,7 +20750,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 1.2146413326263428
+          "bertscore_f1": 1.214638352394104
         }
       }
     },
@@ -21295,7 +21295,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 97.5534200668335,
+          "bertscore_f1": 97.55341410636902,
           "mc_accuracy": 100.0
         },
         "evidence": {
@@ -21317,7 +21317,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 79.59542870521545,
+          "bertscore_f1": 79.59542572498322,
           "mc_accuracy": 100.0
         }
       },
@@ -21330,7 +21330,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -5.9604644775390625e-06
+          "bertscore_f1": 0.0
         },
         "evidence": {
           "token_precision": 3.4791303456055784,
@@ -21350,7 +21350,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 1.4955103397369385
+          "bertscore_f1": 1.4955133199691772
         }
       }
     },
@@ -21364,7 +21364,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 87.15500235557556,
+        "bertscore_f1": 87.15499639511108,
         "mc_accuracy": 100.0
       },
       "evidence": {
@@ -21386,7 +21386,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 78.70075106620789,
+        "bertscore_f1": 78.70074808597565,
         "mc_accuracy": 100.0
       },
       "cost": {
@@ -21415,7 +21415,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 87.15499639511108,
+          "bertscore_f1": 87.15500235557556,
           "mc_accuracy": 100.0
         },
         "evidence": {
@@ -21437,7 +21437,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 78.90128195285797,
+          "bertscore_f1": 78.90128493309021,
           "mc_accuracy": 100.0
         }
       },
@@ -21450,7 +21450,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 5.9604644775390625e-06
+          "bertscore_f1": -5.9604644775390625e-06
         },
         "evidence": {
           "token_precision": -1.3892013498312732,
@@ -21470,7 +21470,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -0.20053088665008545
+          "bertscore_f1": -0.200536847114563
         }
       }
     },
@@ -21484,7 +21484,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 94.50915455818176,
+        "bertscore_f1": 94.50914859771729,
         "mc_accuracy": 100.0
       },
       "evidence": {
@@ -21506,7 +21506,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 81.73360526561737,
+        "bertscore_f1": 81.73360228538513,
         "mc_accuracy": 100.0
       },
       "cost": {
@@ -21570,7 +21570,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -1.8194794654846191
+          "bertscore_f1": -1.8194854259490967
         },
         "evidence": {
           "token_precision": 0.403347634298143,
@@ -21590,7 +21590,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -0.8817344903945923
+          "bertscore_f1": -0.881737470626831
         }
       }
     },
@@ -21604,7 +21604,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 97.17116951942444,
+        "bertscore_f1": 97.17117547988892,
         "mc_accuracy": 100.0
       },
       "evidence": {
@@ -21626,7 +21626,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 83.79422128200531,
+        "bertscore_f1": 83.79422426223755,
         "mc_accuracy": 100.0
       },
       "cost": {
@@ -21655,7 +21655,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 97.17116951942444,
+          "bertscore_f1": 97.17117547988892,
           "mc_accuracy": 100.0
         },
         "evidence": {
@@ -21677,7 +21677,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 83.83895456790924,
+          "bertscore_f1": 83.83895754814148,
           "mc_accuracy": 100.0
         }
       },
@@ -21724,7 +21724,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 87.31301426887512,
+        "bertscore_f1": 87.3130202293396,
         "mc_accuracy": 100.0
       },
       "evidence": {
@@ -21746,7 +21746,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 79.27321493625641,
+        "bertscore_f1": 79.27321791648865,
         "mc_accuracy": 100.0
       },
       "cost": {
@@ -21775,7 +21775,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 87.31301426887512,
+          "bertscore_f1": 87.3130202293396,
           "mc_accuracy": 100.0
         },
         "evidence": {
@@ -21797,7 +21797,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 79.38607335090637,
+          "bertscore_f1": 79.38607633113861,
           "mc_accuracy": 100.0
         }
       },
@@ -21844,7 +21844,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 96.90730571746826,
+        "bertscore_f1": 96.90729975700378,
         "mc_accuracy": 100.0
       },
       "evidence": {
@@ -21866,7 +21866,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 85.64992249011993,
+        "bertscore_f1": 85.6499195098877,
         "mc_accuracy": 100.0
       },
       "cost": {
@@ -21930,7 +21930,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 5.9604644775390625e-06
+          "bertscore_f1": 0.0
         },
         "evidence": {
           "token_precision": -1.464849437940476,
@@ -21950,7 +21950,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 0.3725290298461914
+          "bertscore_f1": 0.37252604961395264
         }
       }
     },
@@ -22084,7 +22084,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 83.71515274047852,
+        "bertscore_f1": 83.71514678001404,
         "mc_accuracy": 100.0
       },
       "evidence": {
@@ -22106,7 +22106,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 78.28085124492645,
+        "bertscore_f1": 78.28084826469421,
         "mc_accuracy": 100.0
       },
       "cost": {
@@ -22135,7 +22135,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 63.28280568122864,
+          "bertscore_f1": 63.28281760215759,
           "mc_accuracy": 0.0
         },
         "evidence": {
@@ -22157,7 +22157,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 67.07784831523895,
+          "bertscore_f1": 67.07785427570343,
           "mc_accuracy": 0.0
         }
       },
@@ -22170,7 +22170,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 20.432347059249878
+          "bertscore_f1": 20.432329177856445
         },
         "evidence": {
           "token_precision": -4.988385598141697,
@@ -22190,7 +22190,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 11.2030029296875
+          "bertscore_f1": 11.202993988990784
         }
       }
     },
@@ -22495,7 +22495,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 68.91846656799316,
+          "bertscore_f1": 68.91847252845764,
           "mc_accuracy": 0.0
         },
         "evidence": {
@@ -22517,7 +22517,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 68.89930665493011,
+          "bertscore_f1": 68.89930963516235,
           "mc_accuracy": 0.0
         }
       },
@@ -22530,7 +22530,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 0.0
+          "bertscore_f1": -5.9604644775390625e-06
         },
         "evidence": {
           "token_precision": 1.127062491879954,
@@ -22550,7 +22550,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 0.2764850854873657
+          "bertscore_f1": 0.27648210525512695
         }
       }
     },
@@ -22924,7 +22924,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 96.01914882659912,
+        "bertscore_f1": 96.0191547870636,
         "mc_accuracy": 100.0
       },
       "evidence": {
@@ -22946,7 +22946,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 81.93384408950806,
+        "bertscore_f1": 81.9338470697403,
         "mc_accuracy": 100.0
       },
       "cost": {
@@ -23010,7 +23010,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -5.9604644775390625e-06
+          "bertscore_f1": 0.0
         },
         "evidence": {
           "token_precision": -2.4880382775119614,
@@ -23030,7 +23030,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -0.4586517810821533
+          "bertscore_f1": -0.45864880084991455
         }
       }
     },
@@ -23095,7 +23095,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 96.47683501243591,
+          "bertscore_f1": 96.47682905197144,
           "mc_accuracy": 100.0
         },
         "evidence": {
@@ -23117,7 +23117,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 84.22646820545197,
+          "bertscore_f1": 84.22646522521973,
           "mc_accuracy": 100.0
         }
       },
@@ -23130,7 +23130,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -1.9710183143615723
+          "bertscore_f1": -1.9710123538970947
         },
         "evidence": {
           "token_precision": 3.097062579821202,
@@ -23150,7 +23150,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 0.1660168170928955
+          "bertscore_f1": 0.16601979732513428
         }
       }
     },
@@ -23284,7 +23284,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 95.82353830337524,
+        "bertscore_f1": 95.82354426383972,
         "mc_accuracy": 100.0
       },
       "evidence": {
@@ -23306,7 +23306,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 84.38749015331268,
+        "bertscore_f1": 84.38749313354492,
         "mc_accuracy": 100.0
       },
       "cost": {
@@ -23370,7 +23370,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -5.9604644775390625e-06
+          "bertscore_f1": 0.0
         },
         "evidence": {
           "token_precision": 0.40957886044591874,
@@ -23390,7 +23390,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -0.2649545669555664
+          "bertscore_f1": -0.26495158672332764
         }
       }
     },
@@ -23524,7 +23524,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 95.64601182937622,
+        "bertscore_f1": 95.6460177898407,
         "mc_accuracy": 100.0
       },
       "evidence": {
@@ -23546,7 +23546,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 82.63038098812103,
+        "bertscore_f1": 82.63038396835327,
         "mc_accuracy": 100.0
       },
       "cost": {
@@ -23610,7 +23610,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -5.9604644775390625e-06
+          "bertscore_f1": 0.0
         },
         "evidence": {
           "token_precision": -2.396389524535973,
@@ -23630,7 +23630,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -0.3136664628982544
+          "bertscore_f1": -0.3136634826660156
         }
       }
     },
@@ -23644,7 +23644,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 94.43736672401428,
+        "bertscore_f1": 94.4373607635498,
         "mc_accuracy": 100.0
       },
       "evidence": {
@@ -23666,7 +23666,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 82.77125060558319,
+        "bertscore_f1": 82.77124762535095,
         "mc_accuracy": 100.0
       },
       "cost": {
@@ -23730,7 +23730,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -1.2622952461242676
+          "bertscore_f1": -1.2623012065887451
         },
         "evidence": {
           "token_precision": 8.178360101437026,
@@ -23750,7 +23750,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -0.06040632724761963
+          "bertscore_f1": -0.0604093074798584
         }
       }
     },
@@ -23764,7 +23764,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 90.07731676101685,
+        "bertscore_f1": 90.07732272148132,
         "mc_accuracy": 100.0
       },
       "evidence": {
@@ -23786,7 +23786,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 78.28569710254669,
+        "bertscore_f1": 78.28570008277893,
         "mc_accuracy": 100.0
       },
       "cost": {
@@ -23815,7 +23815,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 90.07731676101685,
+          "bertscore_f1": 90.07732272148132,
           "mc_accuracy": 100.0
         },
         "evidence": {
@@ -23837,7 +23837,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 78.83088886737823,
+          "bertscore_f1": 78.83089184761047,
           "mc_accuracy": 100.0
         }
       },
@@ -24004,7 +24004,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 68.80764961242676,
+        "bertscore_f1": 68.8076376914978,
         "mc_accuracy": 0.0
       },
       "evidence": {
@@ -24026,7 +24026,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 68.13993752002716,
+        "bertscore_f1": 68.13993155956268,
         "mc_accuracy": 0.0
       },
       "cost": {
@@ -24090,7 +24090,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 0.0
+          "bertscore_f1": -1.1920928955078125e-05
         },
         "evidence": {
           "token_precision": 7.843766720171212,
@@ -24110,7 +24110,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 0.4087209701538086
+          "bertscore_f1": 0.40871500968933105
         }
       }
     },
@@ -24244,7 +24244,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 64.9281919002533,
+        "bertscore_f1": 64.92818593978882,
         "mc_accuracy": 0.0
       },
       "evidence": {
@@ -24266,7 +24266,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 66.86473488807678,
+        "bertscore_f1": 66.86473190784454,
         "mc_accuracy": 0.0
       },
       "cost": {
@@ -24330,7 +24330,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -24.736863374710083
+          "bertscore_f1": -24.73686933517456
         },
         "evidence": {
           "token_precision": -9.598673300165832,
@@ -24350,7 +24350,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -14.49989378452301
+          "bertscore_f1": -14.499896764755249
         }
       }
     },
@@ -24484,7 +24484,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 85.8908474445343,
+        "bertscore_f1": 85.89083552360535,
         "mc_accuracy": 100.0
       },
       "evidence": {
@@ -24506,7 +24506,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 77.62038111686707,
+        "bertscore_f1": 77.62037515640259,
         "mc_accuracy": 100.0
       },
       "cost": {
@@ -24535,7 +24535,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 85.8908474445343,
+          "bertscore_f1": 85.89083552360535,
           "mc_accuracy": 100.0
         },
         "evidence": {
@@ -24557,7 +24557,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 77.82671451568604,
+          "bertscore_f1": 77.82670855522156,
           "mc_accuracy": 100.0
         }
       },
@@ -24844,7 +24844,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 65.34082293510437,
+        "bertscore_f1": 65.34081697463989,
         "mc_accuracy": 0.0
       },
       "evidence": {
@@ -24866,7 +24866,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 66.75477623939514,
+        "bertscore_f1": 66.7547732591629,
         "mc_accuracy": 0.0
       },
       "cost": {
@@ -24895,7 +24895,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 65.34082293510437,
+          "bertscore_f1": 65.34081697463989,
           "mc_accuracy": 0.0
         },
         "evidence": {
@@ -24917,7 +24917,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 66.78996980190277,
+          "bertscore_f1": 66.78996682167053,
           "mc_accuracy": 0.0
         }
       },
@@ -24964,7 +24964,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 94.859778881073,
+        "bertscore_f1": 94.85977292060852,
         "mc_accuracy": 100.0
       },
       "evidence": {
@@ -24986,7 +24986,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 83.01351368427277,
+        "bertscore_f1": 83.01351070404053,
         "mc_accuracy": 100.0
       },
       "cost": {
@@ -25050,7 +25050,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 0.0
+          "bertscore_f1": -5.9604644775390625e-06
         },
         "evidence": {
           "token_precision": 3.7164161439223555,
@@ -25070,7 +25070,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 0.8891552686691284
+          "bertscore_f1": 0.8891522884368896
         }
       }
     },
@@ -25084,7 +25084,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 96.05658650398254,
+        "bertscore_f1": 96.05659246444702,
         "mc_accuracy": 100.0
       },
       "evidence": {
@@ -25106,7 +25106,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 83.58958065509796,
+        "bertscore_f1": 83.5895836353302,
         "mc_accuracy": 100.0
       },
       "cost": {
@@ -25170,7 +25170,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -1.1920928955078125e-05
+          "bertscore_f1": -5.9604644775390625e-06
         },
         "evidence": {
           "token_precision": 3.419452887537993,
@@ -25190,7 +25190,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 0.4100203514099121
+          "bertscore_f1": 0.4100233316421509
         }
       }
     },
@@ -25204,7 +25204,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 97.72262573242188,
+        "bertscore_f1": 97.72263169288635,
         "mc_accuracy": 100.0
       },
       "evidence": {
@@ -25226,7 +25226,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 80.58916628360748,
+        "bertscore_f1": 80.58916926383972,
         "mc_accuracy": 100.0
       },
       "cost": {
@@ -25290,7 +25290,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 0.0
+          "bertscore_f1": 5.9604644775390625e-06
         },
         "evidence": {
           "token_precision": -1.98350500074638,
@@ -25310,7 +25310,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -0.7931053638458252
+          "bertscore_f1": -0.7931023836135864
         }
       }
     },
@@ -25444,7 +25444,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 85.26114225387573,
+        "bertscore_f1": 85.26113629341125,
         "mc_accuracy": 100.0
       },
       "evidence": {
@@ -25466,7 +25466,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 79.45838272571564,
+        "bertscore_f1": 79.4583797454834,
         "mc_accuracy": 100.0
       },
       "cost": {
@@ -25495,7 +25495,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 85.26114225387573,
+          "bertscore_f1": 85.26113629341125,
           "mc_accuracy": 100.0
         },
         "evidence": {
@@ -25517,7 +25517,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 80.35142421722412,
+          "bertscore_f1": 80.35142123699188,
           "mc_accuracy": 100.0
         }
       },
@@ -26284,7 +26284,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 96.48631811141968,
+        "bertscore_f1": 96.48632407188416,
         "mc_accuracy": 100.0
       },
       "evidence": {
@@ -26306,7 +26306,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 82.93192088603973,
+        "bertscore_f1": 82.93192386627197,
         "mc_accuracy": 100.0
       },
       "cost": {
@@ -26370,7 +26370,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -5.9604644775390625e-06
+          "bertscore_f1": 0.0
         },
         "evidence": {
           "token_precision": 4.546347211311865,
@@ -26390,7 +26390,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 0.10922253131866455
+          "bertscore_f1": 0.10922551155090332
         }
       }
     },
@@ -26455,7 +26455,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 97.93047904968262,
+          "bertscore_f1": 97.93049097061157,
           "mc_accuracy": 100.0
         },
         "evidence": {
@@ -26477,7 +26477,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 82.6213151216507,
+          "bertscore_f1": 82.62132108211517,
           "mc_accuracy": 100.0
         }
       },
@@ -26490,7 +26490,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -2.882814407348633
+          "bertscore_f1": -2.882826328277588
         },
         "evidence": {
           "token_precision": -0.3970963907226164,
@@ -26510,7 +26510,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -1.0833054780960083
+          "bertscore_f1": -1.0833114385604858
         }
       }
     },
@@ -26815,7 +26815,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 80.1881730556488,
+          "bertscore_f1": 80.18816709518433,
           "mc_accuracy": 0.0
         },
         "evidence": {
@@ -26837,7 +26837,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 74.3333250284195,
+          "bertscore_f1": 74.33332204818726,
           "mc_accuracy": 0.0
         }
       },
@@ -26850,7 +26850,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 2.811187505722046
+          "bertscore_f1": 2.8111934661865234
         },
         "evidence": {
           "token_precision": 15.974981604120675,
@@ -26870,7 +26870,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 2.8903216123580933
+          "bertscore_f1": 2.890324592590332
         }
       }
     },
@@ -26884,7 +26884,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 97.2800076007843,
+        "bertscore_f1": 97.28001356124878,
         "mc_accuracy": 100.0
       },
       "evidence": {
@@ -26906,7 +26906,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 82.63058066368103,
+        "bertscore_f1": 82.63058364391327,
         "mc_accuracy": 100.0
       },
       "cost": {
@@ -26970,7 +26970,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 0.0
+          "bertscore_f1": 5.9604644775390625e-06
         },
         "evidence": {
           "token_precision": 0.3708047977600355,
@@ -26990,7 +26990,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 0.2740144729614258
+          "bertscore_f1": 0.27401745319366455
         }
       }
     },
@@ -27004,7 +27004,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 94.73043084144592,
+        "bertscore_f1": 94.73042488098145,
         "mc_accuracy": 100.0
       },
       "evidence": {
@@ -27026,7 +27026,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 80.71199357509613,
+        "bertscore_f1": 80.71199059486389,
         "mc_accuracy": 100.0
       },
       "cost": {
@@ -27090,7 +27090,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -0.9586572647094727
+          "bertscore_f1": -0.9586632251739502
         },
         "evidence": {
           "token_precision": -2.691635029646374,
@@ -27110,7 +27110,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -0.8045226335525513
+          "bertscore_f1": -0.80452561378479
         }
       }
     },
@@ -27364,7 +27364,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 67.77087450027466,
+        "bertscore_f1": 67.77088046073914,
         "mc_accuracy": 0.0
       },
       "evidence": {
@@ -27386,7 +27386,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 67.46829748153687,
+        "bertscore_f1": 67.4683004617691,
         "mc_accuracy": 0.0
       },
       "cost": {
@@ -27450,7 +27450,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -5.9604644775390625e-06
+          "bertscore_f1": 0.0
         },
         "evidence": {
           "token_precision": 1.0746606334841617,
@@ -27470,7 +27470,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 1.0764628648757935
+          "bertscore_f1": 1.0764658451080322
         }
       }
     },
@@ -27484,7 +27484,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 95.16181945800781,
+        "bertscore_f1": 95.16181349754333,
         "mc_accuracy": 100.0
       },
       "evidence": {
@@ -27506,7 +27506,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 83.35367441177368,
+        "bertscore_f1": 83.35367143154144,
         "mc_accuracy": 100.0
       },
       "cost": {
@@ -27570,7 +27570,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 5.9604644775390625e-06
+          "bertscore_f1": 0.0
         },
         "evidence": {
           "token_precision": 1.7415320879205218,
@@ -27590,7 +27590,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -0.029018521308898926
+          "bertscore_f1": -0.029021501541137695
         }
       }
     },
@@ -27604,7 +27604,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 85.26114225387573,
+        "bertscore_f1": 85.26113629341125,
         "mc_accuracy": 100.0
       },
       "evidence": {
@@ -27626,7 +27626,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 78.89688313007355,
+        "bertscore_f1": 78.89688014984131,
         "mc_accuracy": 100.0
       },
       "cost": {
@@ -27655,7 +27655,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 85.26114225387573,
+          "bertscore_f1": 85.26113629341125,
           "mc_accuracy": 100.0
         },
         "evidence": {
@@ -27677,7 +27677,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 78.61280143260956,
+          "bertscore_f1": 78.61279845237732,
           "mc_accuracy": 100.0
         }
       },
@@ -27724,7 +27724,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 71.43784761428833,
+        "bertscore_f1": 71.43784165382385,
         "mc_accuracy": 0.0
       },
       "evidence": {
@@ -27746,7 +27746,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 67.12560653686523,
+        "bertscore_f1": 67.125603556633,
         "mc_accuracy": 0.0
       },
       "cost": {
@@ -27810,7 +27810,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 0.0
+          "bertscore_f1": -5.9604644775390625e-06
         },
         "evidence": {
           "token_precision": 0.307739652254193,
@@ -27830,7 +27830,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 1.2899190187454224
+          "bertscore_f1": 1.2899160385131836
         }
       }
     },
@@ -27906,7 +27906,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 65.74258804321289,
+          "bertscore_f1": 65.74258208274841,
           "mc_accuracy": null
         },
         "overall": {
@@ -27917,7 +27917,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 79.21347618103027,
+          "bertscore_f1": 79.21347320079803,
           "mc_accuracy": 100.0
         }
       },
@@ -27940,7 +27940,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 1.2552857398986816
+          "bertscore_f1": 1.2552917003631592
         },
         "overall": {
           "token_precision": 0.23829319713751573,
@@ -27950,7 +27950,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 0.6276428699493408
+          "bertscore_f1": 0.6276458501815796
         }
       }
     },
@@ -28015,7 +28015,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 96.47683501243591,
+          "bertscore_f1": 96.47682905197144,
           "mc_accuracy": 100.0
         },
         "evidence": {
@@ -28037,7 +28037,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 80.6996613740921,
+          "bertscore_f1": 80.69965839385986,
           "mc_accuracy": 100.0
         }
       },
@@ -28050,7 +28050,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -5.9604644775390625e-06
+          "bertscore_f1": 0.0
         },
         "evidence": {
           "token_precision": -0.8366291451171279,
@@ -28070,7 +28070,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -0.45759379863739014
+          "bertscore_f1": -0.45759081840515137
         }
       }
     },
@@ -29044,7 +29044,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 79.37971949577332,
+        "bertscore_f1": 79.37971353530884,
         "mc_accuracy": 0.0
       },
       "evidence": {
@@ -29066,7 +29066,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 74.0240603685379,
+        "bertscore_f1": 74.02405738830566,
         "mc_accuracy": 0.0
       },
       "cost": {
@@ -29130,7 +29130,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 0.0
+          "bertscore_f1": -5.9604644775390625e-06
         },
         "evidence": {
           "token_precision": -0.27711419015766836,
@@ -29150,7 +29150,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 0.382000207901001
+          "bertscore_f1": 0.3819972276687622
         }
       }
     },
@@ -29524,7 +29524,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 88.8681173324585,
+        "bertscore_f1": 88.86811137199402,
         "mc_accuracy": 100.0
       },
       "evidence": {
@@ -29546,7 +29546,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 80.43261766433716,
+        "bertscore_f1": 80.43261468410492,
         "mc_accuracy": 100.0
       },
       "cost": {
@@ -29575,7 +29575,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 88.8681173324585,
+          "bertscore_f1": 88.86811137199402,
           "mc_accuracy": 100.0
         },
         "evidence": {
@@ -29597,7 +29597,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 79.31899726390839,
+          "bertscore_f1": 79.31899428367615,
           "mc_accuracy": 100.0
         }
       },
@@ -29764,7 +29764,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 77.26879715919495,
+        "bertscore_f1": 77.26879119873047,
         "mc_accuracy": 0.0
       },
       "evidence": {
@@ -29786,7 +29786,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 73.55201542377472,
+        "bertscore_f1": 73.55201244354248,
         "mc_accuracy": 0.0
       },
       "cost": {
@@ -29850,7 +29850,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": 5.9604644775390625e-06
+          "bertscore_f1": 0.0
         },
         "evidence": {
           "token_precision": 3.1322674418604635,
@@ -29870,7 +29870,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -0.6689965724945068
+          "bertscore_f1": -0.6689995527267456
         }
       }
     },
@@ -30124,7 +30124,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 69.7174072265625,
+        "bertscore_f1": 69.71741318702698,
         "mc_accuracy": 0.0
       },
       "evidence": {
@@ -30146,7 +30146,7 @@
         "cosine_similarity": null,
         "answer_context_token_f1": null,
         "gold_context_token_f1": null,
-        "bertscore_f1": 68.61004829406738,
+        "bertscore_f1": 68.61005127429962,
         "mc_accuracy": 0.0
       },
       "cost": {
@@ -30210,7 +30210,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -22.732311487197876
+          "bertscore_f1": -22.7323055267334
         },
         "evidence": {
           "token_precision": -1.2289156626506017,
@@ -30230,7 +30230,7 @@
           "cosine_similarity": null,
           "answer_context_token_f1": null,
           "gold_context_token_f1": null,
-          "bertscore_f1": -12.221145629882812
+          "bertscore_f1": -12.221142649650574
         }
       }
     }
