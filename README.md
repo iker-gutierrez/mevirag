@@ -1,4 +1,4 @@
-# eviRAG
+# eviRAG: evidence-grounded RAG for the medical domain
 
 Retrieval-augmented generation (RAG) pipeline for clinical question answering in Spanish and Basque.
 The system is evaluated on two tasks: open-answer clinical QA (GuiaSalud) and multiple-choice medical exam QA (CasiMédicos-Exp), across four core generator configurations (Qwen3.5-9B in non-thinking and thinking mode, Llama-3.1-8B-Instruct, and its Basque-adapted counterpart Latxa-Llama-3.1-8B-Instruct) and an eleven-condition ablation grid varying retrieval depth, cross-encoder reranking, few-shot prompting, self-feedback, and domain restriction, plus five inference-only reasoning-pipeline variants drawn from recent literature. Ministral-8B is additionally evaluated as a fifth, exploratory single-pass and reasoning-pipeline configuration.
