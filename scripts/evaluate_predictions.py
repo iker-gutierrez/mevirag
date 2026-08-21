@@ -11,7 +11,12 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from medical_rag_thesis.data_io import read_jsonl  # noqa: E402
-from medical_rag_thesis.evaluation import evaluate_records, write_metrics  # noqa: E402
+from medical_rag_thesis.evaluation import (  # noqa: E402
+    evaluate_records,
+    extract_option_number,
+    resolve_predicted_option,
+    write_metrics,
+)
 from medical_rag_thesis.run_logging import run_with_logs  # noqa: E402
 
 
@@ -79,8 +84,34 @@ def enrich_records_with_references(
         item = dict(record)
         reference = references.get(record.get("id"), {})
         if reference:
-            item.setdefault("reference_short_answer", reference.get("short_answer", ""))
-            item.setdefault("reference_evidence", reference.get("evidence", ""))
+            # The dataset passed to this evaluator is authoritative. A
+            # prediction file may contain an old reference snapshot from when
+            # it was generated; retaining it makes a later corrected dataset
+            # silently impossible to evaluate correctly.
+            item["reference_short_answer"] = reference.get("short_answer", "")
+            item["reference_evidence"] = reference.get("evidence", "")
+            # justification replaces evidence as the scored gold reference
+            # (evaluation.reference_sections reads it first); the predictions
+            # file itself never carries it (run_generation_experiment.py's
+            # output dict is fixed and predates this field), so it must be
+            # re-attached here from the original dataset, the same way
+            # reference_short_answer/reference_evidence already are.
+            item["reference_justification"] = reference.get("justification", "")
+            # CasiMedicos now preserves its explicit source label. Prefer it:
+            # matching translated answer prose against option prose is only a
+            # fallback for legacy datasets that do not carry correct_option.
+            options = reference.get("options")
+            if options:
+                item["reference_options"] = options
+                gold_option = reference.get("correct_option") or reference.get("correct_answer")
+                if gold_option is None:
+                    gold_short_answer = reference.get("short_answer", "")
+                    gold_option = extract_option_number(gold_short_answer)
+                    if gold_option is None:
+                        exact = [k for k, v in options.items() if v == gold_short_answer]
+                        gold_option = exact[0] if exact else resolve_predicted_option(gold_short_answer, options)
+                if gold_option is not None:
+                    item["reference_correct_option"] = str(gold_option)
         enriched.append(item)
     return enriched
 

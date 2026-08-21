@@ -4,7 +4,7 @@
 prefix. Matches the file-naming convention every other mixed-dev run in this
 thesis already uses (e.g. reports/metrics/1134_..._seed42_casimedicos.json),
 which scripts/meanq.py and scripts/write_reasoning_latex_table.py read MC-acc
-from -- MC-acc is defined only on CasiMedicos-Exp (multiple-choice), so a
+from. MC-acc is defined only on CasiMedicos-Exp (multiple-choice), so a
 mixed-table row with no _casimedicos file renders MC-acc and MeanQ as blank.
 
 Usage:
@@ -25,13 +25,14 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from medical_rag_thesis.data_io import read_jsonl, write_jsonl  # noqa: E402
 
-SOURCE_PREFIXES = {"_sns1064": "sns1064", "_casimedicos": "casimedicos"}
+SOURCE_PREFIXES = {"_sns1064": "sns1064", "_casimedicos": "casimedicos", "_guiasalud": "guiasalud"}
+INCOMPLETE_FINISH_REASONS = {"length", "repetition"}
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--predictions", required=True)
-    parser.add_argument("--output", required=True, help="Base output path; source suffixes are inserted before .json.")
+    parser.add_argument("--output", required=True, help="Base output path, source suffixes are inserted before .json.")
     parser.add_argument("--semantic-model", default="")
     parser.add_argument("--bertscore-model", default="bert-base-multilingual-cased")
     parser.add_argument("--bertscore-lang", default="es")
@@ -69,7 +70,7 @@ def run_eval(
 
 def _is_stale(output_path: Path, predictions_path: Path) -> bool:
     """True if output_path is missing or older than predictions_path. A
-    metrics file that merely exists is not enough -- if it predates the
+    metrics file that merely exists is not enough, if it predates the
     predictions it is supposed to score (e.g. left over from a run that was
     later regenerated against a corrected corpus), it must be recomputed,
     not skipped."""
@@ -78,11 +79,35 @@ def _is_stale(output_path: Path, predictions_path: Path) -> bool:
     return output_path.stat().st_mtime < predictions_path.stat().st_mtime
 
 
+def _validate_zero_truncation(predictions_path: Path, records: list[dict]) -> None:
+    """Reject prediction artifacts containing any truncated record.
+
+    Generation removes failed artifacts before raising, but this second gate
+    protects evaluation from legacy/orphaned files left by older runs.
+    """
+    offenders = [
+        str(record.get("id", "<unknown>"))
+        for record in records
+        if (
+            (record.get("truncation") or {}).get("initial_truncated")
+            or (record.get("truncation") or {}).get("feedback_truncated")
+            or (record.get("truncation") or {}).get("initial_finish_reason") in INCOMPLETE_FINISH_REASONS
+            or (record.get("truncation") or {}).get("feedback_finish_reason") in INCOMPLETE_FINISH_REASONS
+        )
+    ]
+    if offenders:
+        raise RuntimeError(
+            f"Refusing to evaluate {predictions_path}: {len(offenders)} truncated "
+            f"record(s) found (ids: {offenders[:20]})."
+        )
+
+
 def main() -> None:
     args = parse_args()
     predictions_path = Path(args.predictions)
     output_path = Path(args.output)
     records = read_jsonl(predictions_path)
+    _validate_zero_truncation(predictions_path, records)
 
     if _is_stale(output_path, predictions_path):
         print(f"[eval-by-source] full mixed set -> {output_path}")
@@ -106,7 +131,7 @@ def main() -> None:
             tmp_path = Path(tmp.name)
         write_jsonl(subset, tmp_path)
         # evaluate_predictions.py looks up predictions_path.with_suffix(".meta.json")
-        # for the reference split; point the temp file's meta at the real one.
+        # for the reference split, point the temp file's meta at the real one.
         real_meta = predictions_path.with_suffix(".meta.json")
         tmp_meta = tmp_path.with_suffix(".meta.json")
         if real_meta.exists():

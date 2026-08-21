@@ -47,6 +47,16 @@ hyperparameters only that family sets), covering:
      top_k/min_p/presence_penalty -- the last of which was, historically, a
      real shipped bug (silently applied as vLLM's unrelated
      repetition_penalty field instead), so it is checked explicitly here.
+  6. Truncation safety: feedback_max_new_tokens is set equal to
+     max_new_tokens (not a smaller fixed constant -- see
+     scripts/create_single_run_self_feedback_configs.py's own docstring for
+     why a tighter feedback budget caused real truncated self-feedback
+     revisions), max_truncation_retries=5 and fail_on_remaining_truncation=
+     True are set, and predictions.meta.json's truncation_counts is checked
+     directly for num_initial_truncated == 0 and num_feedback_truncated ==
+     0 on both rows -- if the settings ever regressed to a too-small budget,
+     the real generation script would have already hard-failed the run
+     before this check even ran.
 
 Every file this test touches lives at a dedicated smoke-test id block
 (97000s) and output path prefix, distinct from any real experiment id, and
@@ -82,6 +92,8 @@ BASE_MODEL_CONFIG = {
     "self_feedback": True,
     "feedback_max_new_tokens": 256,
     "max_new_tokens": 256,
+    "max_truncation_retries": 5,
+    "fail_on_remaining_truncation": True,
     "temperature": 0.6,
     "trust_remote_code": True,
     "retrieval_index": "models/retrieval/guiasalud_casimedicos_eu_train_multilingual_e5_large",
@@ -258,6 +270,18 @@ def main() -> None:
         check(
             any(r.get("initial_prediction_text") != r.get("prediction_text") for r in sf_records),
             f"{label}: at least one record's revised answer actually differs from its initial answer",
+        )
+
+    print("\n--- checking the truncation-retry/hard-fail settings actually produced 0 truncations ---")
+    for label, pred in (("row A", pred_a), ("row B", pred_b)):
+        meta_path = pred.parent / "predictions.meta.json"
+        check(meta_path.exists(), f"{label}: predictions.meta.json was written ({meta_path.name})")
+        meta = json.loads(meta_path.read_text())
+        truncation = meta.get("truncation_counts", {})
+        check(
+            truncation.get("num_initial_truncated") == 0 and truncation.get("num_feedback_truncated") == 0,
+            f"{label}: 0 initial and 0 feedback truncations "
+            f"(got {truncation.get('num_initial_truncated')}, {truncation.get('num_feedback_truncated')})",
         )
 
     # --- 4-5: real (tiny) evaluation + the real staged decision code ----

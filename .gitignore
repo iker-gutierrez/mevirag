@@ -40,6 +40,10 @@ reports/metrics/*
 reports/metrics_v2/*
 reports/metrics_archive/
 
+# Local checksum inventory for the historical working archive. The upload
+# contains only current, publication-facing artefacts under reproducibility/final_test/.
+reproducibility/full_working_archive_sha256.tsv
+
 # Track processed datasets (exclude smoke test subsets).
 # The _v1 suffix marks the live split actually used for currently-reported
 # results; sns1064/ etc. (no suffix) is reserved for the re-curated dataset
@@ -71,9 +75,9 @@ reports/metrics_archive/
 !reports/metrics/es_dev_ablation_results.md
 !reports/metrics/eu_dev_ablation_results.md
 
-# Dataset construction lives in the SNS1064-dataset repo
-# (https://github.com/iker-gutierrez/SNS1064-dataset), not here -- kept
-# locally as reference/scratch only.
+# Dataset construction lives in the separate Guiasalud repository
+# (https://github.com/iker-gutierrez/guiasalud), not here.
+guiasalud_datasetting/
 src/medical_rag_thesis/datasetting_precuration.py
 src/medical_rag_thesis/datasetting_postcuration.py
 
@@ -91,6 +95,7 @@ becoming_autonomous_with_slurm.py
 codex_history_v2.md
 experiments/codex_history.txt
 TODO_curated_rerun.md
+docs/inference_eval_scripts_summary.md
 
 # Local machine state
 .env

@@ -16,7 +16,7 @@ def parse_args() -> argparse.Namespace:
         "--seed",
         type=int,
         default=None,
-        help="Override the config's seed (the ablation configs carry no seed field; "
+        help="Override the config's seed (the ablation configs carry no seed field, "
         "the staged/seeded rerun scripts pass this explicitly per task).",
     )
     parser.add_argument(
@@ -88,6 +88,11 @@ def build_command(
         "max_new_tokens": "--max-new-tokens",
         "temperature": "--temperature",
         "top_p": "--top-p",
+        "top_k": "--top-k",
+        "min_p": "--min-p",
+        "presence_penalty": "--presence-penalty",
+        "thinking_token_budget": "--thinking-token-budget",
+        "truncation_retry_presence_penalty": "--truncation-retry-presence-penalty",
         "dtype": "--dtype",
         "device_map": "--device-map",
         "few_shot_file": "--few-shot-file",
@@ -116,6 +121,7 @@ def build_command(
     add_bool_arg(command, config, "self_feedback", "--self-feedback")
     add_bool_arg(command, config, "trust_remote_code", "--trust-remote-code")
     add_bool_arg(command, config, "log_gold_hit_rate", "--log-gold-hit-rate")
+    add_bool_arg(command, config, "fail_on_remaining_truncation", "--fail-on-remaining-truncation")
     if dry_run or config.get("dry_run"):
         command.append("--dry-run")
     if save_prompts or config.get("save_prompts"):

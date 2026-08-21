@@ -7,7 +7,7 @@ over the three seeds, on the no-self-feedback (initial) prediction.
 Rationale for the choice of metrics: ROUGE-L captures lexical fidelity, BERT-F1
 captures semantic fidelity, and MC-accuracy captures decision correctness. Averaging
 the three rewards a configuration only if it does well on all of the axes the thesis
-cares about, rather than winning on one and losing on the others -- which a single
+cares about, rather than winning on one and losing on the others, which a single
 metric (e.g. BERTScore alone) can hide.
 
 MC-accuracy is defined only for CasiMedicos-Exp (multiple-choice) records. On the
@@ -15,7 +15,7 @@ mixed dev set it is therefore read from the CasiMedicos subset (`_casimedicos.js
 matching how the results tables report it. On an open-answer-only set (SNS-1064)
 MC-accuracy does not exist and MeanQ is the mean of the two overlap metrics.
 
-This module is pure computation over the metric JSONs; it loads no models and needs
+This module is pure computation over the metric JSONs, it loads no models and needs
 no GPU. It is the single source of truth for "which RAG config is best" and is used
 both to report the decision and to wire the dependent configs (few-shot, domain
 restriction) to the correct base.
@@ -77,9 +77,9 @@ def metric_per_seed(prefix: str, base: str, metric: str, *, suffix: str = "",
 def meanq_per_seed(prefix: str, base: str, *, use_sf: bool = False) -> list[Optional[float]]:
     """Per-seed MeanQ = mean(ROUGE-L, BERT-F1, MC-acc) within each seed.
 
-    ROUGE-L/BERT-F1 come from the mixed metric file; MC-acc from that same seed's
+    ROUGE-L/BERT-F1 come from the mixed metric file, MC-acc from that same seed's
     CasiMedicos subset (undefined on the open-answer half). A seed's MeanQ is the
-    mean of whichever of its three components exist; None if the seed has none.
+    mean of whichever of its three components exist, None if the seed has none.
     Keeping it per-seed lets the summary/decision tables report a real ±std on MeanQ.
     """
     rouge = metric_per_seed(prefix, base, "rouge_l_f1", use_sf=use_sf)
@@ -95,7 +95,7 @@ def meanq_per_seed(prefix: str, base: str, *, use_sf: bool = False) -> list[Opti
 def meanq(prefix: str, base: str, *, use_sf: bool = False) -> tuple[Optional[float], dict]:
     """MeanQ on the MIXED dev set. Returns (MeanQ, per-metric components).
 
-    ROUGE-L and BERT-F1 come from the mixed metric file; MC-accuracy from the
+    ROUGE-L and BERT-F1 come from the mixed metric file, MC-accuracy from the
     CasiMedicos subset (it is undefined on the open-answer half). MeanQ is the mean
     of whichever of the three are available.
     """
@@ -112,7 +112,7 @@ def best_by_meanq(candidates: dict[str, tuple[str, str]], *, use_sf: bool = Fals
     """Given {label: (id_prefix, base)}, return (winning label, {label: MeanQ}).
 
     A configuration with no metrics yet is skipped, so this is safe to call before
-    every run has been evaluated; it just picks the best of what exists.
+    every run has been evaluated, it just picks the best of what exists.
     """
     scores: dict[str, float] = {}
     for label, (prefix, base) in candidates.items():
@@ -125,30 +125,85 @@ def best_by_meanq(candidates: dict[str, tuple[str, str]], *, use_sf: bool = Fals
     return winner, scores
 
 
-def relative_cost(prefix: str, base: str) -> float:
-    """A monotone proxy for a RAG config's inference cost: the number of
-    documents actually retrieved/embedded into the prompt (retrieval_top_k),
-    plus a fixed penalty for running the cross-encoder reranker (it scores
-    every one of the retrieval_top_k candidates -- typically 15 in this grid
-    -- regardless of how many survive to reranker_top_k, so that full pass is
-    real wall-clock cost the final top_k number alone would hide).
+def token_cost(prefix: str, base: str, *, use_sf: bool = False) -> Optional[float]:
+    """Mean LLM tokens consumed per answer across the available seeds.
 
-    Not calibrated to actual latency/FLOPs; only used to break near-ties in
-    MeanQ toward the cheaper of two options that score almost the same.
+    This is the cost quantity used only to break a near-tie in MeanQ.  It is
+    deliberately the measured token total, not a hand-built retrieval proxy:
+    self-feedback genuinely makes a second LLM call and must therefore cost
+    more than its initial-answer reading.  Conversely, dense retrieval and
+    CPU cross-encoder reranking do not themselves consume LLM tokens, so they
+    are not converted into fictitious tokens here.  Their end-to-end runtime
+    remains reported separately in the experiment tables.
+
+    Metric summaries record the whole run's ``total_tokens`` for the revised
+    (SF) reading.  The initial-answer reading is reconstructed from its input
+    and initial-output components, matching the table writers.
     """
-    config_path = ROOT / "configs" / "experiments" / f"{prefix}_{base}.json"
-    if not config_path.exists():
-        return float("inf")
-    config = json.loads(config_path.read_text())
-    cost = float(config.get("retrieval_top_k") or 0)
-    if config.get("reranker_model"):
-        cost += 5.0  # fixed reranker-pass penalty, on the same rough scale as top_k
-    return cost
+    values: list[float] = []
+    for seed in SEEDS:
+        summary = _load(f"{prefix}_{base}_seed{seed}")
+        if not summary:
+            continue
+        tokens = ((summary.get("cost") or {}).get("token_counts") or {})
+
+        def mean_of(name: str) -> Optional[float]:
+            value = (tokens.get(name) or {}).get("mean")
+            return float(value) if value is not None else None
+
+        if use_sf:
+            value = mean_of("total_tokens")
+        else:
+            input_tokens = mean_of("input_tokens")
+            initial_output = mean_of("initial_output_tokens")
+            value = (input_tokens + initial_output
+                     if input_tokens is not None and initial_output is not None
+                     else None)
+        if value is not None:
+            values.append(value)
+    return statistics.mean(values) if values else None
+
+
+def incomplete_candidates(
+    candidates: "dict[str, tuple[str, str] | tuple[str, str, bool]]", *, use_sf: bool = False,
+    required_seeds: int = len(SEEDS),
+) -> "dict[str, int]":
+    """{label: n_seeds_present} for every candidate with fewer than
+    `required_seeds` seeds of metrics on disk, empty if the pool is complete.
+
+    A stage-A/B/C generation array can finish with some tasks failed (GPU
+    contention, a truncation hard-fail not yet retried, etc.); the
+    evaluation script that writes metrics files skips any run with no
+    predictions.jsonl rather than crashing (see slurm/*_ablation_evaluation_
+    stage*.sh's own "Skipping ${run}: no predictions" line), and
+    meanq_per_seed/metric_over_seeds silently drop missing seeds rather than
+    erroring. best_by_meanq_robust therefore CAN select a winner from a
+    candidate pool where one or more rows only have 1 or 2 of the normal 3
+    seeds -- a real, silent risk: eval firing on a generation array with
+    partial failures (necessary, since eval depends on the array via
+    afterany, not afterok, or a single failed task in a 42-task array would
+    permanently deadlock the whole chain) must not be allowed to quietly
+    carry a weaker-sampled candidate into the stage-to-stage selection.
+
+    Callers should call this immediately before best_by_meanq_robust on the
+    SAME candidates dict and refuse to proceed (hard error, not a warning) if
+    it returns anything non-empty, exactly the same "verified complete or
+    fail loudly" principle already used for truncation
+    (fail_on_remaining_truncation)."""
+    incomplete = {}
+    for label, spec in candidates.items():
+        prefix, base = spec[0], spec[1]
+        candidate_use_sf = spec[2] if len(spec) > 2 else use_sf
+        per_seed = meanq_per_seed(prefix, base, use_sf=candidate_use_sf)
+        n_present = sum(1 for v in per_seed if v is not None)
+        if n_present < required_seeds:
+            incomplete[label] = n_present
+    return incomplete
 
 
 def best_by_meanq_robust(
-    candidates: dict[str, tuple[str, str]], *, use_sf: bool = False,
-    margin: float = 0.5, std_threshold: float = 0.5, cost_ratio: float = 0.4,
+    candidates: "dict[str, tuple[str, str] | tuple[str, str, bool]]", *, use_sf: bool = False,
+    margin: float = 0.5, std_threshold: float = 0.5, token_threshold: float = 1000.0,
 ) -> tuple[Optional[str], dict[str, dict]]:
     """Variance- and cost-aware version of best_by_meanq, using a pairwise,
     point-scored tie-break (see manuscript \\S "Selecting the best
@@ -159,20 +214,21 @@ def best_by_meanq_robust(
     leader is compared pairwise against each candidate within `margin` points:
     standard deviation awards one point to whichever side has a std at least
     `std_threshold` MeanQ points lower (an ABSOLUTE difference, not a fraction
-    of the larger std -- a relative/percentage threshold makes it trivially
+    of the larger std, a relative/percentage threshold makes it trivially
     easy to "meaningfully" beat a candidate whose own std is already small,
     since a tiny absolute gap can still clear a large percentage of a tiny
-    denominator; std_threshold matches `margin`'s own scale, since both ask
+    denominator. std_threshold matches `margin`'s own scale, since both ask
     "is this difference at least as large as the smallest gap this thesis
     already treats as a real MeanQ difference"). Cost awards its own point the
-    same way as before, as a fraction of the larger cost (`cost_ratio`) -- cost
-    is a designed quantity with no sampling noise of its own, so a relative
-    threshold does not have the same failure mode there. A criterion that
+    same way whenever its measured LLM-token cost is at least
+    `token_threshold` tokens/sample lower.  An absolute token threshold avoids
+    treating a small difference as meaningful merely because a cheap baseline
+    makes it a large percentage. A criterion that
     doesn't clear its own threshold awards no point to either side. Whichever
-    side has more points after both criteria is preferred; if the two split
+    side has more points after both criteria is preferred. If the two split
     one point each, or neither criterion is decisive, the pairwise winner
     falls back to whichever of the two has the higher mean MeanQ (even though,
-    by construction, that difference is itself under `margin`) -- a real, if
+    by construction, that difference is itself under `margin`), a real, if
     marginal, quality edge is never discarded once stability/cost are
     themselves inconclusive. The leader is replaced by the pairwise winner and
     the process repeats against the next candidate, so the final winner has
@@ -182,15 +238,26 @@ def best_by_meanq_robust(
     actually called on in this codebase (both ablation stages, all four
     current models) and changes no current winner relative to the old
     std_ratio=0.4 relative rule, across every threshold from 0.05 to 2.00
-    swept in 0.05 steps -- the std criterion is exercised (both candidates
+    swept in 0.05 steps. The std criterion is exercised (both candidates
     within `margin` of each other) in some of those sets, but the outcome is
     always settled by cost or the final mean tie-break either way.
+
+    Each candidate value is normally (prefix, base), scored with the call-level
+    `use_sf`. A candidate may instead be (prefix, base, candidate_use_sf) to
+    override `use_sf` just for that one entry, e.g. GuiaSalud's final selection
+    (scripts/mixed_meanq.py) puts a row's noSF and SF variants in the SAME
+    pool as two separate candidates so the true winner (whichever variant
+    actually scores higher) can surface, matching the manuscript's own stated
+    rule that self-feedback is applied only where it is a row's own dev-set
+    MeanQ-winning state (sec:results-test).
 
     Returns (winning label, {label: {"mean": ..., "std": ..., "cost": ..., "n": ...}}).
     """
     stats: dict[str, dict] = {}
-    for label, (prefix, base) in candidates.items():
-        per_seed = meanq_per_seed(prefix, base, use_sf=use_sf)
+    for label, spec in candidates.items():
+        prefix, base = spec[0], spec[1]
+        candidate_use_sf = spec[2] if len(spec) > 2 else use_sf
+        per_seed = meanq_per_seed(prefix, base, use_sf=candidate_use_sf)
         values = [v for v in per_seed if v is not None]
         if not values:
             continue
@@ -198,7 +265,7 @@ def best_by_meanq_robust(
         std = statistics.stdev(values) if len(values) > 1 else 0.0
         stats[label] = {
             "mean": mean, "std": std, "n": len(values),
-            "cost": relative_cost(prefix, base),
+            "cost": token_cost(prefix, base, use_sf=candidate_use_sf),
         }
     if not stats:
         return None, {}
@@ -218,11 +285,10 @@ def best_by_meanq_robust(
         elif std_a - std_b > std_threshold:
             points[b] += 1
 
-        cost_max = max(cost_a, cost_b)
-        if cost_max > 0:
-            if cost_b - cost_a > cost_ratio * cost_max:
+        if cost_a is not None and cost_b is not None:
+            if cost_b - cost_a > token_threshold:
                 points[a] += 1
-            elif cost_a - cost_b > cost_ratio * cost_max:
+            elif cost_a - cost_b > token_threshold:
                 points[b] += 1
 
         if points[a] != points[b]:
@@ -236,18 +302,24 @@ def best_by_meanq_robust(
     return winner, stats
 
 
-def decision_table(candidates: dict[str, tuple[str, str]], *, title: str,
+def decision_table(candidates: "dict[str, tuple[str, str] | tuple[str, str, bool]]", *, title: str,
                    use_sf: bool = False, top: Optional[int] = None) -> str:
     """Render a MeanQ-ranked markdown decision table for one model+language.
 
-    `candidates` maps a display label -> (id_prefix, base). Rows are sorted by
-    MeanQ descending; the top row is bolded as the chosen configuration. This is
-    the single source of the decision prose, so the .md reports never drift from
-    what the staged ablation actually selected (see best_by_meanq).
+    `candidates` maps a display label -> (id_prefix, base), or (id_prefix,
+    base, candidate_use_sf) to override `use_sf` for just that entry (see
+    best_by_meanq_robust's own docstring -- same convention, used the same
+    way by scripts/mixed_meanq.py to list a row's noSF and SF variants
+    side by side). Rows are sorted by MeanQ descending, the top row is bolded
+    as the chosen configuration. This is the single source of the decision
+    prose, so the .md reports never drift from what the staged ablation
+    actually selected (see best_by_meanq).
     """
     rows = []
-    for label, (prefix, base) in candidates.items():
-        mq, comp = meanq(prefix, base, use_sf=use_sf)
+    for label, spec in candidates.items():
+        prefix, base = spec[0], spec[1]
+        candidate_use_sf = spec[2] if len(spec) > 2 else use_sf
+        mq, comp = meanq(prefix, base, use_sf=candidate_use_sf)
         if mq is None:
             continue
         rows.append((label, mq, comp))
@@ -271,10 +343,15 @@ def decision_table(candidates: dict[str, tuple[str, str]], *, title: str,
         out.append(line)
     if rows:
         best_label, best_mq, _ = rows[0]
+        prediction_note = (
+            "the no-self-feedback prediction" if not any(len(c) > 2 for c in candidates.values())
+            else "either the no-self-feedback or self-feedback prediction, whichever scores "
+            "higher for that row (candidates labeled \"(SF)\" are the self-feedback variant)"
+        )
         out.append(
             f"\n**Chosen config: {best_label}** (MeanQ {best_mq:.2f}), the highest "
-            "MeanQ = mean(ROUGE-L, BERT-F1, MC-acc) over 3 seeds on the no-self-feedback "
-            "prediction. MeanQ is used instead of any single metric so a config is only "
+            f"MeanQ = mean(ROUGE-L, BERT-F1, MC-acc) over 3 seeds on {prediction_note}. "
+            "MeanQ is used instead of any single metric so a config is only "
             "chosen if it does well on lexical, semantic, and decision correctness "
             "together.\n")
     return "\n".join(out)

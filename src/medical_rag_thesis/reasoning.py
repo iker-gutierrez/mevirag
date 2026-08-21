@@ -4,7 +4,7 @@ Four pipelines, all inference-only (no fine-tuning), all reusing the same
 retriever + reranker as the winning single-pass RAG row of the dev ablation:
 
     structured_cot   MedCoT-RAG-style structured clinical chain of thought
-                     (wangEtAl2025). Retrieval is unchanged; only the prompt
+                     (wangEtAl2025). Retrieval is unchanged, only the prompt
                      imposes a diagnosis-shaped reasoning scaffold.
 
     thought_rag      RAR2 (xuEtAl2025) Parallel Scaling, tuning-free (Fig. 4):
@@ -19,15 +19,15 @@ retriever + reranker as the winning single-pass RAG row of the dev ablation:
     marag            MA-RAG (wuEtAl2026), re-implemented against the actual
                      NJU-RL/MA-RAG code (ma_rag_entropy.py), not just the
                      paper's prose: a Solver samples several candidates each
-                     round; conflict among them is measured; conflicted
+                     round, conflict among them is measured, conflicted
                      records turn that conflict into up to four retrieval
                      queries (the original's own multi-query retrieval
-                     agent); all candidates, re-sorted by confidence, are
+                     agent), all candidates, re-sorted by confidence, are
                      carried into the next round's Solver prompt as history
-                     (the original has no ranking/pruning agent -- an earlier
+                     (the original has no ranking/pruning agent, an earlier
                      draft of this pipeline added one, which was not a
                      faithful reproduction of the original and has been
-                     removed); a final synthesis pass resolves any record
+                     removed), a final synthesis pass resolves any record
                      that never reaches unanimity once the round budget is
                      exhausted (the original instead takes the last round's
                      plurality vote, which has no equivalent on this thesis's
@@ -154,7 +154,7 @@ def _question_and_options(record: Mapping[str, Any], language: str) -> list[str]
 
 def _context_section(documents: Sequence[Mapping[str, Any]], language: str) -> list[str]:
     lab = labels(language)
-    context_text = format_context_text(documents or [])
+    context_text = format_context_text(documents or [], language=language)
     if not context_text:
         return []
     return [f"{lab['context']}:\n" + context_text]
@@ -170,7 +170,7 @@ def _few_shot_section(
     examples: Optional[Sequence[Mapping[str, Any]]], language: str
 ) -> list[str]:
     """Same demonstrations, same intro line, as prompts.build_extractive_user_prompt
-    (row 8's "3-shot + <base>" ablation row) -- only for the pipeline's final,
+    (row 8's "3-shot + <base>" ablation row), only for the pipeline's final,
     answer-emitting call, since the demonstrations teach output *format*, and the
     intermediate reasoning/ranking/query calls in these pipelines don't emit that
     format at all."""
@@ -311,12 +311,12 @@ def build_thought_prompt(
     previous_thought: str = "",
     documents: Optional[Sequence[Mapping[str, Any]]] = None,
 ) -> str:
-    """A thought process, generated *before* any retrieval -- shared by both
+    """A thought process, generated *before* any retrieval, shared by both
     thought_rag (Parallel Scaling: m independent, zero-shot samples of this
     same prompt) and thought_rag_iter's first round.
 
     With `previous_thought` and `documents` this becomes thought_rag_iter's
-    re-think step (RAR2's "Iterative Scaling"); thought_rag never calls it
+    re-think step (RAR2's "Iterative Scaling"), thought_rag never calls it
     that way, since Parallel Scaling never re-thinks with retrieved evidence.
     """
     lab = labels(language)
@@ -378,7 +378,7 @@ def build_thought_answer_prompt(
 def concatenate_thoughts(thoughts: Sequence[str]) -> str:
     """RAR2 Parallel Scaling (xuEtAl2025 Fig. 4): join m independently-sampled
     thought processes into the single extended thought thought_rag retrieves
-    with -- the paper's "+" ("Thought 1 + Thought 2 + ... + Thought m")."""
+    with, the paper's "+" ("Thought 1 + Thought 2 + ... + Thought m")."""
     return "\n\n".join(t.strip() for t in thoughts if t and t.strip())
 
 
@@ -388,7 +388,7 @@ def concatenate_thoughts(thoughts: Sequence[str]) -> str:
 
 # Matches the original's system_prompt_query (ma_rag_entropy.py /
 # ma_rag_evaluator.py), which asks for "1-4 precise queries", each on its own
-# "[Query N] ..." line, parsed back out with a regex over that exact tag --
+# "[Query N] ..." line, parsed back out with a regex over that exact tag,
 # translated into Spanish and Basque (the original is English-only,
 # mirroring MA-RAG's own MedCorp/BM25 setup, which has no Spanish/Basque
 # equivalent here either).
@@ -432,7 +432,7 @@ def build_conflict_query_prompt(
     language: str = "es",
 ) -> str:
     """Retrieval agent. Turns *conflict between candidates* into up to four
-    actionable queries -- matches the original's system_prompt_query +
+    actionable queries, matches the original's system_prompt_query +
     user_prompt_query (ma_rag_entropy.py)."""
     instruction = CONFLICT_QUERY_INSTRUCTION.get(language, CONFLICT_QUERY_INSTRUCTION["es"])
     candidate_label = "Hautagaia" if language == "eu" else "Candidata"
@@ -447,8 +447,8 @@ def parse_conflict_queries(text: str, *, fallback: str) -> list[str]:
     """Up to 4 deduplicated queries from the [Consulta N]/[Kontsulta N]/[Query
     N] tags, mirroring the original's `re.findall(r"\\[Query .*?\\](.*?)$", ...)`
     + `set()`-dedup. Falls back to the surface question if the model emits no
-    tagged line at all (the original has no such fallback -- it would run
-    retrieval with an empty query list, i.e. skip retrieval that round -- but
+    tagged line at all (the original has no such fallback, it would run
+    retrieval with an empty query list, i.e. skip retrieval that round, but
     silently skipping evidence retrieval because of a formatting slip is worse
     for this thesis's purposes than falling back to the plain question)."""
     matches = [m.strip() for m in QUERY_TAG_RE.findall(text or "") if m.strip()]
@@ -458,7 +458,7 @@ def parse_conflict_queries(text: str, *, fallback: str) -> list[str]:
 
 # The original's user_prompt_round (ma_rag_entropy.py) feeds back every one of
 # the N previous candidates, each labelled with its confidence, sorted from
-# lowest confidence (highest entropy) to highest -- "sorted by their
+# lowest confidence (highest entropy) to highest, "sorted by their
 # confidence (low entropy means high confidence)" per the prompt's own text,
 # and the loop `for i, (answer, answer_entropy) in enumerate(zip(...), start=1)`
 # in the source confirms the iteration order is the sort order, ascending
@@ -481,7 +481,7 @@ def build_solver_prompt(
 ) -> str:
     """Solver agent. `history` is [(candidate_text, confidence), ...] for ALL
     of the previous round's candidates, already sorted ascending by
-    confidence (matching the original's own iteration order) -- not a single
+    confidence (matching the original's own iteration order), not a single
     pruned "best" trace."""
     lab = labels(language)
     if language == "eu":
@@ -525,7 +525,7 @@ def token_confidence(token_logprobs: Sequence[float]) -> float:
     this thesis's Generator requests only the sampled token's own logprob from
     vLLM, not a full top-k distribution, so full categorical entropy is not
     available. Mean per-token log probability of the SAMPLED token is used
-    instead -- both are monotone proxies for "how sure was the model of what
+    instead, both are monotone proxies for "how sure was the model of what
     it actually said", and higher values mean higher confidence in both."""
     if not token_logprobs:
         return 0.0
@@ -565,7 +565,7 @@ def build_consensus_prompt(
     examples: Optional[Sequence[Mapping[str, Any]]] = None,
 ) -> str:
     """Final synthesis pass, only for records that never reach unanimity once
-    the round budget is exhausted -- this thesis's open-answer-compatible
+    the round budget is exhausted. This thesis's open-answer-compatible
     resolution mechanism (the original instead just takes the last round's
     plurality vote, which has no equivalent for open-answer records)."""
     lab = labels(language)
@@ -624,7 +624,7 @@ def parse_pipeline_answer(text: str) -> dict[str, str]:
          captured as the answer, and the real answer block appended to it.
 
     If the model never emits an answer label at all, we fall back to the shared
-    parser (whose own fallback puts the whole text in short_answer) -- that is a
+    parser (whose own fallback puts the whole text in short_answer), that is a
     genuine format failure and is counted, not hidden.
     """
     normalized = normalize_answer_labels(text)
@@ -632,6 +632,41 @@ def parse_pipeline_answer(text: str) -> dict[str, str]:
     if matches:
         normalized = normalized[matches[-1].start():]
     return parse_answer_sections(normalized)
+
+
+def trim_leaked_thinking_prefix(text: str) -> tuple[str, bool]:
+    """Return a clean final answer block when a leaked CoT prefix is unambiguous.
+
+    This is deliberately a narrow output-cleanup step, not a repair of a
+    model's answer.  Some think-mode pipeline calls emit a long visible
+    ``Thinking Process``/``Razonamiento`` preamble and only then provide a
+    normal extractive answer block.  In that specific case, the last answer
+    label marks the boundary between leaked internal reasoning and the answer
+    the model ultimately chose.  Preserve the raw text otherwise: an output
+    with no answer label, or without a reasoning marker before the final
+    answer block, remains available to evaluation as produced.
+
+    The caller records both the cleanup decision and the original text for
+    auditability.  This must never silently invent or regenerate content.
+    """
+    normalized = normalize_answer_labels(text)
+    matches = list(ANSWER_LABEL_RE.finditer(normalized))
+    if not matches:
+        return text, False
+    start = matches[-1].start()
+    prefix = normalized[:start]
+    leaked_markers = (
+        "thinking process",
+        "razonamiento:",
+        "reasoning:",
+        "<think>",
+        "</think>",
+        "[think]",
+        "[/think]",
+    )
+    if any(marker in prefix.lower() for marker in leaked_markers):
+        return normalized[start:].strip(), True
+    return text, False
 
 
 def has_answer_label(text: str) -> bool:

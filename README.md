@@ -1,13 +1,13 @@
 # Medical RAG MA thesis
 
 Retrieval-augmented generation (RAG) pipeline for clinical question answering in Spanish and Basque.
-The system is evaluated on two tasks: open-answer clinical QA (SNS-1064) and multiple-choice medical exam QA (CasiMédicos-Exp), across four core generator configurations (Qwen3.5-9B in non-thinking and thinking mode, Llama-3.1-8B-Instruct, and its Basque-adapted counterpart Latxa-Llama-3.1-8B-Instruct) and an eleven-condition ablation grid varying retrieval depth, cross-encoder reranking, few-shot prompting, self-feedback, and domain restriction, plus five inference-only reasoning-pipeline variants drawn from recent literature. Ministral-8B is additionally evaluated as a fifth, exploratory single-pass and reasoning-pipeline configuration.
+The system is evaluated on two tasks: open-answer clinical QA (GuiaSalud) and multiple-choice medical exam QA (CasiMédicos-Exp), across four core generator configurations (Qwen3.5-9B in non-thinking and thinking mode, Llama-3.1-8B-Instruct, and its Basque-adapted counterpart Latxa-Llama-3.1-8B-Instruct) and an eleven-condition ablation grid varying retrieval depth, cross-encoder reranking, few-shot prompting, self-feedback, and domain restriction, plus five inference-only reasoning-pipeline variants drawn from recent literature. Ministral-8B is additionally evaluated as a fifth, exploratory single-pass and reasoning-pipeline configuration.
 
 Full system implementation: retrieval, generation, self-feedback, reasoning pipelines, and evaluation.
 
 ## Status
 
-- **Spanish and Basque dev ablations**: complete, all eleven conditions, three seeds each, decided by MeanQ (mean of ROUGE-L, BERT-F1, MC-accuracy; see `scripts/meanq.py`). Rerun in full against a rebuilt evidence-only retrieval index (`configs/experiments/3*.json`), closing an answer-leakage path where the original full-record index could let one dev/test instance's retrieval surface a different instance's gold answer.
+- **Spanish and Basque dev ablations**: complete, all eleven conditions, three seeds each, decided by MeanQ (mean of ROUGE-L, BERT-F1, MC-accuracy; see `scripts/meanq.py`). Retrieval uses the full corpus while excluding each query's own gold instance at retrieval time, preventing answer leakage without discarding the remaining corpus.
 - **Reasoning-pipeline comparison**: complete for both languages, including a second Basque backbone (Llama) alongside Latxa, and both Qwen3.5-9B modes.
 - **Test set evaluation**: complete. Each model's own dev-set MeanQ-best configuration was frozen and run once against the held-out test split.
 
@@ -15,7 +15,7 @@ Full system implementation: retrieval, generation, self-feedback, reasoning pipe
 
 - Retrieval helps every model in both languages substantially; reranking and few-shot prompting each help only narrowly and inconsistently, and are actively harmful for the weakest models in each language, while self-feedback is neutral for three of the four models but a genuine, if modest, gain for the Basque-adapted model specifically.
 - Of the five reasoning-pipeline variants, two show a real gain over our single-pass RAG ablation winner, and only for one of the two Spanish configurations tested, at several times the inference cost; every pipeline underperforms our ablation winner in Basque, and for the other Spanish configuration.
-- A persistent 20-26 point MeanQ gap between the best achievable Spanish and Basque configurations survives every technique tested on dev, and holds, narrower but still substantial (16-20 points), on the held-out test set.
+- A persistent 20-26 point MeanQ gap between the best achievable Spanish and Basque configurations survives every technique tested on dev and remains substantial on the held-out test set (21.94-24.16 points across the directly comparable systems).
 - Basque language adaptation (Latxa vs. Llama) does not raise overall single-pass MeanQ above the non-adapted model's, but it does raise multiple-choice accuracy specifically, and it is the only technique tested for which the Basque-adapted model shows a genuine advantage: a positive self-feedback gain that does not extend to multi-step reasoning.
 
 ## Best dev configuration per model
@@ -37,7 +37,7 @@ For Qwen no-think, MedCoT-RAG (our best retrieval) was the only one of the five 
 - `src/medical_rag_thesis/`: reusable experiment code (retrieval, generation, evaluation, reasoning pipelines).
 - `scripts/`: command-line entry points for data prep, experiments, staged ablation, and result-table/report generation.
 - `slurm/`: Slurm job scripts, including the staged-ablation launchers (`slurm/staged_*.sh`).
-- `configs/experiments/`: per-run experiment configs (retrieval depth, reranking, few-shot, self-feedback, reasoning pipeline). The `3xxx`-prefixed configs are the ablation grid rerun against the evidence-only retrieval index; other prefixes predate that rebuild.
+- `configs/experiments/`: per-run experiment configs (retrieval depth, reranking, few-shot, self-feedback, and reasoning pipeline). The final held-out test configurations are also copied, with their predictions and evaluations, to `reproducibility/final_test/`.
 - `experiments/runs/`: generated predictions and run artifacts (gitignored).
 - `reports/metrics/`: ablation result tables and summaries.
 - `docs/`: current prompt reference (`prompts.md`), supervisor meeting notes, reading list, bibliography notes.
@@ -59,7 +59,7 @@ python -m pip install -e .
 
 ### Data preparation
 
-Prepare SNS-1064 from the pre-split train/dev/test CSVs published in the [SNS1064-dataset](https://github.com/iker-gutierrez/SNS1064-dataset) repository (the split used for every experiment in this thesis is fixed there, not re-derived here):
+Prepare GuiaSalud from the pre-split train/dev/test CSVs published in the [guiasalud](https://github.com/iker-gutierrez/guiasalud) repository (the split used for every experiment in this thesis is fixed there, not re-derived here):
 
 ```bash
 python scripts/prepare_sns1064.py \
@@ -77,7 +77,7 @@ python scripts/import_casimedicos_exp.py \
   --output-dir data/processed/casimedicos
 ```
 
-Create the mixed dataset (SNS-1064 + CasiMédicos-Exp):
+Create the mixed dataset (GuiaSalud + CasiMédicos-Exp):
 
 ```bash
 python scripts/create_amplified_dataset.py \

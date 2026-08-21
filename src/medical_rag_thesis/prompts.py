@@ -156,20 +156,27 @@ def format_examples(examples: Sequence[Mapping[str, Any]], language: str = "es")
 
 
 
-# Retrieved documents used to only surface their pre-joined index `text`
-# (guidebook/topic/subtopic/question/focus/short_answer/evidence, see
-# retrieval.build_index's text_fields), which silently dropped `judgement`
-# and `considerations` even though both are indexed in each document's own
-# metadata (retrieval.build_index's `doc` dict). This renders the full
-# retrieved row instead (every field except `id`/`source`/`split`, which
-# carry no content the model should reason over), one labeled line per
-# field, the same label set and per-field-line format format_question
-# already uses for the query itself, so retrieved context and the query
-# read consistently. `short_answer` is skipped: it's always identical to
-# `judgement` (prepare_sns1064.py sets short_answer = judgement), so
-# showing both would just repeat the same text under two labels.
-_CONTEXT_DOCUMENT_FIELDS = (
+# The generator must see the same serialized passage that the dense retriever
+# embeds and the cross-encoder reranks.  In particular, the current mixed
+# GuiaSalud+CasiMedicos index's `text` contains guidebook_title/specialty,
+# query, short_answer, and justification.  A previous metadata-based renderer
+# accidentally returned after seeing GuiaSalud's guidebook_title, reducing all
+# of its retrieved passages to the title alone; its fallback also omitted the
+# answer-bearing short_answer field.  Prefer `text` whenever it is present so
+# retrieval, reranking, and generation operate on one identical passage.
+#
+# The explicit fields below are only a compatibility fallback for callers that
+# construct document dictionaries directly rather than loading them from an
+# index.  They include both the current mixed schema and the older expanded
+# SNS/GuiaSalud schema.
+_CONTEXT_CANONICAL_FIELDS = (
     "guidebook_title",
+    "specialty",
+    "query",
+    "short_answer",
+    "justification",
+)
+_CONTEXT_DOCUMENT_FIELDS = (
     "topic",
     "subtopic",
     "question",
@@ -181,29 +188,23 @@ _CONTEXT_DOCUMENT_FIELDS = (
 
 
 def format_context_document(document: Mapping[str, Any], language: str = "es") -> str:
+    indexed_text = str(document.get("text", "") or "").strip()
+    if indexed_text:
+        return indexed_text
+
     labels = field_labels(language)
     lines = []
-    for field in _CONTEXT_DOCUMENT_FIELDS:
+    for field in _CONTEXT_CANONICAL_FIELDS + _CONTEXT_DOCUMENT_FIELDS:
         value = str(document.get(field, "") or "").strip()
         if value:
-            label = labels.get(field, field)
-            lines.append(f"{label}: {value}")
-    if lines:
-        return "\n".join(lines)
-    # Trimmed datasets (e.g. data/processed/guiasalud_casimedicos/*.jsonl,
-    # id/query/short_answer/justification(/options) only) carry none of the
-    # individual fields above, only their own pre-composed query/
-    # justification pair (retrieval.build_index's own `doc` dict indexes
-    # both alongside the individual fields, for exactly this case). Both
-    # are already self-labeled composites (query = "Tema: .../Pregunta:
-    # ...", justification = "Evidencia procedente de la investigación:
-    # ..."), so they're appended as-is rather than wrapped in another label.
-    fallback_lines = []
-    for field in ("query", "justification"):
-        value = str(document.get(field, "") or "").strip()
-        if value:
-            fallback_lines.append(value)
-    return "\n".join(fallback_lines)
+            # query and justification are already labeled composites in the
+            # processed corpora, matching retrieval.record_to_document_text.
+            if field in ("query", "justification"):
+                lines.append(value)
+            else:
+                label = labels.get(field, field)
+                lines.append(f"{label}: {value}")
+    return "\n".join(lines)
 
 
 def format_context_text(documents: Sequence[Mapping[str, Any]], language: str = "es") -> str:

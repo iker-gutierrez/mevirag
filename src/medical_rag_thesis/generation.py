@@ -107,7 +107,7 @@ def strip_thinking_text(text: str) -> str:
     This has to be done here, in Python, on the actual generated text: vLLM's
     engine-level `reasoning_parser` kwarg (passed to load_vllm_model) only
     populates a separate `.reasoning_content` field on vLLM's OpenAI-compatible
-    SERVER API responses -- CompletionOutput, what LLM.generate() actually
+    SERVER API responses. CompletionOutput, what LLM.generate() actually
     returns (the interface this project's whole vLLM generation path uses,
     scripts/run_generation_experiment.py and run_reasoning_pipeline.py alike),
     has no such field, so the engine kwarg is silently inert for every call
@@ -149,7 +149,7 @@ def generate_one(
     import torch
 
     inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
-    # Left-truncate if prompt exceeds context window; keeps the question at the end
+    # Left-truncate if prompt exceeds context window, keeps the question at the end
     max_ctx = getattr(model.config, "max_position_embeddings", 4096)
     allowed_input = max_ctx - max_new_tokens
     if inputs["input_ids"].shape[1] > allowed_input:

@@ -4,7 +4,7 @@ given query q as
 
     s(d, q) = alpha * sim(q, d) + beta * psi(d)
 
-where sim(q, d) is embedding cosine similarity (MedCPT in the original paper; our
+where sim(q, d) is embedding cosine similarity (MedCPT in the original paper, our
 own multilingual-e5-large dense index here, see sec:retrieval) and psi(d) is a
 "causal relevance score that estimates the diagnostic utility of the document",
 computed by "detecting medically relevant causal patterns in the text, such as
@@ -94,8 +94,8 @@ def causal_score(
     MedCoT-RAG's composite s(d, q) = alpha*sim(q,d) + beta*psi(d), and returns
     the top_k by that composite score. `sim(q, d)` is each document's existing
     dense-retrieval `score` field (already a cosine similarity in [-1, 1] from
-    EmbeddingRetriever, sec:retrieval); this function only adds the psi(d) term
-    and re-ranks -- it does not re-embed or re-query the index."""
+    EmbeddingRetriever, sec:retrieval), this function only adds the psi(d) term
+    and re-ranks, it does not re-embed or re-query the index."""
     scored = []
     for doc in documents:
         sim = float(doc.get("score", 0.0))

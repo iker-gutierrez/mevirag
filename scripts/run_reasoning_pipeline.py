@@ -11,7 +11,7 @@ once. thought_rag_iter is the separate Iterative Scaling strategy (re-think
 with retrieved evidence, re-retrieve, repeat for `rounds`). marag samples
 `num_candidates` per round, measures conflict, turns conflict into up to four
 retrieval queries, and carries ALL candidates (re-sorted by confidence) into
-the next round -- matching the actual NJU-RL/MA-RAG code, not just its paper.
+the next round, matching the actual NJU-RL/MA-RAG code, not just its paper.
 The previous v1 pipelines (single-retrieval thought_rag, and a marag variant
 with a separate ranking/pruning agent not present in the original) are kept,
 unmodified, in reasoning_v1.py / run_reasoning_pipeline_v1.py for
@@ -40,6 +40,7 @@ sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT / "scripts"))
 
 from run_generation_experiment import sample_random_examples  # noqa: E402
+from truncation_safety import remove_failed_output  # noqa: E402
 
 from medical_rag_thesis.data_io import read_jsonl, write_jsonl  # noqa: E402
 from medical_rag_thesis.generation import (  # noqa: E402
@@ -69,6 +70,7 @@ from medical_rag_thesis.reasoning import (  # noqa: E402
     parse_pipeline_answer,
     sort_by_confidence,
     token_confidence,
+    trim_leaked_thinking_prefix,
 )
 from medical_rag_thesis.causal_scoring import causal_score  # noqa: E402
 from medical_rag_thesis.retrieval import EmbeddingRetriever  # noqa: E402
@@ -85,7 +87,7 @@ INCOMPLETE_FINISH_REASONS = ("length", "repetition")
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run a reasoning pipeline from a JSON config.")
     parser.add_argument("--config", required=True)
-    parser.add_argument("--seed", type=int, default=None, help="Override config seed; output goes to a _seedK dir.")
+    parser.add_argument("--seed", type=int, default=None, help="Override config seed, output goes to a _seedK dir.")
     parser.add_argument("--limit", type=int, default=None, help="Override config limit (debug).")
     parser.add_argument("--save-prompts", action="store_true")
     return parser.parse_args()
@@ -119,6 +121,10 @@ class Config:
         self.top_k: int = int(payload.get("top_k", 0))
         self.min_p: float = float(payload.get("min_p", 0.0))
         self.presence_penalty: float = float(payload.get("presence_penalty", 0.0))
+        self.max_truncation_retries: int = int(payload.get("max_truncation_retries", 5))
+        self.truncation_retry_presence_penalty: float = float(
+            payload.get("truncation_retry_presence_penalty", 0.1)
+        )
 
         # vLLM
         self.dtype: str = payload.get("dtype", "auto")
@@ -137,18 +143,25 @@ class Config:
             else None
         )
 
-        # retrieval (the frozen best config)
+        # retrieval (the frozen best config). `or default` rather than
+        # `.get(key, default)`: domain-restriction / causal-scoring winners
+        # (scripts/mixed_meanq.py's retrieval_settings()) can write these
+        # keys as an EXPLICIT null (no reranker stage, not merely "unset"),
+        # and .get()'s own default only fires when the key is absent, not
+        # when it's present-but-None -- confirmed as a live bug: config 3320
+        # (frozen to a domain-restricted, no-reranker winner) crashed every
+        # array task with "int() argument ... not 'NoneType'" until this fix.
         self.retrieval_index: str = payload["retrieval_index"]
-        self.retrieval_top_k: int = int(payload.get("retrieval_top_k", 15))
-        self.reranker_model: str = payload.get("reranker_model", "")
-        self.reranker_top_k: int = int(payload.get("reranker_top_k", 5))
-        self.reranker_device: str = payload.get("reranker_device", "cpu")
+        self.retrieval_top_k: int = int(payload.get("retrieval_top_k") or 15)
+        self.reranker_model: str = payload.get("reranker_model") or ""
+        self.reranker_top_k: int = int(payload.get("reranker_top_k") or 5)
+        self.reranker_device: str = payload.get("reranker_device") or "cpu"
         # Query encoder shares the GPU with vLLM, so it defaults to CPU (see Retriever).
         self.retriever_device: str = payload.get("retriever_device", "cpu")
 
-        # few-shot demonstrations (optional; row 8's "3-shot + <base>" ablation
+        # few-shot demonstrations (optional, row 8's "3-shot + <base>" ablation
         # row on top of a pipeline instead of the plain single-pass base). Only
-        # the pipeline's final, answer-emitting call(s) get the examples --
+        # the pipeline's final, answer-emitting call(s) get the examples,
         # see reasoning._few_shot_section. Absent by default so every existing
         # config (no few_shot_file) behaves exactly as before.
         self.few_shot_file: Optional[str] = payload.get("few_shot_file")
@@ -156,9 +169,9 @@ class Config:
         self.few_shot_mode: str = payload.get("few_shot_mode", "random")
         if self.few_shot_k > 0 and self.few_shot_mode != "random":
             raise ValueError(
-                f"few_shot_mode={self.few_shot_mode!r} not supported here -- "
+                f"few_shot_mode={self.few_shot_mode!r} not supported here, "
                 "only 'random' (config 1280's mode) is wired into the "
-                "reasoning-pipeline runner; 'retrieval' mode would need a "
+                "reasoning-pipeline runner, 'retrieval' mode would need a "
                 "live per-record retriever call this driver doesn't make."
             )
 
@@ -167,14 +180,14 @@ class Config:
         self.num_candidates: int = int(payload.get("num_candidates", 3))
         # RAR2 Parallel Scaling: m independent thoughts sampled per record,
         # concatenated, retrieved once. Distinct from `rounds`
-        # (thought_rag_iter's re-retrieve budget) -- Parallel Scaling never
+        # (thought_rag_iter's re-retrieve budget). Parallel Scaling never
         # re-retrieves.
         self.parallel_thoughts: int = int(payload.get("parallel_thoughts", 3))
         # Two thresholds, because the two conflict signals live on different scales.
         # Multiple choice is discrete: any candidate not backing the plurality option
         # is a real disagreement, so the bar is 0 (MA-RAG's own criterion). Semantic
-        # disagreement between open answers never reaches 0 -- two correct paraphrases
-        # of a short answer sit around 0.15 cosine distance -- so a shared threshold
+        # disagreement between open answers never reaches 0, two correct paraphrases
+        # of a short answer sit around 0.15 cosine distance, so a shared threshold
         # would treat every open record as conflicted and make the signal useless.
         legacy = payload.get("conflict_threshold")
         self.conflict_threshold_mc: float = float(payload.get("conflict_threshold_mc", 0.0))
@@ -194,7 +207,7 @@ class Config:
         self.causal_alpha: float = float(payload.get("causal_alpha", 1.0))
         self.causal_beta: float = float(payload.get("causal_beta", 1.0))
         self.causal_pool_size: int = int(payload.get("causal_pool_size", 15))
-        # The paper retrieves top-5 directly by s(d,q) -- no reranking stage at
+        # The paper retrieves top-5 directly by s(d,q), no reranking stage at
         # all, so this is deliberately its own field, not reranker_top_k.
         self.causal_top_k: int = int(payload.get("causal_top_k", 5))
 
@@ -275,11 +288,11 @@ class Generator:
         # The seed MUST reach SamplingParams. Plumbing it only as far as the config
         # (which is what the single-pass runs do) leaves vLLM on its own fixed engine
         # seed, so every "seed" re-runs the identical sample and the resulting +/-std
-        # across seeds is exactly 0.00 -- a number that looks like measured stability
+        # across seeds is exactly 0.00, a number that looks like measured stability
         # and is really the same run averaged with itself.
         #
         # `seed` is offset per call so the stages of a pipeline don't all draw the same
-        # stream, and -- critically for MA-RAG -- so the N solver candidates stay
+        # stream, and (critically for MA-RAG) so the N solver candidates stay
         # independent draws rather than N copies. self._call_index advances every call.
         sp_kwargs: dict[str, Any] = dict(
             n=n,
@@ -289,7 +302,7 @@ class Generator:
             top_p=config.top_p,
             top_k=config.top_k if config.top_k > 0 else -1,
             min_p=config.min_p,
-            repetition_penalty=1.0 + config.presence_penalty if config.presence_penalty else 1.0,
+            presence_penalty=config.presence_penalty,
         )
         self._call_index += 1
         if config.thinking_token_budget is not None:
@@ -313,23 +326,58 @@ class Generator:
         `n > 1` asks vLLM for n independent samples per prompt in a single pass --
         this is the Solver agent's parallel sampling, and it shares the prompt's
         KV cache across the samples instead of re-encoding it n times.
+
+        Every prompt is retried (all its n samples together, fresh seed each
+        attempt) until every sample finishes cleanly (finish_reason not in
+        INCOMPLETE_FINISH_REASONS), up to config.max_truncation_retries extra
+        attempts. Repetition-detection alone cannot catch every degenerate
+        pattern (a run can drift into long, non-repeating word-salad that
+        never repeats a short pattern and so never trips repetition_detection,
+        confirmed on real GuiaSalud output -- 99.98% unique words), so once a
+        prompt has used half its retry budget without succeeding, remaining
+        attempts fall back to config.truncation_retry_presence_penalty (a
+        conservative, previously-validated value) instead of repeating the
+        configured value that may itself be the cause.
         """
         from vllm import SamplingParams
 
+        config = self.config
         chat_prompts = self.chat(user_prompts)
         truncated = self._truncate(chat_prompts, max_new_tokens)
-        sp_kwargs = self._sampling_kwargs(n=n, max_new_tokens=max_new_tokens, temperature=temperature)
+
+        n_prompts = len(truncated)
+        texts: list[list[Optional[str]]] = [None] * n_prompts  # type: ignore[list-item]
+        reasons: list[list[Optional[str]]] = [None] * n_prompts  # type: ignore[list-item]
+        pending = list(range(n_prompts))
 
         started = time.perf_counter()
-        outputs = self.llm.generate(truncated, SamplingParams(**sp_kwargs))
+        for attempt in range(config.max_truncation_retries + 1):
+            if not pending:
+                break
+            presence_penalty_override = (
+                config.truncation_retry_presence_penalty
+                if attempt > max(1, config.max_truncation_retries // 2)
+                else None
+            )
+            sp_kwargs = self._sampling_kwargs(n=n, max_new_tokens=max_new_tokens, temperature=temperature)
+            if presence_penalty_override is not None:
+                sp_kwargs["presence_penalty"] = presence_penalty_override
+            outputs = self.llm.generate([truncated[i] for i in pending], SamplingParams(**sp_kwargs))
+
+            still_pending = []
+            for i, output in zip(pending, outputs):
+                sample_texts = [completion.text.strip() for completion in output.outputs]
+                sample_reasons = [completion.finish_reason for completion in output.outputs]
+                texts[i] = sample_texts
+                reasons[i] = sample_reasons
+                if attempt < config.max_truncation_retries and any(
+                    r in INCOMPLETE_FINISH_REASONS for r in sample_reasons
+                ):
+                    still_pending.append(i)
+            pending = still_pending
         self.total_generation_seconds += time.perf_counter() - started
 
-        texts: list[list[str]] = []
-        reasons: list[list[Optional[str]]] = []
-        for output in outputs:
-            texts.append([completion.text.strip() for completion in output.outputs])
-            reasons.append([completion.finish_reason for completion in output.outputs])
-        return texts, reasons, chat_prompts
+        return texts, reasons, chat_prompts  # type: ignore[return-value]
 
     def generate_one(
         self,
@@ -354,44 +402,71 @@ class Generator:
         reasoning.token_confidence for what this stands in for and why).
         MA-RAG's Solver call goes through this so its history can be sorted
         by confidence, matching the original NJU-RL/MA-RAG code. Returns
-        (texts, finish_reasons, confidences, chat_prompts)."""
+        (texts, finish_reasons, confidences, chat_prompts).
+
+        Same per-prompt truncation-retry loop as generate() (see its
+        docstring): retried prompts also get fresh confidences from their
+        successful attempt, never mixed with a discarded truncated one."""
         from vllm import SamplingParams
 
+        config = self.config
         chat_prompts = self.chat(user_prompts)
         truncated = self._truncate(chat_prompts, max_new_tokens)
-        # logprobs=0: return only the sampled token's own logprob per
-        # position (no top-k alternatives), the minimum needed for
-        # token_confidence's mean-logprob proxy without the extra cost of
-        # requesting a full top-k distribution per token.
-        sp_kwargs = self._sampling_kwargs(n=n, max_new_tokens=max_new_tokens, temperature=None, logprobs=0)
+
+        n_prompts = len(truncated)
+        texts: list[list[Optional[str]]] = [None] * n_prompts  # type: ignore[list-item]
+        reasons: list[list[Optional[str]]] = [None] * n_prompts  # type: ignore[list-item]
+        confidences: list[list[Optional[float]]] = [None] * n_prompts  # type: ignore[list-item]
+        pending = list(range(n_prompts))
 
         started = time.perf_counter()
-        outputs = self.llm.generate(truncated, SamplingParams(**sp_kwargs))
+        for attempt in range(config.max_truncation_retries + 1):
+            if not pending:
+                break
+            presence_penalty_override = (
+                config.truncation_retry_presence_penalty
+                if attempt > max(1, config.max_truncation_retries // 2)
+                else None
+            )
+            # logprobs=0: return only the sampled token's own logprob per
+            # position (no top-k alternatives), the minimum needed for
+            # token_confidence's mean-logprob proxy without the extra cost of
+            # requesting a full top-k distribution per token.
+            sp_kwargs = self._sampling_kwargs(n=n, max_new_tokens=max_new_tokens, temperature=None, logprobs=0)
+            if presence_penalty_override is not None:
+                sp_kwargs["presence_penalty"] = presence_penalty_override
+            outputs = self.llm.generate([truncated[i] for i in pending], SamplingParams(**sp_kwargs))
+
+            still_pending = []
+            for i, output in zip(pending, outputs):
+                sample_texts = [completion.text.strip() for completion in output.outputs]
+                sample_reasons = [completion.finish_reason for completion in output.outputs]
+                sample_confidences = []
+                for completion in output.outputs:
+                    token_logprobs = []
+                    for position_index, position in enumerate(completion.logprobs or []):
+                        # Each position maps {token_id: Logprob}, the sampled
+                        # token's own entry is what was actually emitted. Indexed
+                        # by the loop position, not by len(token_logprobs), a
+                        # missing entry at any position must not shift every
+                        # later lookup out of alignment with completion.token_ids.
+                        if position is None or position_index >= len(completion.token_ids):
+                            continue
+                        entry = position.get(completion.token_ids[position_index])
+                        if entry is not None:
+                            token_logprobs.append(entry.logprob)
+                    sample_confidences.append(token_confidence(token_logprobs))
+                texts[i] = sample_texts
+                reasons[i] = sample_reasons
+                confidences[i] = sample_confidences
+                if attempt < config.max_truncation_retries and any(
+                    r in INCOMPLETE_FINISH_REASONS for r in sample_reasons
+                ):
+                    still_pending.append(i)
+            pending = still_pending
         self.total_generation_seconds += time.perf_counter() - started
 
-        texts: list[list[str]] = []
-        reasons: list[list[Optional[str]]] = []
-        confidences: list[list[float]] = []
-        for output in outputs:
-            texts.append([completion.text.strip() for completion in output.outputs])
-            reasons.append([completion.finish_reason for completion in output.outputs])
-            sample_confidences = []
-            for completion in output.outputs:
-                token_logprobs = []
-                for position_index, position in enumerate(completion.logprobs or []):
-                    # Each position maps {token_id: Logprob}; the sampled
-                    # token's own entry is what was actually emitted. Indexed
-                    # by the loop position, not by len(token_logprobs) -- a
-                    # missing entry at any position must not shift every
-                    # later lookup out of alignment with completion.token_ids.
-                    if position is None or position_index >= len(completion.token_ids):
-                        continue
-                    entry = position.get(completion.token_ids[position_index])
-                    if entry is not None:
-                        token_logprobs.append(entry.logprob)
-                sample_confidences.append(token_confidence(token_logprobs))
-            confidences.append(sample_confidences)
-        return texts, reasons, confidences, chat_prompts
+        return texts, reasons, confidences, chat_prompts  # type: ignore[return-value]
 
     def visible(self, text: str) -> str:
         """Drop the thinking block for models that emit one, so downstream stages
@@ -411,7 +486,7 @@ class Retriever:
         # multilingual-e5-large is ~2.1 GiB. Constructing it on CUDA and calling
         # .to("cpu") afterwards still allocates those 2.1 GiB on the GPU, and
         # PyTorch's caching allocator keeps the block RESERVED after the tensors
-        # move away -- so vLLM, which then claims gpu_memory_utilization (0.90) of
+        # move away, so vLLM, which then claims gpu_memory_utilization (0.90) of
         # what it can see, starts life 2 GiB short. That is what produced the
         # intermittent OOM: it struck whichever pipeline happened to retrieve again
         # after generation, and only on some seeds, because it was a race for the
@@ -429,7 +504,7 @@ class Retriever:
     @property
     def embedder(self) -> Any:
         """The retriever's own multilingual-e5-large, reused to score semantic
-        conflict between MA-RAG candidates -- no second embedding model loaded."""
+        conflict between MA-RAG candidates, no second embedding model loaded."""
         return getattr(self.retriever, "model", None)
 
     @property
@@ -458,7 +533,7 @@ class Retriever:
 
     def search_causal(self, query: str, exclude_id: Optional[str], language: str) -> list[dict[str, Any]]:
         """MedCoT-RAG's causal-aware retrieval (sec:reasoning-pipelines): this is
-        the paper's ONLY retrieval step -- there is no separate cross-encoder
+        the paper's ONLY retrieval step, there is no separate cross-encoder
         reranking stage. We dense-retrieve a larger candidate pool (so psi(d) has
         genuinely different documents to select among, not just the same top-k
         the dense score would already return) and select the final top-k directly
@@ -488,7 +563,7 @@ def thought_query(record: Mapping[str, Any], thought: str, config: Config) -> st
 
     `thought_only` is the paper's setting. We default to `question_plus_thought`
     because our questions carry the clinical topic, which a thought that wanders
-    off can lose entirely; the mode is a config knob so the deviation is testable.
+    off can lose entirely, the mode is a config knob so the deviation is testable.
     The truncation matters: e5 encodes ~512 tokens, so an unbounded thought would
     silently drop its own tail out of the query.
     """
@@ -517,7 +592,7 @@ def blank_stage_stats() -> dict[str, Any]:
 class Accumulator:
     """Per-record cost + trace ledger. Every LLM call in every pipeline funnels
     through `add`, so the reported tokens/sample really is the whole pipeline and
-    not just its last stage -- which is the number the thesis needs to compare a
+    not just its last stage, which is the number the thesis needs to compare a
     3-round agentic loop against a single-pass baseline honestly."""
 
     def __init__(self, num_records: int):
@@ -599,11 +674,11 @@ def run_thought_rag(
 ) -> tuple[list[str], list[Optional[str]], list[list[dict[str, Any]]], list[list[str]]]:
     """RAR2 Parallel Scaling (xuEtAl2025 Fig. 4), tuning-free: sample
     `config.parallel_thoughts` independent thought processes per record (one
-    vLLM call, n=parallel_thoughts, sharing the prompt's KV cache -- same
+    vLLM call, n=parallel_thoughts, sharing the prompt's KV cache, same
     mechanism MA-RAG's Solver uses for its own parallel sampling), concatenate
     them into a single extended thought, retrieve ONCE with the
-    concatenation, answer ONCE. Never re-retrieves or re-thinks across rounds
-    -- that is thought_rag_iter's job, not this pipeline's."""
+    concatenation, answer ONCE. Never re-retrieves or re-thinks across rounds,
+    that is thought_rag_iter's job, not this pipeline's."""
     n = len(records)
     examples_per_record = examples_per_record or [[] for _ in range(n)]
 
@@ -760,9 +835,9 @@ def run_marag(
     consuming compute -> the rest turn their conflict into UP TO FOUR
     retrieval queries (the original's own multi-query retrieval agent), pull
     new evidence from all of them, and carry ALL candidates (re-sorted
-    ascending by confidence) into the next round's Solver prompt as history
-    -- there is no ranking/pruning agent in the original. A final synthesis
-    pass (this thesis's own addition; the original instead just takes the
+    ascending by confidence) into the next round's Solver prompt as history,
+    there is no ranking/pruning agent in the original. A final synthesis
+    pass (this thesis's own addition, the original instead just takes the
     last round's plurality vote, which has no equivalent on the open-answer
     half of this dev set) resolves any record that never reaches unanimity.
     """
@@ -776,7 +851,7 @@ def run_marag(
         candidate_ids.append([str(doc.get("doc_id") or "") for doc in docs])
 
     # history[i] = [(candidate_text, confidence), ...] for ALL candidates of
-    # the most recent round, ascending by confidence -- fed back whole into
+    # the most recent round, ascending by confidence, fed back whole into
     # the next round's Solver prompt (build_solver_prompt).
     history: list[list[tuple[str, float]]] = [[] for _ in range(n)]
     final_candidates: list[list[str]] = [[] for _ in range(n)]
@@ -839,7 +914,7 @@ def run_marag(
             )
             if score <= threshold:
                 # Consensus reached. This is plain self-consistency: the candidates
-                # agree, so their agreed answer *is* the output -- no synthesis pass,
+                # agree, so their agreed answer *is* the output, no synthesis pass,
                 # and the record stops consuming compute in later rounds.
                 choice = majority_candidate(visible, records[i])
                 settled[i] = True
@@ -848,7 +923,7 @@ def run_marag(
             else:
                 conflicted.append(i)
                 # Full history for the next round's Solver prompt: ALL
-                # candidates, ascending by confidence -- no ranking agent.
+                # candidates, ascending by confidence, no ranking agent.
                 history[i] = sort_by_confidence(visible, confidences[slot])
 
         print(
@@ -910,7 +985,7 @@ def run_marag(
                 docs_per_record[i],
                 # final_candidates[i] is set every round a record stays
                 # active, so it is populated whenever the record reaches this
-                # point; the history fallback only matters if a future edit
+                # point, the history fallback only matters if a future edit
                 # adds a code path that leaves a record unresolved without
                 # ever sampling a candidate for it.
                 final_candidates[i] or [text for text, _ in history[i][-1:]],
@@ -1026,9 +1101,13 @@ def run(args: argparse.Namespace) -> None:
     outputs = []
     num_answer_truncated = 0
     num_missing_answer_label = 0
+    num_leaked_cot_trimmed = 0
     for i, record in enumerate(records):
         stats = acc.stats[i]
-        answer_text = generator.visible(answers[i])
+        raw_answer_text = generator.visible(answers[i])
+        answer_text, leaked_cot_trimmed = trim_leaked_thinking_prefix(raw_answer_text)
+        if leaked_cot_trimmed:
+            num_leaked_cot_trimmed += 1
         parsed = parse_pipeline_answer(answer_text) if answer_text else {}
         truncated = reasons[i] in INCOMPLETE_FINISH_REASONS
         if truncated:
@@ -1054,8 +1133,9 @@ def run(args: argparse.Namespace) -> None:
                 "native_thinking": generator.native_thinking,
                 "source": record.get("source"),
                 "topic": record.get("topic"),
+                "subtopic": record.get("subtopic", ""),
                 "question": record.get("question"),
-                "subquestion": record.get("subquestion", ""),
+                "focus": record.get("focus", ""),
                 "reference_short_answer": record.get("short_answer", ""),
                 "reference_evidence": record.get("evidence", ""),
                 # No self-feedback stage here: the pipeline *is* the refinement
@@ -1065,6 +1145,14 @@ def run(args: argparse.Namespace) -> None:
                 "parsed_initial_prediction": parsed,
                 "prediction_text": answer_text,
                 "parsed_prediction": parsed,
+                # Keep a complete audit trail whenever an unmistakable CoT
+                # prefix was removed before scoring.  If no safe boundary was
+                # found, prediction_text remains the unmodified model output.
+                "raw_prediction_text": raw_answer_text if leaked_cot_trimmed else None,
+                "format_cleanup": {
+                    "leaked_cot_trimmed": leaked_cot_trimmed,
+                    "fallback_evaluated_as_is": bool(raw_answer_text) and not leaked_cot_trimmed,
+                },
                 "few_shot_ids": [
                     str(example.get("id") or "") for example in examples_per_record[i]
                 ],
@@ -1102,6 +1190,21 @@ def run(args: argparse.Namespace) -> None:
             }
         )
         print(f"[{i + 1}/{len(records)}] {record.get('id', '')}", flush=True)
+
+    still_truncated = [
+        r["id"] for r in outputs if r["truncation"]["initial_finish_reason"] in INCOMPLETE_FINISH_REASONS
+    ]
+    if still_truncated:
+        # Keep afterany RP evaluation from accepting a partial artifact when
+        # one pipeline task fails: failed runs must leave no predictions file
+        # to discover and score.
+        remove_failed_output(output_path)
+        raise RuntimeError(
+            f"{len(still_truncated)} record(s) still truncated after "
+            f"{config.max_truncation_retries} retries (ids: {still_truncated}). "
+            "Zero truncated output is required -- raise max_truncation_retries "
+            "or inspect these records manually rather than accepting partial answers."
+        )
 
     write_jsonl(outputs, output_path)
 
@@ -1154,6 +1257,7 @@ def run(args: argparse.Namespace) -> None:
         },
         "format_compliance": {
             "num_missing_answer_label": num_missing_answer_label,
+            "num_leaked_cot_trimmed": num_leaked_cot_trimmed,
             "num_records": len(outputs),
         },
     }

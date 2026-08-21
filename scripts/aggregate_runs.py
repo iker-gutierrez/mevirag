@@ -65,7 +65,7 @@ def _aggregate_dict(nodes: list[Any]) -> Any:
         keys = nodes[0].keys()
         return {key: _aggregate_dict([n.get(key) for n in nodes]) for key in keys}
     if all(isinstance(n, list) for n in nodes):
-        # e.g. warnings lists — just take the union
+        # e.g. warnings lists, just take the union
         seen: list[Any] = []
         for lst in nodes:
             for item in lst:
@@ -77,7 +77,7 @@ def _aggregate_dict(nodes: list[Any]) -> Any:
         mu = sum(numerics) / len(numerics)
         std = _stdev(numerics)
         return {"mean": mu, "std": std, "values": numerics}
-    # non-numeric scalars (strings, bools, None) — return the first value
+    # non-numeric scalars (strings, bools, None), return the first value
     return nodes[0]
 
 
@@ -94,7 +94,7 @@ def main() -> None:
         "aggregated": True,
         "num_runs": len(payloads),
         "run_files": [str(p) for p in args.runs],
-        # rows are not aggregated — omit to keep file small
+        # rows are not aggregated, omit to keep file small
         "warnings": _aggregate_dict([p.get("warnings", []) for p in payloads]),
     }
 

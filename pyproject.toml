@@ -17,6 +17,7 @@ dependencies = [
   "sentence-transformers",
   "torch",
   "transformers",
+  "unbabel-comet",
 ]
 
 [tool.setuptools.packages.find]

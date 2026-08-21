@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Generate the LaTeX result tables: four staged main-text tables + full appendix tables.
+"""Generate the LaTeX result tables, four staged main-text tables + full appendix tables.
 
 Two decisions are baked in here.
 
@@ -13,7 +13,7 @@ numeric label that survives translation untouched, which makes it the only metri
 that is directly comparable across Spanish and Basque. It is defined only for
 CasiMédicos-Exp records, so it is blank ("---") on the SNS-1064-only tables.
 
-**The main text stages the comparison; the appendix shows everything.** Putting all
+**The main text stages the comparison, the appendix shows everything.** Putting all
 eleven configurations in one table asks the reader to hold eleven rows in mind and
 find the contrasts themselves. Each main-text table instead answers one question,
 carrying forward the winner of the previous stage as its reference row:
@@ -42,7 +42,25 @@ SEEDS = [42, 43, 44]
 
 # (row label, config-id prefix, run-name base) per model, per language.
 from write_mixed_es_seed_summary import EXPERIMENTS as ES_EXPERIMENTS  # noqa: E402
-from write_mixed_eu_seed_summary import EXPERIMENTS as EU_EXPERIMENTS  # noqa: E402
+
+# Basque 11000-series: each config performs its initial and self-feedback
+# generation in one run, so the same id/base is intentionally supplied for
+# both table readings.  ``collect()`` then reads ``before_feedback`` for noSF
+# and ``after_feedback`` for SF.  This replaces the retired SNS1064-era EU
+# experiment map, whose separate noSF/SF ids no longer describe the live data.
+CURRENT_EU_EXPERIMENTS = [
+    ("Baseline LLM only", "11000", "llama31_8b_no_rag_extractive_guiasalud_dev", "11000", "llama31_8b_no_rag_extractive_guiasalud_dev", "11011", "latxa_llama31_8b_no_rag_extractive_guiasalud_dev", "11011", "latxa_llama31_8b_no_rag_extractive_guiasalud_dev"),
+    ("e5 top 1", "11001", "llama31_8b_rag_e5_topk1_extractive_guiasalud_dev", "11001", "llama31_8b_rag_e5_topk1_extractive_guiasalud_dev", "11012", "latxa_llama31_8b_rag_e5_topk1_extractive_guiasalud_dev", "11012", "latxa_llama31_8b_rag_e5_topk1_extractive_guiasalud_dev"),
+    ("e5 top 3", "11002", "llama31_8b_rag_e5_topk3_extractive_guiasalud_dev", "11002", "llama31_8b_rag_e5_topk3_extractive_guiasalud_dev", "11013", "latxa_llama31_8b_rag_e5_topk3_extractive_guiasalud_dev", "11013", "latxa_llama31_8b_rag_e5_topk3_extractive_guiasalud_dev"),
+    ("e5 top 5", "11003", "llama31_8b_rag_e5_topk5_extractive_guiasalud_dev", "11003", "llama31_8b_rag_e5_topk5_extractive_guiasalud_dev", "11014", "latxa_llama31_8b_rag_e5_topk5_extractive_guiasalud_dev", "11014", "latxa_llama31_8b_rag_e5_topk5_extractive_guiasalud_dev"),
+    ("rerank top 1", "11004", "llama31_8b_rag_e5_rerank1_extractive_guiasalud_dev", "11004", "llama31_8b_rag_e5_rerank1_extractive_guiasalud_dev", "11015", "latxa_llama31_8b_rag_e5_rerank1_extractive_guiasalud_dev", "11015", "latxa_llama31_8b_rag_e5_rerank1_extractive_guiasalud_dev"),
+    ("rerank top 3", "11005", "llama31_8b_rag_e5_rerank3_extractive_guiasalud_dev", "11005", "llama31_8b_rag_e5_rerank3_extractive_guiasalud_dev", "11016", "latxa_llama31_8b_rag_e5_rerank3_extractive_guiasalud_dev", "11016", "latxa_llama31_8b_rag_e5_rerank3_extractive_guiasalud_dev"),
+    ("rerank top 5", "11006", "llama31_8b_rag_e5_rerank5_extractive_guiasalud_dev", "11006", "llama31_8b_rag_e5_rerank5_extractive_guiasalud_dev", "11017", "latxa_llama31_8b_rag_e5_rerank5_extractive_guiasalud_dev", "11017", "latxa_llama31_8b_rag_e5_rerank5_extractive_guiasalud_dev"),
+    ("3-shot, no RAG", "11007", "llama31_8b_3shot_no_rag_extractive_guiasalud_dev", "11007", "llama31_8b_3shot_no_rag_extractive_guiasalud_dev", "11018", "latxa_llama31_8b_3shot_no_rag_extractive_guiasalud_dev", "11018", "latxa_llama31_8b_3shot_no_rag_extractive_guiasalud_dev"),
+    ("3-shot + rerank top 5", "11108", "llama31_8b_rag_3shot_e5_rerank3_extractive_guiasalud_dev_costaware", "11108", "llama31_8b_rag_3shot_e5_rerank3_extractive_guiasalud_dev_costaware", "11019", "latxa_llama31_8b_rag_3shot_e5_rerank5_extractive_guiasalud_dev", "11019", "latxa_llama31_8b_rag_3shot_e5_rerank5_extractive_guiasalud_dev"),
+    ("domain: GuiaSalud only", "11109", "llama31_8b_rag_domain_guiasalud_e5_rerank3_extractive_guiasalud_dev_costaware", "11109", "llama31_8b_rag_domain_guiasalud_e5_rerank3_extractive_guiasalud_dev_costaware", "11020", "latxa_llama31_8b_rag_domain_guiasalud_e5_rerank5_extractive_guiasalud_dev", "11020", "latxa_llama31_8b_rag_domain_guiasalud_e5_rerank5_extractive_guiasalud_dev"),
+    ("domain: CasiMedicos only", "11110", "llama31_8b_rag_domain_casimedicos_e5_rerank3_extractive_guiasalud_dev_costaware", "11110", "llama31_8b_rag_domain_casimedicos_e5_rerank3_extractive_guiasalud_dev_costaware", "11021", "latxa_llama31_8b_rag_domain_casimedicos_e5_rerank5_extractive_guiasalud_dev", "11021", "latxa_llama31_8b_rag_domain_casimedicos_e5_rerank5_extractive_guiasalud_dev"),
+]
 
 # Quality columns. Cosim is deliberately absent (see module docstring).
 QUALITY = [
@@ -52,7 +70,7 @@ QUALITY = [
     ("meanq", r"MeanQ"),
 ]
 
-# MeanQ is the mean of the three quality metrics (see scripts/meanq.py); it is the
+# MeanQ is the mean of the three quality metrics (see scripts/meanq.py), it is the
 # score the staged ablation uses to choose the best RAG configuration, so it is
 # shown alongside its components. It is computed from the row's metrics, not read
 # from a metric file. On SNS-1064 (open answer) MC-accuracy is undefined, so MeanQ
@@ -62,22 +80,22 @@ MEANQ_COMPONENTS = ("rouge_l_f1", "bertscore_f1", "mc_accuracy")
 # Raw metric fields collect() needs to pull from the metric JSONs (MeanQ is
 # derived, computed separately below, not read from a file). The appendix used
 # to additionally show cosine similarity, but it was dropped everywhere else
-# (it saturates -- configurations separate by barely a point -- and scores a
+# (it saturates, configurations separate by barely a point, and scores a
 # fluent, on-topic, factually wrong answer nearly as highly as a correct one),
 # so the appendix now shows the same six metrics as the main text: no reason
 # for the two to disagree on what "the" results are.
 RAW_QUALITY_FIELDS = ("rouge_l_f1", "bertscore_f1", "mc_accuracy")
 
 # Composite id: <experiment number><model letter>[']. The experiment number
-# (0-10) identifies the row/condition -- baseline is 0, retrieve top 1 is 1, ...
-# domain-CasiMedicos is 10 -- assigned once from the canonical EXPERIMENTS list
+# (0-10) identifies the row/condition, baseline is 0, retrieve top 1 is 1, ...
+# domain-CasiMedicos is 10, assigned once from the canonical EXPERIMENTS list
 # order (ES and EU share the same label text and order, so one map serves both).
 # The model letter (a, b, c, ...) is assigned from that language's own model list
 # order (ES_MODELS / EU_MODELS). A trailing ' marks the self-feedback row (e.g.
 # "2a" noSF, "2a'" SF), so an id read in running prose is unambiguous on its own
 # without also needing to say "SF"/"noSF" in words. Rows are additionally emitted
 # model-major, SF-minor (2a, 2a', 2b, 2b', ...) so the two rows of one model sit
-# adjacent -- see emit_table.
+# adjacent, see emit_table.
 # Both numbers and letters are global across every table (staged + appendix): a
 # row carried forward as a reference keeps the id it had when first introduced.
 EXPERIMENT_NUMBERS: dict[str, int] = {}
@@ -95,7 +113,7 @@ def experiment_id(label: str, model: str, use_sf: bool) -> str:
 STAGES = [
     ("retrieval", "Effect of dense retrieval",
      "Does retrieval help at all, and how many passages?",
-     ["Baseline LLM only", "retrieve top 1", "retrieve top 3", "retrieve top 5"]),
+     ["Baseline LLM only", "e5 top 1", "e5 top 3", "e5 top 5"]),
     ("rerank", "Effect of cross-encoder reranking",
      "Does reranking a larger candidate pool beat dense retrieval alone?",
      ["rerank top 1", "rerank top 3", "rerank top 5"]),
@@ -104,19 +122,19 @@ STAGES = [
      ["3-shot, no RAG", "3-shot + rerank top 5"]),
     ("domain", "Effect of restricting the retrieval corpus",
      "Does retrieving from a single-domain corpus help or hurt?",
-     ["cross-domain: SNS index", "cross-domain: CasiMedicos index"]),
+     ["domain: GuiaSalud only", "domain: CasiMedicos only"]),
 ]
 
 # The corpus-restriction rows are not a different *method*, they are the best RAG
 # configuration run against a corpus restricted to one dataset. Naming them
-# "cross-domain: ..." obscured that; the label is rewritten at render time to say
+# "cross-domain: ..." obscured that, the label is rewritten at render time to say
 # which corpus, and to carry the name of the configuration being held fixed.
 DOMAIN_RENAME = {
-    "cross-domain: SNS index": "SNS retrieval",
-    "cross-domain: CasiMedicos index": "CasiMédicos retrieval",
+    "domain: GuiaSalud only": "GuiaSalud retrieval",
+    "domain: CasiMedicos only": "CasiMédicos retrieval",
 }
 
-# The domain-restriction rows' base config PER MODEL, as an independent fact --
+# The domain-restriction rows' base config PER MODEL, as an independent fact,
 # NOT derived from FORCED_REFERENCES, because the domain runs are fixed
 # experiments (already run against one specific base per model) and don't move
 # when the pinned reference list changes. Checked directly against the actual
@@ -125,20 +143,20 @@ DOMAIN_RENAME = {
 # ES (configs/experiments/1136_qwen35_9b_rag_sns1064_...,
 # 1268_mistral7b_rag_sns1064_..., 1147/1278_..._think_...) all have
 # reranker_top_k=5 and rag_base_source=None, confirming "rerank top 5" as
-# filenamed, for all three models -- matches each model's own pin, no rerun
+# filenamed, for all three models, matches each model's own pin, no rerun
 # needed.
 #
 # EU (full staged rerun against the rebuilt CasiMedicos-Exp/SNS-1064 splits
 # and rebuilt retrieval indices, 2026-07-21): both Llama's and Latxa's domain
 # rows were run against "retrieve top 3" as their base (dense-only, no
-# reranking) -- see FORCED_REFERENCES below for the per-model rationale.
+# reranking), see FORCED_REFERENCES below for the per-model rationale.
 DOMAIN_BASE_LABEL: dict[str, dict[str, str]] = {
     # Qwen think's domain rows (1278/1279) were rebuilt with few_shot_k=3 added
     # on top of rerank top 5, i.e. row 8's "3-shot + rerank top 5" base, per
-    # explicit request; Qwen no-think's domain rows (1136/1137) were not
+    # explicit request. Qwen no-think's domain rows (1136/1137) were not
     # touched and remain on their original rerank-top-5 base.
     "ES": {"Qwen no-think": "rerank top 5", "Qwen think": "3-shot + rerank top 5"},
-    "EU": {"Llama": "retrieve top 3", "Latxa": "retrieve top 3"},
+    "EU": {"Llama": "rerank top 3", "Latxa": "e5 top 1"},
 }
 
 
@@ -146,7 +164,7 @@ def display_label(label: str, best_config: Optional[str], model: str,
                    fewshot_config: Optional[str] | Optional[dict[str, str]] = None) -> str:
     """`best_config` substitutes into DOMAIN_RENAME labels (rows 9-10) AND, when
     `fewshot_config` is not separately given, into the row-8 "3-shot + rerank
-    top 5" label too -- the single-stage main-text tables pass one dict that
+    top 5" label too, the single-stage main-text tables pass one dict that
     happens to serve both purposes there (each call is scoped to one stage, so
     only one of the two substitutions is ever actually exercised on a given
     call). The appendix full-listing table shows rows 8 AND 9-10 in the SAME
@@ -154,7 +172,7 @@ def display_label(label: str, best_config: Optional[str], model: str,
     i.e. the fewshot stage's own `reference`/FORCED_REFERENCES pin) and rows
     9-10's RAG base (DOMAIN_BASE_LABEL, a fixed, independent-of-pins fact
     about which config the domain runs were actually built against) are not
-    always the same value for a given model -- e.g. ES's Qwen think: fewshot
+    always the same value for a given model, e.g. ES's Qwen think: fewshot
     base "rerank top 5" but domain base "3-shot + rerank top 5". Passing both
     `best_config` (domain) and `fewshot_config` (row 8) lets the appendix call
     resolve each label correctly instead of reusing one dict for both."""
@@ -162,7 +180,7 @@ def display_label(label: str, best_config: Optional[str], model: str,
         config_text = best_config.get(model) if isinstance(best_config, dict) else best_config
         return f"{DOMAIN_RENAME[label]}, {config_text}" if config_text else DOMAIN_RENAME[label]
     if label == "3-shot + rerank top 5":
-        # This row's RAG base isn't fixed at "rerank top 5" -- it's rewired to
+        # This row's RAG base isn't fixed at "rerank top 5", it's rewired to
         # whichever config wins stage A's MeanQ (see run_model()'s apply_base
         # call), so the static label goes stale whenever that winner changes
         # (as it did: rerank5 -> retrieve top3 once MC-acc was correctly
@@ -175,7 +193,7 @@ def display_label(label: str, best_config: Optional[str], model: str,
         # itself "3-shot + rerank top 5" and that also happens to be the
         # pinned config_text (ES_STAGE_REFERENCE_OVERRIDE's domain entry),
         # naively prepending would double the prefix ("3-shot + 3-shot +
-        # rerank top 5"). Row 8 already names its own base; leave it as-is.
+        # rerank top 5"). Row 8 already names its own base, leave it as-is.
         if config_text == label:
             return label
         return f"3-shot + {config_text}" if config_text else label
@@ -184,7 +202,7 @@ def display_label(label: str, best_config: Optional[str], model: str,
 
 # Which rows each stage may pick its carried-forward reference from. Cumulative:
 # each stage's pool is every row shown in this or an earlier stage, not just the
-# stage immediately before it -- otherwise a genuinely best config (e.g. retrieve top 5,
+# stage immediately before it, otherwise a genuinely best config (e.g. retrieve top 5,
 # which can beat every reranked row) could win one stage and then be structurally
 # ineligible to be carried into the next, breaking the "reference = best system
 # built so far" property the captions claim. "3-shot, no RAG" is deliberately
@@ -201,7 +219,7 @@ STAGE_POOL = {
 }
 
 # Manual pins, chosen PER MODEL (each model carries forward its OWN best config,
-# not a single config shared across every model in the language) -- one pin per
+# not a single config shared across every model in the language), one pin per
 # model, except ES's Qwen no-think/think tie (see below, still two pins because
 # they're a genuine unresolved trade-off, not a per-model split).
 #
@@ -209,16 +227,16 @@ STAGE_POOL = {
 # rebuilt retrieval indices, 2026-07-21). Chosen by scripts/meanq.py's
 # best_by_meanq_robust(): highest mean MeanQ, UNLESS a candidate within 0.5
 # MeanQ of the leader has meaningfully lower std (<=0.6x the leader's) or
-# meaningfully lower cost (<=0.6x, cost = retrieval_top_k, +5 if reranked) --
+# meaningfully lower cost (<=0.6x, cost = retrieval_top_k, +5 if reranked),
 # the reader's explicit variance/cost-aware selection rule, not a plain MeanQ
 # argmax. This is the reference CARRIED FORWARD into stage 3 (few-shot) and
-# stage 4 (domain) -- those rows were actually generated against this base:
-#   Llama-3.1-8B -> retrieve top 3, no self-feedback (49.01+/-1.71) -- the
+# stage 4 (domain), those rows were actually generated against this base:
+#   Llama-3.1-8B -> retrieve top 3, no self-feedback (49.01+/-1.71), the
 #   outright highest MeanQ Llama reaches across every retrieval AND rerank
 #   candidate (next: retrieve top1 46.81+/-0.84, retrieve top5 46.61+/-1.62,
 #   rerank5 46.24+/-1.01, rerank1 43.88+/-0.85, rerank3 43.12+/-1.00). A clear
-#   leader by margin alone; the std/cost tiebreak never needs to engage.
-#   Latxa-8B -> retrieve top 3, no self-feedback (47.28+/-0.73) -- narrowly
+#   leader by margin alone, the std/cost tiebreak never needs to engage.
+#   Latxa-8B -> retrieve top 3, no self-feedback (47.28+/-0.73), narrowly
 #   beats the next candidate, rerank top 3 (46.81+/-1.03), by only 0.47 MeanQ,
 #   inside the 0.5-point margin. Std alone would NOT have triggered a
 #   stability override (0.73 vs 0.6x1.03=0.62), but retrieve top 3's cost
@@ -227,43 +245,43 @@ STAGE_POOL = {
 #   reranked config that isn't reliably better. (Other candidates, for
 #   completeness: retrieve top5 45.63+/-0.51, rerank5 45.26+/-2.06, retrieve
 #   top1 41.72+/-0.59, rerank1 40.22+/-0.61.)
-#   Both models land on the SAME label this rerun (retrieve top 3) -- unlike
+#   Both models land on the SAME label this rerun (retrieve top 3), unlike
 #   the previous rerun, where they pinned at different labels (rerank top 5 /
 #   retrieve top 5) and each pin's own stage had to be derived independently
 #   (see pin_own_index() in build_language(), still needed in general even
 #   though it resolves to the same stage for both here).
 #
-# ES (updated 2026-07-21 for the rebuilt data/indices; Mistral-7B-Instruct-v0.3
+# ES (updated 2026-07-21 for the rebuilt data/indices, Mistral-7B-Instruct-v0.3
 # dropped from the roster, superseded by the Ministral-3-8B models, whose own
 # staged rerun was still in progress as of this update and is not yet reflected
 # here): Qwen no-think's own best config is confirmed "rerank top 5" against
 # fresh predictions (best_by_meanq_robust: 69.15+/-0.72 vs 2nd-best rerank3
-# 67.12+/-1.55, well outside the variance/cost margin -- a clean win, no
+# 67.12+/-1.55, well outside the variance/cost margin, a clean win, no
 # tiebreak needed). Qwen think's pin below (rerank top 5, 71.34+/-0.38 vs
-# rerank3 70.41+/-0.61) is CARRIED FORWARD from its pre-rebuild run -- its own
+# rerank3 70.41+/-0.61) is CARRIED FORWARD from its pre-rebuild run, its own
 # staged rerun against the rebuilt data was still running as of this update and
-# has not yet been re-verified; re-check with best_by_meanq_robust once it
+# has not yet been re-verified, re-check with best_by_meanq_robust once it
 # completes and update this pin (and the MeanQ figures in the tie-break note
 # below) if the winning label or numbers change.
 FORCED_REFERENCES: dict[str, list[tuple[str, str]]] = {
-    "EU": [("retrieve top 3", "Llama"), ("retrieve top 3", "Latxa")],
+    "EU": [("rerank top 3", "Llama"), ("e5 top 1", "Latxa")],
     "ES": [("retrieve top 1", "Qwen no-think"), ("retrieve top 5", "Qwen think")],
 }
 
 # ES manual override, by explicit user request: rather than one reference per
 # model carried unchanged through every later stage (FORCED_REFERENCES's
-# default semantics), BOTH models' OWN reference is updated stage by stage --
+# default semantics), BOTH models' OWN reference is updated stage by stage,
 # each later table's "best system built so far" is a different, more recent
 # row per model. This does not reflect an automatic MeanQ selection at every
 # entry (see best_by_meanq_robust in meanq.py for the actual automatic pick
-# at each stage); several entries are deliberate manual choices, overriding
+# at each stage). Several entries are deliberate manual choices, overriding
 # FORCED_REFERENCES's stage-1 entries for every stage from "rerank" onward.
 #
 # Qwen no-think: stage-1's own pin was retrieve top 1 (65.76 MeanQ, that
 # stage's own winner), but from stage 2 onward the reference is rerank top 5
-# (6a, 69.15 MeanQ) -- Qwen no-think's actual best-so-far row once reranking
+# (6a, 69.15 MeanQ), Qwen no-think's actual best-so-far row once reranking
 # is introduced, clearly ahead of retrieve top 1, per explicit user request
-# (previously left at retrieve top 1 through an oversight; corrected here).
+# (previously left at retrieve top 1 through an oversight, corrected here).
 #
 # Keyed (stage_slug) -> the (label, model) pairs that REPLACE, not add to,
 # the reference list computed from FORCED_REFERENCES for that stage. Stage
@@ -275,19 +293,25 @@ ES_STAGE_REFERENCE_OVERRIDE: dict[str, list[tuple[str, str]]] = {
     # stage-1 default (1a/3b, retrieve top 1 / retrieve top 5), unmodified.
     # An override here that names "rerank top 5" would be that stage's own row
     # carrying itself forward as its own reference, which the "own stage" guard
-    # in emit_table() correctly reduces to nothing -- that emptiness was the bug
+    # in emit_table() correctly reduces to nothing, that emptiness was the bug
     # (Table "Effect of cross-encoder reranking" showing no reference row / no
     # 1a, 3b) fixed by removing this entry rather than by changing the guard.
     "fewshot": [("rerank top 5", "Qwen no-think"), ("rerank top 5", "Qwen think")],
     "domain": [("rerank top 5", "Qwen no-think"), ("3-shot + rerank top 5", "Qwen think")],
 }
 
+# The current Basque rerun has a two-part dense-reference comparison in the
+# reranking table: Llama's best dense-only row is 3c' (E5 top-5, SF), while
+# Latxa's is 1d (E5 top-1, noSF).  Both must appear above the dashed divider
+# before the new reranker rows, exactly as the Spanish staged tables do.
+EU_STAGE_REFERENCE_OVERRIDE: dict[str, list[tuple[str, str]]] = {}
+
 # Which SF state to highlight for a manually-forced pin, when it differs from
 # the automatic higher-MeanQ choice best_sf_state() would make. Qwen think's
 # rerank-top-5 row (6b/6b') is one case: SF's MeanQ (72.24) is actually
 # marginally higher than noSF's (72.13), so the automatic rule would highlight
 # 6b', but the request was to highlight 6b (noSF) specifically and remove
-# 6b''s highlight -- both rows remain visible in the "rerank" stage's own
+# 6b''s highlight, both rows remain visible in the "rerank" stage's own
 # table (this is not best_sf_only, which would hide one state entirely), only
 # which one gets \rowcolor{pinnedrow} and the bold MeanQ changes. Same
 # reasoning applies to Qwen think's stage-1 pin (3b/3b'): SF's raw MeanQ
@@ -306,12 +330,12 @@ ES_PIN_SF_OVERRIDE: dict[tuple[str, str, str], bool] = {
     ("fewshot", "rerank top 5", "Qwen think"): False,
 }
 # Which (label, model) pairs, if any, get the tie-break caption note and MeanQ
-# highlight at their pin's own stage -- for a pair sharing ONE label between
+# highlight at their pin's own stage, for a pair sharing ONE label between
 # two models, worth explaining as a real trade-off. Empty now: ES's stage-1
 # pins are two DIFFERENT labels (retrieve top 1 for Qwen no-think, retrieve
-# top 5 for Qwen think, a manual per-model choice -- see FORCED_REFERENCES),
+# top 5 for Qwen think, a manual per-model choice, see FORCED_REFERENCES),
 # not a same-label split, so the tie-break framing this mechanism renders no
-# longer applies; EU's two pins were already a clean single winner each with
+# longer applies. EU's two pins were already a clean single winner each with
 # nothing to explain. Kept as a mechanism (not deleted) in case a future
 # rerun reintroduces a genuine same-label two-model split.
 TIE_BREAK_PAIRS: dict[str, list[tuple[str, str]]] = {}
@@ -322,16 +346,19 @@ TIE_BREAK_STAGE: dict[str, str] = {}
 # Keyed (lang, stage_slug) -> set of (label, model) pairs. Used when a model's
 # own best-in-stage-1 row differs from the label carried forward into later
 # stages (e.g. previously, EU's Llama: stage 1's own winner was retrieve top 5,
-# but the carried-forward pin was rerank top 5 -- both needed separate
+# but the carried-forward pin was rerank top 5, both needed separate
 # highlighting).
 #
 # ES's "rerank" entry: both Qwen think's rerank-top-5 row (6b) and Qwen
 # no-think's rerank-top-5 row (6a) are the winners carried forward into stage
 # 3 (fewshot) via ES_STAGE_REFERENCE_OVERRIDE, but that carry-forward only
-# highlights the row in LATER stages' tables -- within stage 2's OWN table,
+# highlights the row in LATER stages' tables, within stage 2's OWN table,
 # both 6a and 6b need their own explicit highlight too, per request.
 EXTRA_PIN_ROWS: dict[tuple[str, str], frozenset[tuple[str, str]]] = {
     ("ES", "rerank"): frozenset({("rerank top 5", "Qwen think"), ("rerank top 5", "Qwen no-think")}),
+    # Llama's dense-only stage-A leader is top-5; its overall selected row is
+    # rerank-top-5, which appears in the next table and is pinned there.
+    ("EU", "retrieval"): frozenset({("e5 top 5", "Llama")}),
 }
 
 
@@ -400,9 +427,9 @@ def _nested_mean(block: dict, name: str) -> float:
 def cost(summaries: list[dict], token: bool, *, use_sf: bool) -> Optional[float]:
     """noSF and SF cost are NOT the same number, even though the raw metric JSON
     only stores one pipeline-wide total (`example_seconds`, `total_tokens`) that
-    already includes the self-feedback pass. That total IS the SF row's cost; the
+    already includes the self-feedback pass. That total IS the SF row's cost, the
     noSF row's cost has to be reconstructed by summing the pre-feedback components
-    and excluding the feedback ones -- exactly the split
+    and excluding the feedback ones, exactly the split
     scripts/summarize_metrics.py's cost_rows() already uses, so this mirrors it
     rather than inventing a second convention. Before this fix, cost() ignored
     use_sf entirely and both rows silently showed the SF (larger) total.
@@ -432,8 +459,22 @@ def cost(summaries: list[dict], token: bool, *, use_sf: bool) -> Optional[float]
     return sum(vals) / len(vals) if vals else None
 
 
-def collect(prefix: str, base: str, suffix: str, use_sf: bool) -> Optional[dict]:
-    summaries = [s for s in (load_summary(run_dir(prefix, base, sd), suffix) for sd in SEEDS) if s]
+def collect(prefix: str, base: str, sf_prefix: str, sf_base: str, suffix: str, use_sf: bool) -> Optional[dict]:
+    """`prefix`/`base` name the noSF run (self_feedback: false), `sf_prefix`/
+    `sf_base` name the SEPARATE self-feedback clone (self_feedback: true,
+    scripts/create_guiasalud_ablation_sf_configs.py). These are DIFFERENT
+    config ids producing DIFFERENT metrics files in the current GuiaSalud
+    round (unlike the old SNS1064-era architecture, where one run's file
+    carried both before_feedback/after_feedback blocks from a single
+    self_feedback:true pass). `use_sf` therefore selects which FILE to read
+    (sf_prefix/sf_base's own after_feedback block, which reflects the full
+    pipeline including the feedback pass) rather than which block within one
+    shared file: the noSF file's before_feedback/after_feedback blocks are
+    just duplicates of its own plain overall block (self_feedback is false
+    there, so there is nothing to split) and must never be read for an SF row.
+    """
+    read_prefix, read_base = (sf_prefix, sf_base) if use_sf else (prefix, base)
+    summaries = [s for s in (load_summary(run_dir(read_prefix, read_base, sd), suffix) for sd in SEEDS) if s]
     if not summaries:
         return None
     row: dict[str, Any] = {"n": len(summaries)}
@@ -444,17 +485,19 @@ def collect(prefix: str, base: str, suffix: str, use_sf: bool) -> Optional[dict]
 
     # MC-accuracy on the mixed table comes from the CasiMedicos subset (it is
     # undefined on the open-answer half, and the mixed-suffix metric files are
-    # missing it outright for seeds other than 42 -- see the seed/prompt audit),
+    # missing it outright for seeds other than 42, see the seed/prompt audit),
     # so it is read from the *_casimedicos metric files, matching scripts/meanq.py.
     # This OVERWRITES row["mc_accuracy"] (not just a local var used for MeanQ):
     # without that, the table's own MC-acc column silently fell back to the
     # partially-populated mixed-suffix value (often a single seed, so std
     # collapsed to 0.0 and fmt() dropped the +/- entirely). On tables that are
     # already CasiMedicos- or SNS-only, the row's own MC-accuracy value is used
-    # (present or None respectively).
-    mixed_summaries = [load_summary(run_dir(prefix, base, sd), suffix) for sd in SEEDS]
+    # (present or None respectively). Reads from the SAME (noSF vs SF) file
+    # read_prefix/read_base picked above, so the mixed-metrics and the
+    # MC-accuracy subset always come from the same run.
+    mixed_summaries = [load_summary(run_dir(read_prefix, read_base, sd), suffix) for sd in SEEDS]
     if suffix == "":  # mixed table
-        mc_summaries = [load_summary(run_dir(prefix, base, sd), "_casimedicos") for sd in SEEDS]
+        mc_summaries = [load_summary(run_dir(read_prefix, read_base, sd), "_casimedicos") for sd in SEEDS]
         row["mc_accuracy"] = mean_std(values([s for s in mc_summaries if s], "mc_accuracy", use_sf=use_sf))
     else:
         mc_summaries = mixed_summaries
@@ -463,10 +506,10 @@ def collect(prefix: str, base: str, suffix: str, use_sf: bool) -> Optional[dict]
     # seed's MC-acc (casimedicos file for the mixed table, else the row's own file),
     # aligned by seed position (via value_or_none, which keeps a None placeholder
     # rather than silently dropping a missing seed and shifting later ones out of
-    # alignment) -- then averaged over seeds -- exactly scripts/meanq.py's
+    # alignment), then averaged over seeds, exactly scripts/meanq.py's
     # meanq_per_seed method. Averaging three already-averaged component means (the
     # previous approach) has no per-seed variance to report, which is why MeanQ's
-    # +/-std was always missing; this fixes that by construction.
+    # +/-std was always missing, this fixes that by construction.
     per_seed_meanq = []
     for i in range(len(SEEDS)):
         rouge = value_or_none(mixed_summaries[i], "rouge_l_f1", use_sf=use_sf)
@@ -480,8 +523,15 @@ def collect(prefix: str, base: str, suffix: str, use_sf: bool) -> Optional[dict]
 
 
 # ── models per language ───────────────────────────────────────────────────────
-# Each EXPERIMENTS row is (label, id, base, id, base, ...) -- one (id, base) pair
-# per model, in the order the decision tables report them.
+# Each EXPERIMENTS row is (label, id, base, sf_id, sf_base, id, base, sf_id,
+# sf_base, ...), FOUR slots per model (noSF id/base, SF id/base), in the order
+# the decision tables report them. The GuiaSalud round's noSF grid
+# (self_feedback: false, ids 3281-3333) and SF grid (self_feedback: true
+# clones, ids 3700-3743) are SEPARATE config ids producing SEPARATE metrics
+# files (unlike the old SNS1064-era architecture, where one run's file carried
+# both before_feedback/after_feedback blocks from a single self_feedback:true
+# pass), so use_sf now picks which FILE to read, not just which block within
+# one file, see collect() below.
 ES_MODELS = ["Qwen no-think", "Qwen think"]
 EU_MODELS = ["Llama", "Latxa"]
 
@@ -494,10 +544,10 @@ def rows_for(experiments, models, label: str, suffix: str, use_sf: bool):
     rest = list(entry[1:])
     out = []
     for i, model in enumerate(models):
-        if 2 * i + 1 >= len(rest):
+        if 4 * i + 3 >= len(rest):
             break
-        prefix, base = rest[2 * i], rest[2 * i + 1]
-        row = collect(prefix, base, suffix, use_sf)
+        prefix, base, sf_prefix, sf_base = rest[4 * i], rest[4 * i + 1], rest[4 * i + 2], rest[4 * i + 3]
+        row = collect(prefix, base, sf_prefix, sf_base, suffix, use_sf)
         if row:
             out.append((model, row))
     return out
@@ -505,7 +555,7 @@ def rows_for(experiments, models, label: str, suffix: str, use_sf: bool):
 
 def best_label(experiments, models, pool, suffix, *, only_model: Optional[str] = None) -> Optional[tuple[str, str]]:
     """The (label, model) pair in `pool` with the highest MeanQ, on the
-    no-self-feedback prediction -- the same criterion (metric and SF state) used
+    no-self-feedback prediction, the same criterion (metric and SF state) used
     everywhere else in the project to choose the best RAG base config (see
     scripts/meanq.py and reports/metrics/*_dev_ablation_results.md). Ranking by
     BERT-F1 alone, or searching over both SF states, could carry forward a
@@ -513,11 +563,11 @@ def best_label(experiments, models, pool, suffix, *, only_model: Optional[str] =
 
     Returns the winning MODEL alongside the label, not just the label: the
     reference carried into later stages is one specific config-model
-    combination, not "this label, whichever model got there" -- showing every
+    combination, not "this label, whichever model got there", showing every
     model's row under a label that only one of them actually won is misleading
     (see FORCED_MODEL's comment for the concrete case this caused).
 
-    `only_model`, if given, restricts the search to that model's rows -- used to
+    `only_model`, if given, restricts the search to that model's rows, used to
     resolve FORCED_MODEL/TIE_BREAK_MODEL overrides, where the cross-model max at
     a label is not the model actually carried forward.
 
@@ -541,7 +591,7 @@ def best_label_either_sf(experiments, models, pool, suffix, *, only_model: Optio
     returns which one won. Used for the per-dataset appendix tables
     (write_evidence_only_appendix_table.py-style highlighting), where the
     question is genuinely "which single row in this flat table has the
-    highest MeanQ" -- unlike the main-text staging best_label() serves, there
+    highest MeanQ", unlike the main-text staging best_label() serves, there
     is no later stage this choice gets carried into, so restricting to noSF
     the way best_label() deliberately does (see its own docstring) would
     silently skip a higher-MeanQ SF row and highlight a worse one instead.
@@ -572,7 +622,7 @@ def emit_table(experiments, models, labels, *, caption, short, tag, suffix,
                separator_after: int = 0,
                fixed_config_width: bool = False) -> list[str]:
     """`labels` is the row labels to show, in order. `restrict`, if given, maps a
-    label to the SET of models whose rows should be shown for it -- used for
+    label to the SET of models whose rows should be shown for it, used for
     carried-forward reference row(s), which are specific config-model
     combinations, not every model's version of that label (a stage's own
     comparison labels are never in `restrict`, so they still show every model).
@@ -581,14 +631,14 @@ def emit_table(experiments, models, labels, *, caption, short, tag, suffix,
 
     `best_sf_only`, keyed the same way as `highlight_rows` ((label, model)
     pairs), collapses that row to whichever of noSF/SF has the higher MeanQ,
-    instead of showing both -- used for the same carried-forward reference row(s)
+    instead of showing both, used for the same carried-forward reference row(s)
     and the tie-break comparison rows, where showing both SF states doubles the
     row count without adding to the point being made (which config/model wins,
     not whether self-feedback helps it).
 
     `pin_rows`, keyed like `highlight_rows`, marks a row with a translucent blue
     background (\\rowcolor{pinnedrow}): that model's OWN best config, wherever it
-    appears -- as one of a stage's own comparison rows (marking which one wins
+    appears, as one of a stage's own comparison rows (marking which one wins
     and will be carried forward) or as a later stage's reference row (marking
     that it still is that model's best). `separator_after`, if nonzero, draws a
     dashed rule after that many leading reference-row labels, visually splitting
@@ -633,7 +683,7 @@ def emit_table(experiments, models, labels, *, caption, short, tag, suffix,
         r"\endlastfoot",
     ]
     def best_sf_state(nosf_row: Optional[dict], sf_row: Optional[dict]) -> bool:
-        """Which of noSF/SF has the higher MeanQ, for best_sf_only rows -- True
+        """Which of noSF/SF has the higher MeanQ, for best_sf_only rows, True
         means SF wins. Falls back to whichever row exists if only one does."""
         if sf_row is None:
             return False
@@ -672,7 +722,7 @@ def emit_table(experiments, models, labels, *, caption, short, tag, suffix,
     # MeanQ is bolded PER MODEL, not once globally: each model carries forward
     # its OWN best config into the next stage (see FORCED_REFERENCES's
     # per-model pins), so the reader needs to see which row is best for Llama
-    # and, separately, which is best for Latxa -- a single global-max bold
+    # and, separately, which is best for Latxa, a single global-max bold
     # would only ever mark one model's row and leave the other model's own
     # winner unmarked.
     best_meanq_per_model: dict[str, float] = {}
@@ -700,7 +750,7 @@ def emit_table(experiments, models, labels, *, caption, short, tag, suffix,
             else:
                 keep_sf = None
             # Which SF state to paint blue for a pinned (label, model): whichever
-            # has the higher MeanQ, same rule as best_sf_only -- but computed
+            # has the higher MeanQ, same rule as best_sf_only, but computed
             # independently of it, since a pin's OWN stage still shows BOTH SF
             # states (best_sf_only is empty there) while only one of them should
             # get the row highlight.
@@ -729,20 +779,25 @@ def emit_table(experiments, models, labels, *, caption, short, tag, suffix,
                     mean, std = row[metric]
                     cell = fmt(mean, std)
                     if metric == "meanq":
-                        is_col_best = mean is not None and mean == best_meanq_per_model.get(model)
+                        # Match the selection-rule display convention: every
+                        # candidate within the 0.5 MeanQ practical-tie window
+                        # of its model's leader is bolded, not just the
+                        # literal maximum.
+                        is_col_best = (mean is not None and
+                                       mean >= best_meanq_per_model.get(model, float("-inf")) - 0.5)
                     else:
                         is_col_best = mean is not None and metric in best_of and mean == best_of[metric]
                     # highlight_rows marks a tie-break comparison's own MeanQ cell
                     # (not the whole row). The config being weighed is always the
                     # noSF one (best_label()'s search is noSF-only by convention),
                     # but best_sf_only may have collapsed this row down to its
-                    # winning SF state -- so when that's the ONLY row shown for
+                    # winning SF state, so when that's the ONLY row shown for
                     # this (label, model), still highlight it rather than
                     # requiring noSF specifically. Guarded against double-wrapping
                     # when that cell is also the column's best value.
                     tie_break_sf_ok = not use_sf or (label, model) in best_sf_only
                     is_tie_break = metric == "meanq" and tie_break_sf_ok and (label, model) in highlight_rows
-                    # Every blue-bar (pinned) row also gets its MeanQ bolded --
+                    # Every blue-bar (pinned) row also gets its MeanQ bolded,
                     # the row color already marks "this model's chosen config",
                     # bolding MeanQ ties that back to the number that made it
                     # the choice, not just a whole-row splash of color.
@@ -756,11 +811,11 @@ def emit_table(experiments, models, labels, *, caption, short, tag, suffix,
                 ]
                 lines.append(row_prefix + " & ".join(cells) + r" \\")
         # Dashed rule after the last reference-row label, splitting "carried
-        # forward from earlier stages" from "new this stage" -- separator_after
+        # forward from earlier stages" from "new this stage", separator_after
         # counts LABELS, not rendered rows, since a reference label can itself
         # expand to several rows (multiple models, or noSF+SF). Extra space on
         # BOTH sides (4pt, vs the normal 2pt between row groups) so the rule
-        # reads as a deliberate section break rather than just another gap --
+        # reads as a deliberate section break rather than just another gap,
         # \cdashline leaves no vertical gap of its own on either side.
         if separator_after and label_index == separator_after - 1:
             lines.append(r"\addlinespace[4pt]")
@@ -785,13 +840,13 @@ def assign_ids(experiments, models) -> None:
 
     Model letters are assigned from MODEL_LETTERS' current size, NOT reset to
     "a" per language: ES and EU are independent grids for experiment numbers
-    (each staged 0-10, cleared between languages -- a row id like "6a" is only
+    (each staged 0-10, cleared between languages, a row id like "6a" is only
     ever compared against other rows in its own language's own tables), but a
     row id is also cited standalone in manuscript prose and cross-referenced
     into the reasoning-pipeline and evidence-only tables by exact string (e.g.
     "2a", "2b'"), where language context is not always visible at the citation
     site. Letting ES use a/b and EU independently reuse a/b for entirely
-    different models made "6a" ambiguous outside its own table; EU instead
+    different models made "6a" ambiguous outside its own table. EU instead
     continues from where ES left off (c/d), so every row id in this thesis is
     unique across languages, not just within one language's own tables. Model
     letters are therefore NOT cleared between languages in main() the way
@@ -810,6 +865,16 @@ def build_language(experiments, models, lang: str, dev_slug: str, suffix: str, c
     """Four staged main-text tables + one full appendix table, for one language/dataset."""
     # ── staged main-text tables ────────────────────────────────────────────────
     pins = FORCED_REFERENCES.get(lang, [])
+    if lang == "EU":
+        # Authoritative robust-selection outputs replace all manual Basque
+        # pins.  Llama's cost-aware rerun supersedes the older mixed artifact;
+        # Latxa has no later rerun and remains in that artifact.
+        llama = json.loads((METRICS_DIR / "costaware_rerun_selection_llama31_8b.json").read_text())["llama31_8b"]
+        latxa = json.loads((METRICS_DIR / "mixed_meanq_selection_11000.json").read_text())["latxa_llama31_8b"]
+        pins = [
+            (llama["winning_cell"].removesuffix(" (SF)"), "Llama"),
+            (latxa["winning_cell"].removesuffix(" (SF)"), "Latxa"),
+        ]
     tie_break_stage = TIE_BREAK_STAGE.get(lang)
     tie_break_pairs = TIE_BREAK_PAIRS.get(lang, [])
     tie_break_note = ""
@@ -824,7 +889,7 @@ def build_language(experiments, models, lang: str, dev_slug: str, suffix: str, c
             m2, s2 = row2["meanq"]
             if label1 == label2:
                 # Same label, two models: the gap is real cost-vs-quality, not
-                # noise -- report it as a trade-off, not a coin flip.
+                # noise, report it as a trade-off, not a coin flip.
                 sec_ratio = row2["sec"] / row1["sec"] if row1["sec"] else None
                 tok_ratio = row2["tok"] / row1["tok"] if row1["tok"] else None
                 tie_break_note = (
@@ -846,8 +911,8 @@ def build_language(experiments, models, lang: str, dev_slug: str, suffix: str, c
     stage_labels = {s[0]: s[3] for s in STAGES}
     # Each pin's own stage is derived, not hand-specified: whichever stage's
     # OWN `labels` contains that pin's label. Pins are no longer required to
-    # share one "own stage" per language -- e.g. EU can pin Llama at a rerank
-    # label and Latxa at a retrieval label simultaneously; each is only
+    # share one "own stage" per language, e.g. EU can pin Llama at a rerank
+    # label and Latxa at a retrieval label simultaneously, each is only
     # prepended as a carried-forward reference from ITS OWN stage onward.
     def pin_own_index(pin_label: str) -> int:
         for idx, slug in enumerate(stage_slugs):
@@ -860,14 +925,18 @@ def build_language(experiments, models, lang: str, dev_slug: str, suffix: str, c
     for stage_index, (slug, stem, question, labels) in enumerate(STAGES):
         is_tie_break_stage = slug == tie_break_stage
         # A pin only applies (is prepended as a carried-forward reference) from
-        # ITS OWN stage onward -- at its own stage, the pinned label is already
-        # one of that stage's own rows, so prepending it would duplicate it;
+        # ITS OWN stage onward, at its own stage, the pinned label is already
+        # one of that stage's own rows, so prepending it would duplicate it,
         # every LATER stage gets it prepended, since the pipeline has by then
         # moved past the point where that config was chosen. Each pin is
         # checked independently, since different pins can now have different
         # own stages.
         reference = [(lbl, mdl) for lbl, mdl in pins if stage_index > pin_own_index(lbl)]
-        if lang == "ES" and slug in ES_STAGE_REFERENCE_OVERRIDE:
+        stage_reference_overrides = {
+            "ES": ES_STAGE_REFERENCE_OVERRIDE,
+            "EU": EU_STAGE_REFERENCE_OVERRIDE,
+        }.get(lang, {})
+        if slug in stage_reference_overrides:
             # Same "own stage" guard as the static `pins` above: an override
             # entry whose label belongs to THIS stage (e.g. Qwen no-think's
             # rerank-stage override is itself "rerank top 5", a rerank-stage
@@ -875,11 +944,11 @@ def build_language(experiments, models, lang: str, dev_slug: str, suffix: str, c
             # showing it again as a carried-forward reference would duplicate
             # it. Only override entries whose own stage is earlier are kept.
             reference = [
-                (lbl, mdl) for lbl, mdl in ES_STAGE_REFERENCE_OVERRIDE[slug]
+                (lbl, mdl) for lbl, mdl in stage_reference_overrides[slug]
                 if stage_index > pin_own_index(lbl)
             ]
         # Order reference rows by model letter (a before b), not alphabetically
-        # by label text -- the two pinned rows can carry different label text
+        # by label text, the two pinned rows can carry different label text
         # (e.g. domain stage: "rerank top 5" for model a's pin vs. "3-shot +
         # rerank top 5" for model b's), and sorting the label strings
         # themselves can then put model b's row above model a's.
@@ -906,29 +975,29 @@ def build_language(experiments, models, lang: str, dev_slug: str, suffix: str, c
                " Best value per metric in bold.")
         )
         shown = ref_labels + labels
-        # restrict maps a label to the SET of models allowed for it -- both pins
+        # restrict maps a label to the SET of models allowed for it, both pins
         # may share a label (ES) or not (EU), so this groups by label rather than
         # assuming one model per label.
         restrict: dict[str, frozenset[str]] = {}
         for lbl, mdl in reference:
             restrict[lbl] = restrict.get(lbl, frozenset()) | {mdl}
-        # A carried-forward reference row shows only its better-MeanQ SF state --
+        # A carried-forward reference row shows only its better-MeanQ SF state,
         # both states would double the row without adding to what a LATER stage's
         # table is comparing (whether the OTHER conditions beat the references,
         # not whether self-feedback helps a reference itself).
         stage_best_sf_only = frozenset(reference)
         # The domain stage's row-suffix text ("SNS retrieval, X") names the fixed
         # base the domain runs were actually built on (DOMAIN_BASE_LABEL), not
-        # whichever reference labels happen to be pinned -- the domain
+        # whichever reference labels happen to be pinned, the domain
         # experiments don't move when the pinned list changes (see its comment).
         domain_base = DOMAIN_BASE_LABEL.get(lang) if slug == "domain" else None
         # Per-model pinned-label dict for display_label()'s "3-shot + <base>"
         # substitution: NOT ref_labels[0] (which would collapse to None
-        # whenever the pins span more than one distinct label -- e.g. a
+        # whenever the pins span more than one distinct label, e.g. a
         # previous EU rerun had Llama pinned at rerank top 5 while Latxa was
-        # pinned at retrieve top 5; both EU pins currently share one label,
+        # pinned at retrieve top 5. Both EU pins currently share one label,
         # retrieve top 3, but the per-model dict is kept general rather than
-        # assuming that stays true) -- built the same way DOMAIN_BASE_LABEL
+        # assuming that stays true), built the same way DOMAIN_BASE_LABEL
         # already is, one label per model, so each model's row 8 names the
         # RAG base IT was actually built on.
         fewshot_base = {mdl: lbl for lbl, mdl in reference} if reference else None
@@ -940,8 +1009,15 @@ def build_language(experiments, models, lang: str, dev_slug: str, suffix: str, c
         # when ES_STAGE_REFERENCE_OVERRIDE has replaced `reference` for this
         # stage, the highlight must track the OVERRIDE too, or the blue-marked
         # row and the row actually shown/carried-forward would disagree.
+        # A carried-forward reference is evidence for the comparison, not a
+        # stage winner.  Keep exactly one blue winner per model in each stage:
+        # for EU reranking this is Llama's new rerank-top-5 row (6c') and
+        # Latxa's retained dense-top-1 row (1d), while Llama's dense 3c'
+        # reference remains above the divider without a blue highlight.
         this_stage_pins = (
-            ES_STAGE_REFERENCE_OVERRIDE[slug] if (lang == "ES" and slug in ES_STAGE_REFERENCE_OVERRIDE)
+            pins
+            if lang == "EU" and slug in stage_reference_overrides
+            else stage_reference_overrides[slug] if slug in stage_reference_overrides
             else pins
         )
         pin_sf_override = {
@@ -951,7 +1027,7 @@ def build_language(experiments, models, lang: str, dev_slug: str, suffix: str, c
         out = OUT_DIR / f"table_{lang.lower()}_{dev_slug}_{slug}.tex"
         # Short-caption dev-slug display text, matching the List of Tables
         # convention used elsewhere in the manuscript: the mixed-corpus tables
-        # spell out "mixed dataset" (including the rerank stage -- a prior
+        # spell out "mixed dataset" (including the rerank stage, a prior
         # version of this dict special-cased rerank to the shorter "mixed",
         # an inconsistency since fixed by explicit request), and the two
         # single-source tables use the dataset's own capitalization (SNS1064,
@@ -984,7 +1060,7 @@ def build_language(experiments, models, lang: str, dev_slug: str, suffix: str, c
     # ── full appendix table: all eleven conditions ─────────────────────────────
     all_labels = [e[0] for e in experiments]
     # Per-dataset tables (SNS1064-only, CasiMedicos-only) highlight each model's
-    # OWN best-MeanQ row computed on THAT dataset's own metrics -- not the
+    # OWN best-MeanQ row computed on THAT dataset's own metrics, not the
     # mixed-set winner staged in the main text and reused, unstaged, in every
     # earlier version of this appendix. The mixed-set table (dev_slug=="mixed")
     # is left unhighlighted: that winner is already the one reported everywhere
@@ -997,7 +1073,7 @@ def build_language(experiments, models, lang: str, dev_slug: str, suffix: str, c
             # Searches both SF states: this is "which single row in this flat
             # table has the highest MeanQ", not the main-text staging question
             # best_label() answers (which is deliberately noSF-only, see its
-            # own docstring) -- a higher-MeanQ SF row must not be skipped.
+            # own docstring), a higher-MeanQ SF row must not be skipped.
             win = best_label_either_sf(experiments, models, all_labels, suffix, only_model=model)
             if win is not None:
                 label, mdl, use_sf = win
@@ -1027,10 +1103,10 @@ def build_language(experiments, models, lang: str, dev_slug: str, suffix: str, c
         # Row 8 ("3-shot + rerank top 5") and rows 9-10 (SNS/CasiMedicos
         # retrieval) both need their RAG-base substitution here, and it is
         # NOT always the same value per model (see display_label()'s own
-        # docstring for the ES Qwen-think counterexample) -- unlike the
+        # docstring for the ES Qwen-think counterexample), unlike the
         # single-stage main-text calls above, which only ever need one of the
         # two on a given call. best_config drives rows 9-10 (DOMAIN_BASE_LABEL,
-        # a fixed fact about the domain runs); fewshot_config drives row 8
+        # a fixed fact about the domain runs), fewshot_config drives row 8
         # (that model's own fewshot-stage reference, captured above).
         best_config=DOMAIN_BASE_LABEL.get(lang),
         fewshot_config=captured_fewshot_base,
@@ -1040,18 +1116,14 @@ def build_language(experiments, models, lang: str, dev_slug: str, suffix: str, c
 
 
 def main() -> None:
-    for experiments, models, lang in (
-        (ES_EXPERIMENTS, ES_MODELS, "ES"),
-        (EU_EXPERIMENTS, EU_MODELS, "EU"),
-    ):
-        EXPERIMENT_NUMBERS.clear()   # ES and EU are independent grids, each numbered from 0
-        # MODEL_LETTERS is deliberately NOT cleared here -- see assign_ids()'s
-        # own docstring: EU continues from c/d rather than restarting at a/b,
-        # so every row id (e.g. "6a", "2c") is globally unique across languages.
-        assign_ids(experiments, models)
-        for dev_slug, suffix in (("mixed", ""), ("sns1064", "_sns1064"),
-                                 ("casimedicos", "_casimedicos")):
-            build_language(experiments, models, lang, dev_slug, suffix)
+    # Reserve a/b for the Spanish tables already included by main.tex, then
+    # render the current Basque 11000-series as c/d.  The earlier EU tables
+    # used a retired SNS1064 corpus and are deliberately not regenerated.
+    MODEL_LETTERS.clear()
+    assign_ids(ES_EXPERIMENTS, ES_MODELS)
+    EXPERIMENT_NUMBERS.clear()
+    assign_ids(CURRENT_EU_EXPERIMENTS, EU_MODELS)
+    build_language(CURRENT_EU_EXPERIMENTS, EU_MODELS, "EU", "mixed", "")
     written = sorted(p.name for p in OUT_DIR.glob("table_*.tex")) + \
               sorted(p.name for p in OUT_DIR.glob("appendix_table_*.tex"))
     for name in written:

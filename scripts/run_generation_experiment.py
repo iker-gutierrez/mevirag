@@ -33,6 +33,7 @@ from medical_rag_thesis.prompts import (  # noqa: E402
 from medical_rag_thesis.reasoning import parse_pipeline_answer  # noqa: E402
 from medical_rag_thesis.retrieval import EmbeddingRetriever, HitRateLoggingEmbeddingRetriever  # noqa: E402
 from medical_rag_thesis.run_logging import run_with_logs  # noqa: E402
+from truncation_safety import remove_failed_output  # noqa: E402
 
 
 def parse_args() -> argparse.Namespace:
@@ -48,6 +49,29 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--max-new-tokens", type=int, default=256)
     parser.add_argument("--temperature", type=float, default=0.0)
     parser.add_argument("--top-p", type=float, default=1.0)
+    parser.add_argument("--top-k", type=int, default=0, help="vLLM backend only. 0 disables top-k.")
+    parser.add_argument("--min-p", type=float, default=0.0, help="vLLM backend only.")
+    parser.add_argument(
+        "--presence-penalty", type=float, default=0.0,
+        help="vLLM backend only. Maps directly to vLLM SamplingParams.presence_penalty "
+        "(NOT repetition_penalty, a separate multiplicative mechanism vLLM also "
+        "exposes -- conflating the two by piping this into repetition_penalty "
+        "was a real, previously-shipped bug: presence_penalty=1.5 (Qwen3.5's own "
+        "documented recommendation) is a sane presence_penalty, but 1.0 + 1.5 = "
+        "2.5 is a destructively high repetition_penalty, confirmed to produce "
+        "non-repeating word-salad that runs to max_new_tokens on ~97%% of "
+        "GuiaSalud reasoning-pipeline records).",
+    )
+    parser.add_argument(
+        "--thinking-token-budget", type=int, default=None,
+        help="vLLM backend only. Forces the reasoning-parser-recognized model "
+        "(e.g. Qwen3.5 with --reasoning-parser qwen3) to close its thinking "
+        "block within this many tokens, leaving room in max-new-tokens for the "
+        "actual answer. Without this, think mode has no incentive to stop "
+        "thinking before max-new-tokens and reliably runs to the ceiling "
+        "(confirmed: every GuiaSalud think-mode ablation config was missing "
+        "this and showed 126/126 truncated records at only 1024 max_new_tokens).",
+    )
     parser.add_argument("--dtype", default="auto", choices=["auto", "float16", "fp16", "bfloat16", "bf16", "float32", "fp32"])
     parser.add_argument("--device-map", default="auto")
     parser.add_argument("--trust-remote-code", action="store_true")
@@ -120,6 +144,17 @@ def parse_args() -> argparse.Namespace:
         "stop), up to this many extra attempts, each with an advanced seed so "
         "a retry is a genuinely different sampling draw rather than a replay "
         "of the same truncated generation.",
+    )
+    parser.add_argument(
+        "--truncation-retry-presence-penalty", type=float, default=0.1,
+        help="vLLM backend only. presence_penalty used for the back half of "
+        "truncation retries (see --max-truncation-retries), once the "
+        "configured value has repeatedly failed to produce a clean completion.",
+    )
+    parser.add_argument(
+        "--fail-on-remaining-truncation", action="store_true",
+        help="After all truncation retries are exhausted, raise instead of "
+        "writing any still-truncated record to the output file.",
     )
     return parser.parse_args()
 
@@ -232,9 +267,14 @@ def vllm_generate_with_retry(
     max_tokens: int,
     temperature: float,
     top_p: float,
+    top_k: int = 0,
+    min_p: float = 0.0,
+    presence_penalty: float = 0.0,
+    thinking_token_budget: Optional[int] = None,
     seed: int,
     max_truncation_retries: int,
     repetition_detection: Optional[dict[str, int]],
+    truncation_retry_presence_penalty: float = 0.1,
 ) -> tuple[list[str], list[Optional[str]]]:
     """One batched vLLM call, then up to max_truncation_retries more batched
     calls covering only the records still truncated after the previous
@@ -242,6 +282,15 @@ def vllm_generate_with_retry(
     advanced seed so a retry is a genuinely different sampling draw rather
     than a replay of the same truncated generation (a fixed seed would
     reproduce byte-identical output and the retry would change nothing).
+
+    repetition_detection alone cannot catch every degenerate pattern (a run
+    can drift into long, non-repeating word-salad that never repeats a short
+    pattern and so never trips it, confirmed on real GuiaSalud output --
+    99.98%% of words unique). Once a prompt has used half its retry budget
+    without succeeding, remaining attempts fall back to
+    truncation_retry_presence_penalty (a conservative, previously-validated
+    value) instead of repeating the configured value that may itself be
+    contributing to the failure.
 
     Returns (texts, finish_reasons), both indexed like `prompts`."""
     from vllm import SamplingParams
@@ -259,8 +308,17 @@ def vllm_generate_with_retry(
             max_tokens=max_tokens,
             temperature=temperature,
             top_p=top_p,
+            top_k=top_k if top_k > 0 else -1,
+            min_p=min_p,
+            presence_penalty=(
+                truncation_retry_presence_penalty
+                if attempt > max(1, max_truncation_retries // 2)
+                else presence_penalty
+            ),
             seed=attempt_seed,
         )
+        if thinking_token_budget is not None:
+            sp_kwargs["thinking_token_budget"] = thinking_token_budget
         if repetition_detection:
             sp_kwargs["repetition_detection"] = RepetitionDetectionParams(**repetition_detection)
         sp = SamplingParams(**sp_kwargs)
@@ -308,10 +366,10 @@ def run(args: argparse.Namespace) -> None:
             # fix_mistral_regex=True: transformers loads Mistral-family tokenizers
             # (Ministral included) with a regex bug by default that silently
             # mis-splits accented/multibyte text into a different, wrong token
-            # sequence -- transformers itself warns about this on load. It's a
+            # sequence, transformers itself warns about this on load. It's a
             # no-op for non-Mistral tokenizers, so passed unconditionally. This
             # only affects THIS tokenizer's own token counts (input_tokens/
-            # output_tokens, the cost columns in the result tables) -- the actual
+            # output_tokens, the cost columns in the result tables), the actual
             # generation prompt is sent to vLLM as a raw string and tokenized by
             # vLLM's own (correctly auto-detected MistralTokenizer) engine
             # tokenizer, so generation itself was never affected by this bug.
@@ -340,7 +398,7 @@ def run(args: argparse.Namespace) -> None:
     native_thinking = uses_native_qwen_thinking(args.model)
 
     # Pass 1: retrieval, few-shot selection, and prompt construction for every
-    # record. This is unchanged regardless of backend -- vLLM only changes how
+    # record. This is unchanged regardless of backend, vLLM only changes how
     # the *generation* calls below are batched, not how prompts are built.
     prepared: list[dict[str, Any]] = []
     for ordinal, record in enumerate(records, start=1):
@@ -415,8 +473,8 @@ def run(args: argparse.Namespace) -> None:
             "input_tokens": input_tokens,
         })
 
-    # Pass 2: generation. dry-run writes empty predictions; vLLM batches every
-    # record's prompt into one engine call per pass; transformers stays a
+    # Pass 2: generation. dry-run writes empty predictions, vLLM batches every
+    # record's prompt into one engine call per pass, transformers stays a
     # sequential one-call-per-record loop (generate_one), as before.
     if args.dry_run:
         initial_predictions = [""] * len(prepared)
@@ -440,12 +498,17 @@ def run(args: argparse.Namespace) -> None:
             max_tokens=args.max_new_tokens,
             temperature=args.temperature,
             top_p=args.top_p,
+            top_k=args.top_k,
+            min_p=args.min_p,
+            presence_penalty=args.presence_penalty,
+            thinking_token_budget=args.thinking_token_budget,
             seed=args.seed,
             max_truncation_retries=args.max_truncation_retries,
             repetition_detection=repetition_detection,
+            truncation_retry_presence_penalty=args.truncation_retry_presence_penalty,
         )
         # vLLM batches the whole pass into one engine call, so there is no true
-        # per-record wall time; the batch's total is divided evenly across its
+        # per-record wall time, the batch's total is divided evenly across its
         # records to keep mean_generation_seconds comparable to the
         # transformers backend's per-record timing.
         per_record_seconds = (time.perf_counter() - gen_started) / len(prepared) if prepared else 0.0
@@ -515,9 +578,14 @@ def run(args: argparse.Namespace) -> None:
                 max_tokens=args.feedback_max_new_tokens or args.max_new_tokens,
                 temperature=args.temperature,
                 top_p=args.top_p,
+                top_k=args.top_k,
+                min_p=args.min_p,
+                presence_penalty=args.presence_penalty,
+                thinking_token_budget=args.thinking_token_budget,
                 seed=args.seed + 1,
                 max_truncation_retries=args.max_truncation_retries,
                 repetition_detection=repetition_detection,
+                truncation_retry_presence_penalty=args.truncation_retry_presence_penalty,
             )
             fb_seconds = (time.perf_counter() - fb_started) / len(prepared) if prepared else 0.0
             for item, reason in zip(prepared, feedback_finish_reasons):
@@ -575,13 +643,14 @@ def run(args: argparse.Namespace) -> None:
             "native_thinking": native_thinking,
             "source": record.get("source"),
             "topic": record.get("topic"),
+            "subtopic": record.get("subtopic", ""),
             "question": record.get("question"),
-            "subquestion": record.get("subquestion", ""),
+            "focus": record.get("focus", ""),
             "reference_short_answer": record.get("short_answer", ""),
             "reference_evidence": record.get("evidence", ""),
             "initial_prediction_text": initial_prediction,
             # parse_pipeline_answer (not the plain parse_answer_sections) anchors
-            # on the LAST "Respuesta corta"/"Evidencia" occurrence -- required for
+            # on the LAST "Respuesta corta"/"Evidencia" occurrence, required for
             # think-mode output, which routinely rehearses those labels mid-reasoning
             # before the real final answer (see scripts/refix_think_mode_parsing.py
             # for the incident this was originally caught from: a no-think call site
@@ -625,7 +694,27 @@ def run(args: argparse.Namespace) -> None:
         outputs.append(output)
         print(f"[{item['ordinal']}/{len(records)}] {record.get('id', '')}", flush=True)
 
+    if args.fail_on_remaining_truncation and use_vllm:
+        still_truncated = [
+            r["id"] for r in outputs
+            if r["truncation"]["initial_truncated"] or r["truncation"]["feedback_truncated"]
+        ]
+        if still_truncated:
+            # Do not leave a partially generated predictions.jsonl behind:
+            # afterany stage evaluation is allowed to continue when one array
+            # task fails, so an orphaned file could otherwise be mistaken for
+            # an accepted run.  A failed run must be absent and retried.
+            output_path = Path(args.output)
+            remove_failed_output(output_path)
+            raise RuntimeError(
+                f"{len(still_truncated)} record(s) still truncated after "
+                f"{args.max_truncation_retries} retries (ids: {still_truncated}). "
+                "Zero truncated output is required -- raise --max-truncation-retries "
+                "or inspect these records manually rather than accepting partial answers."
+            )
+
     write_jsonl(outputs, args.output)
+
     metadata_path = Path(args.output).with_suffix(".meta.json")
     total_run_seconds = time.perf_counter() - run_started
     generation_times = [record["timing"]["generation_seconds"] for record in outputs]
