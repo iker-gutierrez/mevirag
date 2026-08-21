@@ -18,7 +18,7 @@ Full system implementation: retrieval, generation, self-feedback, reasoning pipe
 - A persistent 20-26 point MeanQ gap between the best achievable Spanish and Basque configurations survives every technique tested on dev and remains substantial on the held-out test set (21.94-24.16 points across the directly comparable systems).
 - Basque language adaptation (Latxa vs. Llama) does not raise overall single-pass MeanQ above the non-adapted model's, but it does raise multiple-choice accuracy specifically, and it is the only technique tested for which the Basque-adapted model shows a genuine advantage: a positive self-feedback gain that does not extend to multi-step reasoning.
 
-## Held-out test set results
+## Test results
 
 Each model's own best dev-set configuration was frozen and run once against the held-out test split. MeanQ is the mean of ROUGE-L, BERT-F1, and MC-accuracy.
 
