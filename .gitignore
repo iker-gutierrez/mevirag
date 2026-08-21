@@ -101,3 +101,7 @@ docs/inference_eval_scripts_summary.md
 .env
 .cache/
 wandb/
+
+# Removed from GitHub, kept locally
+EXPERIMENTS.md
+plan.pdf
