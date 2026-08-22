@@ -7,13 +7,12 @@
 #SBATCH --time=02:00:00
 #SBATCH --mem=16GB
 #SBATCH --gres=gpu:1
-#SBATCH --output=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/staged_latxa_A_eval_%A_%a.log
-#SBATCH --error=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/staged_latxa_A_eval_%A_%a.err
-#SBATCH --chdir=/home/igutierrez134/med_rag_thesis
+#SBATCH --output=experiments/slurm_logs/staged_latxa_A_eval_%A_%a.log
+#SBATCH --error=experiments/slurm_logs/staged_latxa_A_eval_%A_%a.err
 #SBATCH --mail-type=FAIL
 #SBATCH --mail-user=igutierrez134@ikasle.ehu.eus
 set -euo pipefail
-mapfile -t TASKS < /home/igutierrez134/med_rag_thesis/experiments/staged_latxa_A_eval_tasks.txt
+mapfile -t TASKS < ./experiments/staged_latxa_A_eval_tasks.txt
 ENTRY="${TASKS[$SLURM_ARRAY_TASK_ID]}"
 PRED="$(echo "$ENTRY" | cut -d' ' -f2)"
 OUT="$(echo "$ENTRY" | cut -d' ' -f3)"

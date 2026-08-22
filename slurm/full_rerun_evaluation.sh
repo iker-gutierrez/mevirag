@@ -5,9 +5,8 @@
 #SBATCH --ntasks-per-node=1
 #SBATCH --time=06:00:00
 #SBATCH --mem=32GB
-#SBATCH --output=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/eval_full_rerun_%j.log
-#SBATCH --error=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/eval_full_rerun_%j.err
-#SBATCH --chdir=/home/igutierrez134/med_rag_thesis
+#SBATCH --output=experiments/slurm_logs/eval_full_rerun_%j.log
+#SBATCH --error=experiments/slurm_logs/eval_full_rerun_%j.err
 #SBATCH --mail-type=END,FAIL,REQUEUE
 #SBATCH --mail-user=igutierrez134@ikasle.ehu.eus
 

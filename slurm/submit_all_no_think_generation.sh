@@ -4,7 +4,7 @@
 # Llama/Latxa are Basque-only and are not included here.
 set -euo pipefail
 
-cd /home/igutierrez134/med_rag_thesis
+cd "$(dirname "$0")/.."
 
 echo "Submitting no-think generation jobs (mixed Spanish dataset)..."
 

@@ -6,9 +6,8 @@
 #SBATCH --time=12:00:00
 #SBATCH --mem=48GB
 #SBATCH --gres=gpu:1
-#SBATCH --output=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/patch_truncated_v2_%j.log
-#SBATCH --error=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/patch_truncated_v2_%j.err
-#SBATCH --chdir=/home/igutierrez134/med_rag_thesis
+#SBATCH --output=experiments/slurm_logs/patch_truncated_v2_%j.log
+#SBATCH --error=experiments/slurm_logs/patch_truncated_v2_%j.err
 #SBATCH --mail-type=END,FAIL,REQUEUE
 #SBATCH --mail-user=igutierrez134@ikasle.ehu.eus
 
@@ -46,7 +45,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-ROOT = Path("/home/igutierrez134/med_rag_thesis")
+ROOT = Path(".")
 manifest = json.loads(Path("/tmp/claude-1034/-home-igutierrez134/822972dc-80bc-4f28-8df8-cdd479f4aca8/scratchpad/truncation_reruns/rerun_manifest_v2.json").read_text())
 
 for i, entry in enumerate(manifest, start=1):
@@ -82,7 +81,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-ROOT = Path("/home/igutierrez134/med_rag_thesis")
+ROOT = Path(".")
 manifest = json.loads(Path("/tmp/claude-1034/-home-igutierrez134/822972dc-80bc-4f28-8df8-cdd479f4aca8/scratchpad/truncation_reruns/rerun_manifest_v2.json").read_text())
 
 for i, entry in enumerate(manifest, start=1):

@@ -5,7 +5,7 @@
 # reports/metrics/reasoning_pipeline_dev_results.md with the corrected row
 # definitions (write_reasoning_pipeline_summary.py, already updated).
 set -uo pipefail
-cd /home/igutierrez134/med_rag_thesis
+cd "$(dirname "$0")/.."
 source /home/igutierrez134/envs/med_rag_thesis/bin/activate
 LOG=experiments/slurm_logs/chain_reasoning_summary_update.log
 exec >>"$LOG" 2>&1

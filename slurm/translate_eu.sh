@@ -6,9 +6,8 @@
 #SBATCH --time=04:00:00
 #SBATCH --mem=32GB
 #SBATCH --gres=gpu:1
-#SBATCH --output=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/translate_eu_%j.log
-#SBATCH --error=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/translate_eu_%j.err
-#SBATCH --chdir=/home/igutierrez134/med_rag_thesis
+#SBATCH --output=experiments/slurm_logs/translate_eu_%j.log
+#SBATCH --error=experiments/slurm_logs/translate_eu_%j.err
 #SBATCH --mail-type=END,FAIL,REQUEUE
 #SBATCH --mail-user=igutierrez134@ikasle.ehu.eus
 
@@ -22,7 +21,7 @@ export HF_HUB_CACHE="/home/igutierrez134/.cache/huggingface"
 export TOKENIZERS_PARALLELISM=false
 export HF_HUB_OFFLINE=1
 export TRANSFORMERS_OFFLINE=1
-export PYTHONPATH="/home/igutierrez134/med_rag_thesis/.vendor/transformers426:${PYTHONPATH:-}"
+export PYTHONPATH="./.vendor/transformers426:${PYTHONPATH:-}"
 
 EU_TRANSLATION_MODEL="/home/igutierrez134/.cache/huggingface/models--HiTZ--medical_es-eu/snapshots/38899b3feda911b50b6f7c9a380ba420ff99df65"
 

@@ -2,7 +2,7 @@
 # Chain: Mistral -> Qwen3.5-9B -> Llama -> Latxa
 set -euo pipefail
 
-cd /home/igutierrez134/med_rag_thesis
+cd "$(dirname "$0")/.."
 
 mistral=$(sbatch --parsable slurm/mistral_mixed_nosf_generation.sh)
 echo "Mistral:     ${mistral}"

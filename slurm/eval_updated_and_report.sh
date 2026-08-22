@@ -6,9 +6,8 @@
 #SBATCH --time=12:00:00
 #SBATCH --mem=48GB
 #SBATCH --gres=gpu:1
-#SBATCH --output=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/eval_updated_report_%j.log
-#SBATCH --error=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/eval_updated_report_%j.err
-#SBATCH --chdir=/home/igutierrez134/med_rag_thesis
+#SBATCH --output=experiments/slurm_logs/eval_updated_report_%j.log
+#SBATCH --error=experiments/slurm_logs/eval_updated_report_%j.err
 #SBATCH --mail-type=END,FAIL,REQUEUE
 #SBATCH --mail-user=igutierrez134@ikasle.ehu.eus
 
@@ -31,7 +30,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-ROOT = Path("/home/igutierrez134/med_rag_thesis")
+ROOT = Path(".")
 RUNS_DIR = ROOT / "experiments" / "runs"
 METRICS_DIR = ROOT / "reports" / "metrics"
 

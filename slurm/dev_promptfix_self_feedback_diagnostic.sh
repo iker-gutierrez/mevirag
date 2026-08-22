@@ -6,9 +6,8 @@
 #SBATCH --time=12:00:00
 #SBATCH --mem=64GB
 #SBATCH --gres=gpu:1
-#SBATCH --output=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/dev_promptfix_self_feedback_diagnostic_%j.log
-#SBATCH --error=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/dev_promptfix_self_feedback_diagnostic_%j.err
-#SBATCH --chdir=/home/igutierrez134/med_rag_thesis
+#SBATCH --output=experiments/slurm_logs/dev_promptfix_self_feedback_diagnostic_%j.log
+#SBATCH --error=experiments/slurm_logs/dev_promptfix_self_feedback_diagnostic_%j.err
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=igutierrez134@ikasle.ehu.eus
 

@@ -8,7 +8,7 @@
 
 set -euo pipefail
 
-cd /home/igutierrez134/med_rag_thesis
+cd "$(dirname "$0")/.."
 
 translate_job="$(sbatch --parsable slurm/translate_eu.sh)"
 echo "Submitted EU translation: ${translate_job}"

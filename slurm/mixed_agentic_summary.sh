@@ -5,9 +5,8 @@
 #SBATCH --ntasks-per-node=1
 #SBATCH --time=01:00:00
 #SBATCH --mem=16GB
-#SBATCH --output=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/mixed_agentic_summary_%j.log
-#SBATCH --error=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/mixed_agentic_summary_%j.err
-#SBATCH --chdir=/home/igutierrez134/med_rag_thesis
+#SBATCH --output=experiments/slurm_logs/mixed_agentic_summary_%j.log
+#SBATCH --error=experiments/slurm_logs/mixed_agentic_summary_%j.err
 #SBATCH --mail-type=END,FAIL,REQUEUE
 #SBATCH --mail-user=igutierrez134@ikasle.ehu.eus
 

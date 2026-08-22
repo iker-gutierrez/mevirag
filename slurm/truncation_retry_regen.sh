@@ -6,9 +6,8 @@
 #SBATCH --time=02:00:00
 #SBATCH --mem=64GB
 #SBATCH --gres=gpu:1
-#SBATCH --output=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/truncation_retry_regen_%j.log
-#SBATCH --error=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/truncation_retry_regen_%j.err
-#SBATCH --chdir=/home/igutierrez134/med_rag_thesis
+#SBATCH --output=experiments/slurm_logs/truncation_retry_regen_%j.log
+#SBATCH --error=experiments/slurm_logs/truncation_retry_regen_%j.err
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=igutierrez134@ikasle.ehu.eus
 
@@ -37,7 +36,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-sys.path.insert(0, "/home/igutierrez134/med_rag_thesis/scripts")
+sys.path.insert(0, "./scripts")
 from run_generation_from_config import build_command
 
 SCRATCH = Path("/tmp/claude-1034/-home-igutierrez134/822972dc-80bc-4f28-8df8-cdd479f4aca8/scratchpad/truncation_retry_regen")
@@ -51,7 +50,7 @@ for i, entry in enumerate(manifest, start=1):
         save_prompts=False,
         seed_override=entry["seed_int"],
     )
-    result = subprocess.run(cmd, cwd="/home/igutierrez134/med_rag_thesis")
+    result = subprocess.run(cmd, cwd=".")
     if result.returncode != 0:
         print(f"FAILED: {entry['config_base']} seed={entry['seed']}", file=sys.stderr)
 PYEOF

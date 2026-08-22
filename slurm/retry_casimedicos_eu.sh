@@ -7,9 +7,8 @@
 #SBATCH --mem=64GB
 #SBATCH --gres=gpu:1
 #SBATCH --array=0-5%1
-#SBATCH --output=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/casimedicos_eu_retry_%A_task%a_%x.log
-#SBATCH --error=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/casimedicos_eu_retry_%A_task%a_%x.err
-#SBATCH --chdir=/home/igutierrez134/med_rag_thesis
+#SBATCH --output=experiments/slurm_logs/casimedicos_eu_retry_%A_task%a_%x.log
+#SBATCH --error=experiments/slurm_logs/casimedicos_eu_retry_%A_task%a_%x.err
 #SBATCH --mail-type=END,FAIL,REQUEUE
 #SBATCH --mail-user=igutierrez134@ikasle.ehu.eus
 

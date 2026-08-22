@@ -6,9 +6,8 @@
 #SBATCH --time=00:15:00
 #SBATCH --mem=48GB
 #SBATCH --gres=gpu:1
-#SBATCH --output=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/copy_related_sentences_test_1050_%j.log
-#SBATCH --error=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/copy_related_sentences_test_1050_%j.err
-#SBATCH --chdir=/home/igutierrez134/med_rag_thesis
+#SBATCH --output=experiments/slurm_logs/copy_related_sentences_test_1050_%j.log
+#SBATCH --error=experiments/slurm_logs/copy_related_sentences_test_1050_%j.err
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=igutierrez134@ikasle.ehu.eus
 
@@ -48,11 +47,11 @@ echo "=== Truncation/loop comparison: NEW (sentence-level copy license) vs ORIGI
 python3 - <<'PYEOF'
 import json
 import sys
-sys.path.insert(0, "/home/igutierrez134/med_rag_thesis/scripts")
+sys.path.insert(0, "./scripts")
 from fix_truncated_loops_in_place import is_truncated_record, find_loop_cutpoint
 from pathlib import Path
 
-ROOT = Path("/home/igutierrez134/med_rag_thesis")
+ROOT = Path(".")
 new_path = ROOT / "experiments/runs/copy_related_sentences_test_1050/predictions.jsonl"
 orig_path = ROOT / "experiments/runs/1050_llama31_8b_rag_casimedicos_e5_rerank5_extractive_mixed_eu_dev_v2_seed42/predictions.jsonl"
 

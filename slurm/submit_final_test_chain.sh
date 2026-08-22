@@ -4,7 +4,7 @@
 # winner: ``rp_stage_selection.json`` is the frozen post-RP-evaluation record.
 set -euo pipefail
 
-cd /home/igutierrez134/med_rag_thesis
+cd "$(dirname "$0")/.."
 source /home/igutierrez134/envs/med_rag_thesis/bin/activate
 python scripts/prepare_final_test_configs.py
 

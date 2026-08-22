@@ -6,9 +6,8 @@
 #SBATCH --time=01:00:00
 #SBATCH --mem=64GB
 #SBATCH --gres=gpu:2
-#SBATCH --output=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/eu_index_%j.log
-#SBATCH --error=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/eu_index_%j.err
-#SBATCH --chdir=/home/igutierrez134/med_rag_thesis
+#SBATCH --output=experiments/slurm_logs/eu_index_%j.log
+#SBATCH --error=experiments/slurm_logs/eu_index_%j.err
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=igutierrez134@ikasle.ehu.eus
 

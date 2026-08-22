@@ -6,9 +6,8 @@
 #SBATCH --time=03:00:00
 #SBATCH --mem=32GB
 #SBATCH --gres=gpu:1
-#SBATCH --output=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/spanish_ablation_evaluation_stageA_%j.log
-#SBATCH --error=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/spanish_ablation_evaluation_stageA_%j.err
-#SBATCH --chdir=/home/igutierrez134/med_rag_thesis
+#SBATCH --output=experiments/slurm_logs/spanish_ablation_evaluation_stageA_%j.log
+#SBATCH --error=experiments/slurm_logs/spanish_ablation_evaluation_stageA_%j.err
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=igutierrez134@ikasle.ehu.eus
 
@@ -72,6 +71,13 @@ for run_id in "${RUN_IDS[@]}"; do
       --bertscore-lang es
   done
 done
+
+# Hit-rate@k summary (informational only, see scripts/aggregate_hit_rate.py's
+# own docstring for why it never feeds into the selection rule below).
+python scripts/aggregate_hit_rate.py \
+  --run-ids "${RUN_IDS[@]}" \
+  --seeds "${SEEDS[@]}" \
+  --output reports/metrics/hit_rate_summary_12000_stageA.json
 
 # Stage A -> B: rewire row 8 to whichever reading of whichever stage-A row
 # (plain or self-feedback) actually scored best, for each model variant.

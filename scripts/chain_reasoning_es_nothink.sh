@@ -4,7 +4,7 @@
 # rerank5 reasoning pipeline runs: the 3 non-MA-RAG pipelines immediately, and
 # MA-RAG once its threshold is confirmed set (not null).
 set -uo pipefail
-cd /home/igutierrez134/med_rag_thesis
+cd "$(dirname "$0")/.."
 source /home/igutierrez134/envs/med_rag_thesis/bin/activate
 LOG=experiments/slurm_logs/chain_reasoning_es_nothink.log
 exec >>"$LOG" 2>&1

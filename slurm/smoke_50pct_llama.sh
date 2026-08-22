@@ -6,9 +6,8 @@
 #SBATCH --time=00:10:00
 #SBATCH --mem=48GB
 #SBATCH --gres=gpu:1
-#SBATCH --output=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/smoke_llama_%j.log
-#SBATCH --error=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/smoke_llama_%j.err
-#SBATCH --chdir=/home/igutierrez134/med_rag_thesis
+#SBATCH --output=experiments/slurm_logs/smoke_llama_%j.log
+#SBATCH --error=experiments/slurm_logs/smoke_llama_%j.err
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=igutierrez134@ikasle.ehu.eus
 
@@ -29,7 +28,7 @@ python3 - <<'PYEOF'
 import json
 from pathlib import Path
 
-ROOT = Path("/home/igutierrez134/med_rag_thesis")
+ROOT = Path(".")
 p = ROOT / "experiments" / "runs" / "smoke_50pct_llama" / "predictions.jsonl"
 if not p.exists():
     print("NO OUTPUT FOUND")

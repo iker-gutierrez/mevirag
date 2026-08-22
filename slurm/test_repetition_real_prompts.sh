@@ -6,9 +6,8 @@
 #SBATCH --time=00:45:00
 #SBATCH --mem=48GB
 #SBATCH --gres=gpu:1
-#SBATCH --output=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/test_repdet_real_%j.log
-#SBATCH --error=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/test_repdet_real_%j.err
-#SBATCH --chdir=/home/igutierrez134/med_rag_thesis
+#SBATCH --output=experiments/slurm_logs/test_repdet_real_%j.log
+#SBATCH --error=experiments/slurm_logs/test_repdet_real_%j.err
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=igutierrez134@ikasle.ehu.eus
 
@@ -45,7 +44,7 @@ RUNS = [
     ("1261 (Mistral, sns1064_00603)", "loop_test_1261_baseline", "loop_test_1261"),
     ("1044 (Llama, casimedicos_531)", "loop_test_1044_baseline", "loop_test_1044"),
 ]
-ROOT = Path("/home/igutierrez134/med_rag_thesis")
+ROOT = Path(".")
 
 for label, baseline_dir, repdet_dir in RUNS:
     print(f"\n--- {label} ---")

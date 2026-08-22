@@ -45,7 +45,7 @@
 #   list the reasoning-pipeline configs frozen to those winners.
 
 set -euo pipefail
-cd /home/igutierrez134/med_rag_thesis
+cd "$(dirname "$0")/.."
 
 echo "Submitting the full mixed-dataset dev-experiment chain (Spanish + Basque, staged ablation + reasoning pipelines)."
 echo

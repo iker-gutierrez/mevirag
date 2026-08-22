@@ -7,9 +7,8 @@
 #SBATCH --time=16:00:00
 #SBATCH --mem=48GB
 #SBATCH --gres=gpu:1
-#SBATCH --output=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/qwen35_4b_spanish_evaluation_%A_%a.log
-#SBATCH --error=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/qwen35_4b_spanish_evaluation_%A_%a.err
-#SBATCH --chdir=/home/igutierrez134/med_rag_thesis
+#SBATCH --output=experiments/slurm_logs/qwen35_4b_spanish_evaluation_%A_%a.log
+#SBATCH --error=experiments/slurm_logs/qwen35_4b_spanish_evaluation_%A_%a.err
 #SBATCH --mail-type=END,FAIL,REQUEUE
 #SBATCH --mail-user=igutierrez134@ikasle.ehu.eus
 

@@ -6,7 +6,7 @@ set -euo pipefail
 SEED=${1:?Usage: $0 <seed> [after_jobid]}
 AFTER=${2:-}
 
-cd /home/igutierrez134/med_rag_thesis
+cd "$(dirname "$0")/.."
 
 dep_arg=""
 [ -n "$AFTER" ] && dep_arg="--dependency=afterok:${AFTER}"

@@ -2,7 +2,7 @@
 # Chain: Llama (noSF+SF) -> Latxa (noSF+SF)
 set -euo pipefail
 
-cd /home/igutierrez134/med_rag_thesis
+cd "$(dirname "$0")/.."
 
 llama=$(sbatch --parsable slurm/llama31_mixed_eu_generation.sh)
 echo "Llama: ${llama}"

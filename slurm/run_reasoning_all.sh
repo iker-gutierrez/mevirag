@@ -8,7 +8,7 @@
 #   bash slurm/run_reasoning_all.sh          # submit
 #   bash slurm/run_reasoning_all.sh --dry    # print what would be submitted
 set -euo pipefail
-cd /home/igutierrez134/med_rag_thesis
+cd "$(dirname "$0")/.."
 
 DRY=""
 [[ "${1:-}" == "--dry" ]] && DRY=1

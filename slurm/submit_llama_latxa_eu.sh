@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-cd /home/igutierrez134/med_rag_thesis
+cd "$(dirname "$0")/.."
 
 generation_job_id="$(sbatch --parsable slurm/llama_latxa_eu_generation.sh)"
 echo "Submitted Llama/Latxa EU generation array: ${generation_job_id}"

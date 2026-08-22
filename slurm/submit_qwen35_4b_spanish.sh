@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-cd /home/igutierrez134/med_rag_thesis
+cd "$(dirname "$0")/.."
 
 generation_job_id="$(sbatch --parsable slurm/qwen35_4b_spanish_generation.sh)"
 echo "Submitted Qwen3.5-4B Spanish generation array: ${generation_job_id}"

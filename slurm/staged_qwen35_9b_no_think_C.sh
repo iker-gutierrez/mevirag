@@ -7,13 +7,12 @@
 #SBATCH --time=12:00:00
 #SBATCH --mem=64GB
 #SBATCH --gres=gpu:1
-#SBATCH --output=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/staged_qwen35_9b_no_think_C_%A_%a.log
-#SBATCH --error=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/staged_qwen35_9b_no_think_C_%A_%a.err
-#SBATCH --chdir=/home/igutierrez134/med_rag_thesis
+#SBATCH --output=experiments/slurm_logs/staged_qwen35_9b_no_think_C_%A_%a.log
+#SBATCH --error=experiments/slurm_logs/staged_qwen35_9b_no_think_C_%A_%a.err
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=igutierrez134@ikasle.ehu.eus
 set -euo pipefail
-mapfile -t TASKS < /home/igutierrez134/med_rag_thesis/experiments/staged_qwen35_9b_no_think_C_tasks.txt
+mapfile -t TASKS < ./experiments/staged_qwen35_9b_no_think_C_tasks.txt
 ENTRY="${TASKS[$SLURM_ARRAY_TASK_ID]}"
 CONFIG="$(echo "$ENTRY" | cut -d' ' -f1)"
 SEED="$(echo "$ENTRY" | cut -d' ' -f2)"

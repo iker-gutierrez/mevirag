@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-cd /home/igutierrez134/med_rag_thesis
+cd "$(dirname "$0")/.."
 
 dep_args=()
 if [[ $# -ge 1 && -n "${1:-}" ]]; then

@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-cd /home/igutierrez134/med_rag_thesis
+cd "$(dirname "$0")/.."
 
 nosf_job="$(sbatch --parsable slurm/qwen35_4b_v2_generation.sh)"
 echo "Submitted qwen35_4b_v2 noSF generation: ${nosf_job}"

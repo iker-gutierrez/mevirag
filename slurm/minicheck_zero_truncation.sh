@@ -6,9 +6,8 @@
 #SBATCH --time=00:30:00
 #SBATCH --mem=32GB
 #SBATCH --gres=gpu:1
-#SBATCH --output=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/minicheck_zero_trunc_%j.log
-#SBATCH --error=/home/igutierrez134/med_rag_thesis/experiments/slurm_logs/minicheck_zero_trunc_%j.err
-#SBATCH --chdir=/home/igutierrez134/med_rag_thesis
+#SBATCH --output=experiments/slurm_logs/minicheck_zero_trunc_%j.log
+#SBATCH --error=experiments/slurm_logs/minicheck_zero_trunc_%j.err
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=igutierrez134@ikasle.ehu.eus
 
@@ -48,7 +47,7 @@ RUNS = [
     "minicheck_1048_llama",
     "minicheck_1059_latxa",
 ]
-ROOT = Path("/home/igutierrez134/med_rag_thesis")
+ROOT = Path(".")
 any_truncated = False
 for run in RUNS:
     p = ROOT / "experiments" / "runs" / run / "predictions.jsonl"
