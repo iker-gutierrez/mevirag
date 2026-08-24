@@ -22,7 +22,7 @@ Full system implementation: retrieval, generation, self-feedback, reasoning pipe
 
 Each model's own best dev-set configuration was frozen and run once against the held-out test split. MeanQ is the mean of ROUGE-L, BERT-F1, and MC-accuracy.
 
-| Model | Baseline (LLM only) | Best RAG config | Best RAG MeanQ | Delta |
+| Model | Baseline (LLM only) | Best RAG config | Best RAG MeanQ | $\Delta$ |
 |---|---|---|---|---|
 | Qwen3.5-9B (no-think) | 57.97±0.86 | MA-RAG | 65.79±0.30 | +7.82±1.07 |
 | Qwen3.5-9B (think) | 63.46±0.50 | rerank top 5 | 67.42±0.35 | +3.96±0.19 |
