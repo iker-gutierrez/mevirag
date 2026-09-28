@@ -1,28 +1,22 @@
 # MeviRAG: evidence-grounded RAG for the medical domain
 
-Retrieval-augmented generation (RAG) pipeline for clinical question answering in Spanish and Basque.
-The system is evaluated on two tasks: open-answer clinical QA (GuiaSalud) and multiple-choice medical exam QA (CasiMédicos-Exp), across four core generator configurations (Qwen3.5-9B in non-thinking and thinking mode, Llama-3.1-8B-Instruct, and its Basque-adapted counterpart Latxa-Llama-3.1-8B-Instruct) and an eleven-condition ablation grid varying retrieval depth, cross-encoder reranking, few-shot prompting, self-feedback, and domain restriction, plus five inference-only reasoning-pipeline variants drawn from recent literature.
+This repository contains the completed implementation and evaluation of MeviRAG, a retrieval-augmented generation (RAG) pipeline for clinical question answering in Spanish and Basque.
+The system is evaluated on two tasks: open-answer clinical QA (GuiaSalud) and multiple-choice medical exam QA (CasiMédicos-Exp), across four core generator configurations (Qwen3.5-9B in non-thinking and thinking mode, Llama-3.1-8B-Instruct, and its Basque-adapted counterpart Latxa-Llama-3.1-8B-Instruct) and an eleven-condition ablation grid varying retrieval depth, cross-encoder reranking, few-shot prompting, self-feedback, and retrieval-corpus scope, plus five inference-only reasoning-pipeline variants drawn from recent literature.
 
-Full system implementation: retrieval, generation, self-feedback, reasoning pipelines, and evaluation.
-
-## Status
-
-- **Spanish and Basque dev ablations**: complete, all eleven conditions, three seeds each, selected with the MeanQ--Stability--Token rule. MeanQ is the mean of ROUGE-L, BERT-F1, and MC-accuracy (see `scripts/meanq.py`). Retrieval uses the full corpus while excluding each query's own gold instance at retrieval time, preventing answer leakage without discarding the remaining corpus.
-- **Reasoning-pipeline comparison**: complete for both languages, including a second Basque backbone (Llama) alongside Latxa, and both Qwen3.5-9B modes.
-- **Test set evaluation**: complete. Each model's development-selected configuration was frozen and evaluated on the held-out test split.
+It includes retrieval, generation, self-feedback, reasoning pipelines, evaluation, and the final reproducibility artefacts. Retrieval uses the full corpus while excluding each query's own gold instance at query time.
 
 ## Key findings
 
-- Retrieval helps every model substantially. Reranking is model-specific, while few-shot prompting and corpus restriction do not provide consistent gains. Self-feedback is close to neutral for both Qwen settings and improves both Basque models on average, but the final MST-selected Basque configurations do not use it.
-- Of the five reasoning-pipeline variants, only MA-RAG improves over its model's selected single-pass MeviRAG reference, and only for Qwen no-think. Every reasoning pipeline underperforms the selected reference for Qwen think, Llama, and Latxa while generally increasing inference cost.
-- A persistent 20-26 point MeanQ gap between the best achievable Spanish and Basque configurations survives every technique tested on dev and remains substantial on the held-out test set (21.94-24.16 points across the directly comparable systems).
-- Basque-specific continued pre-training provides targeted benefits for Latxa, particularly in retrieval-free generation, self-feedback, and multiple-choice accuracy, but it does not produce a uniform advantage over Llama once retrieval is used.
+- **Retrieval and ablations.** Retrieval helps every model substantially. Reranking is model-specific, while few-shot prompting and corpus restriction do not provide consistent gains. Self-feedback is close to neutral for both Qwen settings and improves both Basque models on average, but the final MST-selected Basque configurations do not use it.
+- **Reasoning pipelines.** Of the five reasoning-pipeline variants, only MA-RAG improves over its model's selected single-pass MeviRAG reference, and only for Qwen no-think. Every reasoning pipeline underperforms the selected reference for Qwen think, Llama, and Latxa while generally increasing inference cost.
+- **Spanish--Basque gap.** A persistent 20-26 point MeanQ gap between the best achievable Spanish and Basque configurations survives every technique tested on dev and remains substantial on the held-out test set (21.94-24.16 points across the directly comparable systems).
+- **Basque adaptation.** Basque-specific continued pre-training provides targeted benefits for Latxa, particularly in retrieval-free generation, self-feedback, and multiple-choice accuracy, but it does not produce a uniform advantage over Llama once retrieval is used.
 
 ## Test results
 
 Each model's development-selected configuration was frozen and evaluated on the held-out test split. MeanQ is the mean of ROUGE-L, BERT-F1, and MC-accuracy.
 
-| Model | Baseline (LLM only) | Best RAG config | Best RAG MeanQ | $\Delta$ |
+| Model | Baseline (LLM only) | Selected system | Selected MeanQ | $\Delta$ |
 |---|---|---|---|---|
 | Qwen3.5-9B (no-think) | 57.97±0.86 | MA-RAG | 65.79±0.30 | +7.82±1.07 |
 | Qwen3.5-9B (think) | 63.46±0.50 | rerank top 5 | 67.42±0.35 | +3.96±0.19 |
@@ -60,6 +54,10 @@ Install the package in editable mode:
 ```bash
 python -m pip install -e .
 ```
+
+The final GPU experiments use vLLM. Install a vLLM release compatible with
+the local CUDA and PyTorch environment before running the published configs or
+reasoning pipelines.
 
 ### Data preparation
 
@@ -110,10 +108,10 @@ In practice, most experiments are launched from a JSON config in `configs/experi
 ### Evaluation
 
 ```bash
-python scripts/evaluate_predictions.py \
+python scripts/evaluate_predictions_by_source.py \
   --predictions experiments/runs/qwen9b_rerank5_3shot_noSF/predictions.jsonl \
   --output reports/metrics/qwen9b_rerank5_3shot_noSF.json \
-  --semantic-model intfloat/multilingual-e5-large \
+  --semantic-model '' \
   --bertscore-model bert-base-multilingual-cased \
   --bertscore-lang es
 ```
@@ -145,3 +143,27 @@ python scripts/build_retrieval_index.py \
 ```
 
 Slurm logs go to `experiments/slurm_logs/`.
+
+## Citation
+
+If you use MeviRAG or this repository, please cite the Master's thesis that
+introduces the system and reports its evaluation:
+
+```bibtex
+@mastersthesis{gutierrezfandino2026mevirag,
+  author = {Gutierrez Fandiño, Iker},
+  title  = {{GuiaSalud dataset and MeviRAG}: Towards evidence-grounded medical QA in Spanish and Basque},
+  school = {University of the Basque Country (EHU)},
+  year   = {2026},
+  type   = {Master's thesis}
+}
+```
+
+## License
+
+This repository is released under the [Creative Commons Attribution-NonCommercial 4.0 International License](LICENSE).
+
+## Contact
+
+For questions, contact Iker Gutierrez Fandiño at
+[ikergutierrezfandino@gmail.com](mailto:ikergutierrezfandino@gmail.com).

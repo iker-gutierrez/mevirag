@@ -1,11 +1,12 @@
 #!/usr/bin/env python
-"""Evaluate a mixed-corpus predictions.jsonl three ways: the full mixed set
-(plain output), and each source subset (_sns1064, _casimedicos), by record id
-prefix. Matches the file-naming convention every other mixed-dev run in this
-thesis already uses (e.g. reports/metrics/1134_..._seed42_casimedicos.json),
-which scripts/meanq.py and scripts/write_reasoning_latex_table.py read MC-acc
-from. MC-acc is defined only on CasiMedicos-Exp (multiple-choice), so a
-mixed-table row with no _casimedicos file renders MC-acc and MeanQ as blank.
+"""Evaluate mixed-corpus predictions on the full set and by dataset source.
+
+The unsuffixed output contains the full mixed-set evaluation. GuiaSalud and
+CasiMedicos-Exp subsets are written with ``_guiasalud`` and ``_casimedicos``
+suffixes, based on the record ID prefix. The retained ``_sns1064`` mapping is
+only for backward compatibility with older prediction files. MC-acc is defined
+only on CasiMedicos-Exp, and the result-table writers read it from the
+``_casimedicos`` evaluation.
 
 Usage:
     python scripts/evaluate_predictions_by_source.py \\
