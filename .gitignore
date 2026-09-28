@@ -42,6 +42,9 @@ configs/experiments/*
 !configs/experiments/161??_*.json
 !configs/experiments/162??_*.json
 
+# Obsolete pre-GuiaSalud split configuration retained locally
+configs/data/sns1064_split.json
+
 # Superseded prompt-doc snapshots (docs/prompts.md is current)
 docs/prompts_v1.md
 docs/prompts_v2.md
