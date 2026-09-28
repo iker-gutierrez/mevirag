@@ -30,6 +30,18 @@ configs/experiments/smoke_stagedeval_*.json
 configs/experiments/mini_test_qwen_fix.json
 configs/experiments/no_copy_prompt_test_1050.json
 
+# Historical experiment configs kept locally. Only the final publication-facing
+# ID ranges remain eligible for tracking.
+configs/experiments/*
+!configs/experiments/110??_*.json
+!configs/experiments/111??_*.json
+!configs/experiments/120??_*.json
+!configs/experiments/121??_*.json
+!configs/experiments/132??_*.json
+!configs/experiments/160??_*.json
+!configs/experiments/161??_*.json
+!configs/experiments/162??_*.json
+
 # Superseded prompt-doc snapshots (docs/prompts.md is current)
 docs/prompts_v1.md
 docs/prompts_v2.md
@@ -44,42 +56,64 @@ reports/metrics_archive/
 # contains only current, publication-facing artefacts under reproducibility/final_test/.
 reproducibility/full_working_archive_sha256.tsv
 
-# Track processed datasets (exclude smoke test subsets).
-# The _v1 suffix marks the live split actually used for currently-reported
-# results; sns1064/ etc. (no suffix) is reserved for the re-curated dataset
-# (docs/curated_splits_reproduction.md) once it exists.
-!data/processed/sns1064_v1/
-!data/processed/sns1064_v1/**
-!data/processed/casimedicos_v1/
-!data/processed/casimedicos_v1/**
-!data/processed/sns1064_casimedicos_v1/
-!data/processed/sns1064_casimedicos_v1/**
-!data/processed/sns1064_eu_v1/
-!data/processed/sns1064_eu_v1/**
-!data/processed/casimedicos_eu_v1/
-!data/processed/casimedicos_eu_v1/**
-!data/processed/sns1064_casimedicos_eu_v1/
-!data/processed/sns1064_casimedicos_eu_v1/**
-!data/processed/sns1064/
-!data/processed/sns1064/**
-!data/processed/casimedicos/
-!data/processed/casimedicos/**
-!data/processed/sns1064_casimedicos/
-!data/processed/sns1064_casimedicos/**
-!data/processed/sns1064_eu/
-!data/processed/sns1064_eu/**
-!data/processed/casimedicos_eu/
-!data/processed/casimedicos_eu/**
-!data/processed/sns1064_casimedicos_eu/
-!data/processed/sns1064_casimedicos_eu/**
-!reports/metrics/es_dev_ablation_results.md
-!reports/metrics/eu_dev_ablation_results.md
+# Processed datasets and generated metric reports remain local. Published data
+# are loaded from Hugging Face, while final test artifacts live under
+# reproducibility/final_test/.
 
-# Dataset construction lives in the separate Guiasalud repository
+# Historical job launchers kept locally. These exceptions are the final staged
+# ablation, reasoning-pipeline, and held-out-test workflows.
+slurm/*
+!slurm/spanish_ablation_generation_stageA.sh
+!slurm/spanish_ablation_generation_stageB.sh
+!slurm/spanish_ablation_generation_stageC.sh
+!slurm/spanish_ablation_evaluation_stageA.sh
+!slurm/spanish_ablation_evaluation_stageB.sh
+!slurm/spanish_ablation_evaluation_stageC.sh
+!slurm/basque_ablation_generation_stageA.sh
+!slurm/basque_ablation_generation_stageB.sh
+!slurm/basque_ablation_generation_stageC.sh
+!slurm/basque_ablation_evaluation_stageA.sh
+!slurm/basque_ablation_evaluation_stageB.sh
+!slurm/basque_ablation_evaluation_stageC.sh
+!slurm/spanish_reasoning_pipeline_generation.sh
+!slurm/spanish_reasoning_pipeline_evaluation.sh
+!slurm/basque_reasoning_pipeline_generation.sh
+!slurm/basque_reasoning_pipeline_evaluation.sh
+!slurm/final_test_generation.sh
+!slurm/final_test_evaluation.sh
+!slurm/submit_final_test_chain.sh
+!slurm/llm_only_test_generation.sh
+!slurm/llm_only_test_evaluation.sh
+!slurm/submit_llm_only_test_chain.sh
+
+# Dataset construction lives in the separate GuiaSalud repository
 # (https://github.com/iker-gutierrez/guiasalud), not here.
 guiasalud_datasetting/
 src/medical_rag_thesis/datasetting_precuration.py
 src/medical_rag_thesis/datasetting_postcuration.py
+scripts/prepare_sns1064.py
+scripts/check_translation_integrity.py
+scripts/translate_to_basque.py
+scripts/retranslate_repetition_fields.py
+scripts/retranslate_truncated_fields.py
+
+# Superseded source and experiment-maintenance code retained locally
+src/medical_rag_thesis/prompts_v1.py
+src/medical_rag_thesis/reasoning_v1.py
+scripts/add_bullets_to_query_field.py
+scripts/create_amplified_dataset.py
+scripts/create_llama_latxa_eu_configs.py
+scripts/create_qwen35_4b_spanish_configs.py
+scripts/create_qwen35_9b_spanish_configs.py
+scripts/create_qwen3_8b_sf_configs.py
+scripts/create_qwen3_8b_spanish_configs.py
+scripts/create_reasoning_pipeline_configs.py
+scripts/create_self_feedback_ablation_configs.py
+scripts/create_single_run_self_feedback_configs.py
+scripts/update_es_ablation_with_qwen3.py
+scripts/write_qwen35_spanish_summary.py
+scripts/write_supervisor_summary.py
+tests/fixtures/sns1064_tiny.csv
 
 # SNS-1064 paper (dataset not included)
 SNS_1064/
@@ -96,6 +130,10 @@ codex_history_v2.md
 experiments/codex_history.txt
 TODO_curated_rerun.md
 docs/inference_eval_scripts_summary.md
+docs/plan_extract.md
+docs/reading_list_v1.md
+docs/supervisor_meeting_notes.md
+docs/supervisor_meeting2_notes.md
 
 # Local machine state
 .env
@@ -105,3 +143,5 @@ wandb/
 # Removed from GitHub, kept locally
 EXPERIMENTS.md
 plan.pdf
+docs/bibliography_notes.md
+docs/reading_list.md

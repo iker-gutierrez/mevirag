@@ -1,0 +1,22 @@
+{
+  "experiment_name": "llama31_8b_no_rag_extractive_guiasalud",
+  "input": "data/processed/guiasalud_casimedicos_eu/dev.jsonl",
+  "output": "experiments/runs/11000_llama31_8b_no_rag_extractive_guiasalud_dev/predictions.jsonl",
+  "model": "meta-llama/Llama-3.1-8B-Instruct",
+  "prompt_style": "extractive",
+  "think": false,
+  "self_feedback": true,
+  "backend": "vllm",
+  "max_new_tokens": 2048,
+  "temperature": 0.6,
+  "few_shot_k": 0,
+  "retrieval_top_k": 0,
+  "top_p": 0.9,
+  "num_runs": 3,
+  "language": "eu",
+  "rag_base_source": " | fresh-id-clone-for-eu-format-question-bugfix (from 3299)",
+  "feedback_max_new_tokens": 2048,
+  "log_gold_hit_rate": true,
+  "max_truncation_retries": 5,
+  "fail_on_remaining_truncation": true
+}
