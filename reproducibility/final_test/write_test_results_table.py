@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-"""Generates the test-set results table (manuscript/table_test_results.tex):
+"""Generate ``table_test_results.tex`` from the bundled test evaluations:
 each model's own best frozen dev config, run against test.jsonl instead of
-dev.jsonl, 3 seeds each (slurm/test_set_inference.sh, slurm/eval_test_set.sh).
+dev.jsonl, with three seeds each.
 
 Reuses write_result_tables.py's own fmt()/esc()/mean_std()/value_or_none()
 so this table follows the same conventions (row format, MeanQ-per-seed
@@ -13,23 +13,64 @@ collect() itself.
 Columns match every other results table: #, Model, Config, SF, Quality
 (ROUGE-L, BERT-F1, MC-acc, MeanQ), Cost (sec, tok).
 
-Usage:
-  python scripts/write_test_results_table.py
+Usage from the repository root:
+  python reproducibility/final_test/write_test_results_table.py
 """
 from __future__ import annotations
 
-import sys
+import json
+import math
 from pathlib import Path
+from typing import Any, Optional
 
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "scripts"))
+BUNDLE_DIR = Path(__file__).resolve().parent
+METRICS_DIR = BUNDLE_DIR / "evaluations"
+OUT_PATH = BUNDLE_DIR / "table_test_results.tex"
+SEEDS = [42, 43, 44]
+RAW_QUALITY_FIELDS = ("rouge_l_f1", "bertscore_f1", "mc_accuracy")
 
-from write_result_tables import (  # noqa: E402
-    METRICS_DIR, SEEDS, RAW_QUALITY_FIELDS,
-    esc, fmt, mean_std, value_or_none, load_summary, values,
-)
 
-OUT_PATH = ROOT / "manuscript" / "table_test_results.tex"
+def esc(value: str) -> str:
+    return (str(value).replace("&", r"\&").replace("%", r"\%")
+            .replace("_", r"\_").replace("#", r"\#"))
+
+
+def load_summary(run: str, suffix: str) -> Optional[dict[str, Any]]:
+    path = METRICS_DIR / f"{run}{suffix}.json"
+    if not path.exists():
+        return None
+    return json.loads(path.read_text(encoding="utf-8")).get("summary")
+
+
+def value_or_none(summary: Optional[dict], metric: str, *, use_sf: bool) -> Optional[float]:
+    if summary is None:
+        return None
+    block = "after_feedback" if use_sf else "before_feedback"
+    value = (summary.get(block) or {}).get("overall", {}).get(metric)
+    if value is None:
+        value = (summary.get("overall") or {}).get(metric)
+    return float(value) if value is not None else None
+
+
+def values(summaries: list[dict], metric: str, *, use_sf: bool) -> list[float]:
+    return [value for summary in summaries
+            if (value := value_or_none(summary, metric, use_sf=use_sf)) is not None]
+
+
+def mean_std(vals: list[float]) -> tuple[Optional[float], Optional[float]]:
+    if not vals:
+        return None, None
+    mean = sum(vals) / len(vals)
+    if len(vals) < 2:
+        return mean, 0.0
+    variance = sum((value - mean) ** 2 for value in vals) / (len(vals) - 1)
+    return mean, math.sqrt(variance)
+
+
+def fmt(mean: Optional[float], std: Optional[float]) -> str:
+    if mean is None:
+        return "---"
+    return f"{mean:.2f}{{\\tiny$\\pm${std:.2f}}}" if std else f"{mean:.2f}"
 
 QUALITY = [
     ("rouge_l_f1", "ROUGE-L"),
@@ -233,22 +274,23 @@ def main() -> None:
     lines.append(r"\begin{scriptsize}")
     lines.append(r"\setlength{\tabcolsep}{4pt}")
     lines.append(r"\setlength{\LTcapwidth}{\linewidth}")
-    lines.append(r"\begin{longtable}{r l >{\raggedright\arraybackslash}p{3.8cm} c c c c c c c}")
+    lines.append(r"\begin{longtable}{r l >{\raggedright\arraybackslash}p{2.8cm} c c c c c c c}")
     lines.append(
         r"\caption[Test results]{"
-        r"Held-out test-set results (250-example mixed test set, "
-        r"\autoref{sec:datasets-top}), comparing each model's LLM-only baseline "
-        r"with its own best dev-set RAG configuration (\autoref{sec:results}), "
-        r"held frozen; no hyperparameter differs from the corresponding dev run "
-        r"except the input file. The higher-MeanQ configuration per model is "
-        r"blue-highlighted; paired $\Delta$ MeanQ values are in bold.} "
+        r"Results on the 250-example held-out mixed test set. Each retrieval-free "
+        r"baseline is compared with the corresponding system selected on development "
+        r"data and then frozen. Blue shading identifies the development-selected "
+        r"system rather than a choice made from test performance. Paired $\Delta$ "
+        r"rows report the selected system minus its baseline. Quality values are "
+        r"means $\pm$ standard deviations over seeds 42, 43, and 44. Sec and tok "
+        r"are mean seconds and LLM tokens per answer.} "
         r"\label{tab:test-results} \\"
     )
     header = (
         r"\# & Model & Config & SF & \multicolumn{4}{c}{Quality $\uparrow$} & "
         r"\multicolumn{2}{c}{Cost $\downarrow$} \\"
         "\n" + r"\cmidrule(lr){5-8}\cmidrule(lr){9-10}"
-        "\n" + r" &  &  &  & ROUGE-L & BERT-F1 & MC-acc & MeanQ & sec & tok \\"
+        "\n" + r" &  &  &  & ROUGE-L & BERT-F1 & MC-acc & \cellcolor{blue!12}\textbf{MeanQ} & sec & tok \\"
     )
     lines.append(r"\toprule")
     lines.append(header)

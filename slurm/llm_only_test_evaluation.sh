@@ -16,7 +16,14 @@ source /home/igutierrez134/envs/med_rag_thesis/bin/activate
 export HF_HOME=/home/igutierrez134/.cache/huggingface
 export HF_HUB_CACHE=/home/igutierrez134/.cache/huggingface
 export TOKENIZERS_PARALLELISM=false
-while read -r STEM SEED; do
+STEMS=(
+  17100_qwen35_9b_no_rag_no_think_extractive_guiasalud_llm_only_final_test
+  17101_qwen35_9b_no_rag_think_extractive_guiasalud_llm_only_final_test
+  17102_llama31_8b_no_rag_extractive_guiasalud_llm_only_final_test
+  17103_latxa_llama31_8b_no_rag_extractive_guiasalud_llm_only_final_test
+)
+for STEM in "${STEMS[@]}"; do
+ for SEED in 42 43 44; do
   RUN="${STEM}_seed${SEED}"
   LANG=es
   [[ "$STEM" == 17102_* || "$STEM" == 17103_* ]] && LANG=eu
@@ -28,5 +35,6 @@ while read -r STEM SEED; do
     --predictions "experiments/runs/${RUN}/predictions.jsonl" \
     --output "reports/metrics/${RUN}.json" \
     --semantic-model '' --bertscore-model bert-base-multilingual-cased --bertscore-lang "$LANG"
-done < experiments/llm_only_test_seeded_tasks.txt
+ done
+done
 python3 scripts/patch_mc_accuracy.py

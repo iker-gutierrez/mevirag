@@ -117,8 +117,7 @@ def guidebook_title(guidebook: Any, language: str = "es") -> str:
 # query/justification are already self-labeled composites (e.g. query =
 # "Tema: .../Subtema: .../Pregunta: .../Foco: ...", justification =
 # "Evidencia procedente de la investigación: .../Consideraciones
-# adicionales: ..." for GuiaSalud, see scripts/prepare_sns1064.py's
-# build_justification / prompts.format_question), so indexing them under an
+# adicionales: ..." for GuiaSalud), so indexing them under an
 # ADDITIONAL outer "query: .../justification: ..." label (field_labels has
 # no entry for either, so the raw field name would be used verbatim as the
 # label) would double up labeling redundantly. They're appended to the

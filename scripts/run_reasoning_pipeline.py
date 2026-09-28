@@ -12,17 +12,12 @@ with retrieved evidence, re-retrieve, repeat for `rounds`). marag samples
 `num_candidates` per round, measures conflict, turns conflict into up to four
 retrieval queries, and carries ALL candidates (re-sorted by confidence) into
 the next round, matching the actual NJU-RL/MA-RAG code, not just its paper.
-The previous v1 pipelines (single-retrieval thought_rag, and a marag variant
-with a separate ranking/pruning agent not present in the original) are kept,
-unmodified, in reasoning_v1.py / run_reasoning_pipeline_v1.py for
-reproducibility of results already reported from them.
-
 Predictions are written in exactly the schema produced by
 run_generation_experiment.py, so scripts/evaluate_predictions.py and every
 downstream summary script work on these runs unchanged.
 
 Usage:
-    python scripts/run_reasoning_pipeline.py --config configs/experiments/1600_*.json
+    python scripts/run_reasoning_pipeline.py --config configs/experiments/16000_*.json
     python scripts/run_reasoning_pipeline.py --config ... --seed 43
 """
 from __future__ import annotations

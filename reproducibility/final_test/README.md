@@ -13,9 +13,6 @@ working archive of intermediate runs.
   (24 JSONL files).
 - `evaluations/`: the corresponding mixed-test, GuiaSalud-only, and
   CasiMedicos-only evaluation outputs (72 JSON files).
-- `guiasalud_dev_ablation_results.md` and
-  `guiasalud_meanq_decision_tables.md`: the current dev-set evidence used to
-  select the frozen test configurations.
 - `write_test_results_table.py`: regenerates the manuscript test-results
   table from the per-seed evaluation JSONs.
 
@@ -26,18 +23,17 @@ configuration.
 
 ## Recreating the table
 
-From the repository root, evaluate a prediction file with
-`scripts/evaluate_predictions.py` and write the JSON into `reports/metrics/`.
-Then run:
+From the repository root, run:
 
 ```bash
 python reproducibility/final_test/write_test_results_table.py
 ```
 
-The table writer reads evaluation files from `reports/metrics/` by design.
-To reproduce the checked-in table from this artefact directory, copy the
-files in `evaluations/` there first. It writes
-`manuscript/table_test_results.tex`.
+The table writer reads the bundled JSON files directly from `evaluations/` and
+writes `table_test_results.tex` in this directory. The full development tables
+and the MST decisions used to choose configurations are documented in the
+accompanying manuscript; the obsolete GuiaSalud-only development summaries
+are intentionally not included in this final mixed-dataset bundle.
 
 ## Scope and data access
 

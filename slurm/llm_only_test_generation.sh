@@ -15,12 +15,21 @@
 # Four LLM-only baselines x three seeds. %2 permits exactly two one-GPU vLLM
 # tasks at a time.
 set -euo pipefail
-mapfile -t TASKS < experiments/llm_only_test_seeded_tasks.txt
-read -r STEM SEED <<< "${TASKS[$SLURM_ARRAY_TASK_ID]}"
+STEMS=(
+  17100_qwen35_9b_no_rag_no_think_extractive_guiasalud_llm_only_final_test
+  17101_qwen35_9b_no_rag_think_extractive_guiasalud_llm_only_final_test
+  17102_llama31_8b_no_rag_extractive_guiasalud_llm_only_final_test
+  17103_latxa_llama31_8b_no_rag_extractive_guiasalud_llm_only_final_test
+)
+SEEDS=(42 43 44)
+MODEL_IDX=$(( SLURM_ARRAY_TASK_ID / 3 ))
+SEED_IDX=$(( SLURM_ARRAY_TASK_ID % 3 ))
+STEM="${STEMS[$MODEL_IDX]}"
+SEED="${SEEDS[$SEED_IDX]}"
 source /home/igutierrez134/envs/med_rag_thesis/bin/activate
 export HF_HOME=/home/igutierrez134/.cache/huggingface
 export HF_HUB_CACHE=/home/igutierrez134/.cache/huggingface
 export TOKENIZERS_PARALLELISM=false
 scripts/pick_free_gpu.sh 40000 python scripts/run_generation_from_config.py \
-  --config "configs/experiments/${STEM}.json" --seed "$SEED" \
+  --config "reproducibility/final_test/configs/${STEM}.json" --seed "$SEED" \
   --output "experiments/runs/${STEM}_seed${SEED}/predictions.jsonl"

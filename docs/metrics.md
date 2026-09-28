@@ -1,20 +1,52 @@
-# Evaluation Metrics
+# Evaluation metrics and configuration selection
 
-Recommended reporting split:
+MeviRAG evaluates answer quality with three complementary metrics, all
+reported on a 0--100 scale:
 
-- Primary answer quality metric: semantic embedding cosine plus token-overlap F1.
-- Secondary semantic metric: BERTScore F1, if `bert-score` is installed and the selected model works well for Spanish medical text.
-- Retrieval-grounded quality: RAGAS faithfulness, answer relevancy, context precision, and context recall, once an evaluator LLM and embeddings are configured.
-- Cheap RAG proxies: answer-context token F1 and gold-context token F1, mainly for debugging retrieved context coverage.
-- Efficiency: total run time, mean generation time per example, and input/output token counts.
+- **ROUGE-L F1** measures lexical overlap with the reference and serves as the
+  surface-form or extractive-fidelity metric.
+- **BERTScore F1**, computed with `bert-base-multilingual-cased`, measures
+  contextual semantic similarity and is more tolerant of paraphrases.
+- **Multiple-choice accuracy (MC-acc)** measures whether the correct option is
+  selected on CasiMedicos-Exp samples. It is not defined for GuiaSalud's
+  open-answer samples.
 
-Quality metrics are reported on a 0-100 scale in the generated metrics JSON files.
-BERTScore is computed section-wise over the normalized `short_answer` and `evidence`
-columns.
+The overlap metrics score the generated short answer and justification against
+their corresponding references. MC-acc is computed only on the
+CasiMedicos-Exp subset.
 
-It is reasonable to have two semantic similarity metrics between prediction and gold answer. They are not redundant if they answer slightly different questions:
+## MeanQ
 
-- Embedding cosine measures sentence-level closeness with one vector per answer. It is cheap, stable, and easy to interpret across experiments.
-- BERTScore F1 measures token-level semantic alignment using contextual embeddings. It can be more sensitive to partial matches and wording differences.
+MeanQ is the unweighted mean of ROUGE-L F1, BERTScore F1, and MC-acc on the
+mixed GuiaSalud--CasiMedicos-Exp evaluation set. On a GuiaSalud-only table,
+where MC-acc is undefined, it is the mean of ROUGE-L F1 and BERTScore F1.
+MeanQ is computed independently for each seed before the mean and standard
+deviation across seeds are reported.
 
-For the thesis tables, avoid giving every metric equal status. Use one semantic metric as the main score, keep token-overlap F1 as the lexical anchor, and put BERTScore/RAGAS in secondary columns or appendix tables if they agree with the main findings.
+The component metrics remain visible alongside MeanQ so that the lexical,
+semantic, and decision-level behavior can be inspected separately.
+
+## Cost metrics
+
+The reported cost measures are:
+
+- end-to-end wall-clock seconds per sample;
+- input and generated tokens per sample, including hidden reasoning tokens and
+  additional self-feedback or reasoning calls where applicable; and
+- mean LLM calls per answer for the reasoning-pipeline comparison.
+
+## MeanQ--Stability--Token selection
+
+Development configurations are selected separately for each model with the
+MeanQ--Stability--Token (MST) rule:
+
+1. A MeanQ difference of at least 0.5 points is decisive, and the configuration
+   with the higher mean wins.
+2. For a smaller MeanQ difference, one point is awarded for a reduction in
+   seed-to-seed standard deviation greater than 0.5 MeanQ points and one point
+   for a reduction greater than 1,000 LLM tokens per answer.
+3. If the stability and token-cost points remain tied, the configuration with
+   the higher MeanQ wins.
+
+All configuration selection is performed on the development split. The test
+split is used only after the model-specific configuration has been frozen.

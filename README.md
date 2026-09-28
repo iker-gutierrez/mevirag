@@ -7,20 +7,20 @@ Full system implementation: retrieval, generation, self-feedback, reasoning pipe
 
 ## Status
 
-- **Spanish and Basque dev ablations**: complete, all eleven conditions, three seeds each, decided by MeanQ (mean of ROUGE-L, BERT-F1, MC-accuracy, see `scripts/meanq.py`). Retrieval uses the full corpus while excluding each query's own gold instance at retrieval time, preventing answer leakage without discarding the remaining corpus.
+- **Spanish and Basque dev ablations**: complete, all eleven conditions, three seeds each, selected with the MeanQ--Stability--Token rule. MeanQ is the mean of ROUGE-L, BERT-F1, and MC-accuracy (see `scripts/meanq.py`). Retrieval uses the full corpus while excluding each query's own gold instance at retrieval time, preventing answer leakage without discarding the remaining corpus.
 - **Reasoning-pipeline comparison**: complete for both languages, including a second Basque backbone (Llama) alongside Latxa, and both Qwen3.5-9B modes.
-- **Test set evaluation**: complete. Each model's own dev-set MeanQ-best configuration was frozen and run once against the held-out test split.
+- **Test set evaluation**: complete. Each model's development-selected configuration was frozen and evaluated on the held-out test split.
 
 ## Key findings
 
-- Retrieval helps every model in both languages substantially. Reranking and few-shot prompting each help only narrowly and inconsistently, and are actively harmful for the weakest models in each language. Self-feedback is neutral for three of the four models but a genuine, if modest, gain for the Basque-adapted model specifically.
-- Of the five reasoning-pipeline variants, two show a real gain over the single-pass RAG ablation winner, and only for one of the two Spanish configurations tested, at several times the inference cost. Every pipeline underperforms the ablation winner in Basque, and for the other Spanish configuration.
+- Retrieval helps every model substantially. Reranking is model-specific, while few-shot prompting and corpus restriction do not provide consistent gains. Self-feedback is close to neutral for both Qwen settings and improves both Basque models on average, but the final MST-selected Basque configurations do not use it.
+- Of the five reasoning-pipeline variants, only MA-RAG improves over its model's selected single-pass MeviRAG reference, and only for Qwen no-think. Every reasoning pipeline underperforms the selected reference for Qwen think, Llama, and Latxa while generally increasing inference cost.
 - A persistent 20-26 point MeanQ gap between the best achievable Spanish and Basque configurations survives every technique tested on dev and remains substantial on the held-out test set (21.94-24.16 points across the directly comparable systems).
-- Basque language adaptation (Latxa vs. Llama) does not raise overall single-pass MeanQ above the non-adapted model's, but it does raise multiple-choice accuracy specifically, and it is the only technique tested for which the Basque-adapted model shows a genuine advantage: a positive self-feedback gain that does not extend to multi-step reasoning.
+- Basque-specific continued pre-training provides targeted benefits for Latxa, particularly in retrieval-free generation, self-feedback, and multiple-choice accuracy, but it does not produce a uniform advantage over Llama once retrieval is used.
 
 ## Test results
 
-Each model's own best dev-set configuration was frozen and run once against the held-out test split. MeanQ is the mean of ROUGE-L, BERT-F1, and MC-accuracy.
+Each model's development-selected configuration was frozen and evaluated on the held-out test split. MeanQ is the mean of ROUGE-L, BERT-F1, and MC-accuracy.
 
 | Model | Baseline (LLM only) | Best RAG config | Best RAG MeanQ | $\Delta$ |
 |---|---|---|---|---|
@@ -29,7 +29,7 @@ Each model's own best dev-set configuration was frozen and run once against the 
 | Llama-3.1-8B-Instruct | 33.99±1.30 | rerank top 3 | 43.85±2.35 | +9.86±1.30 |
 | Latxa-Llama-3.1-8B-Instruct | 37.15±0.37 | retrieve top 1 | 43.26±0.52 | +6.11±0.78 |
 
-For Qwen no-think, MA-RAG was the only one of the five reasoning-pipeline variants to beat its own model's RAG ablation winner on dev, so it is the frozen test-set configuration. The other three models carry forward their own single-pass ablation winner instead. Full per-condition results, including cost (seconds/tokens per sample) and self-feedback deltas, are in the ablation reports linked below.
+For Qwen no-think, MA-RAG was the only one of the five reasoning-pipeline variants to beat its own model's RAG ablation winner on dev, so it is the frozen test-set configuration. The other three models carry forward their own single-pass ablation winner instead. The manuscript reports the full per-condition results, including cost and self-feedback deltas.
 
 ## Repository layout
 
@@ -38,18 +38,20 @@ For Qwen no-think, MA-RAG was the only one of the five reasoning-pipeline varian
 - `data/processed/`: normalized JSONL/CSV splits (Spanish and Basque).
 - `src/medical_rag_thesis/`: reusable experiment code (retrieval, generation, evaluation, reasoning pipelines).
 - `scripts/`: command-line entry points for data prep, experiments, staged ablation, and result-table/report generation.
-- `slurm/`: Slurm job scripts, including the staged-ablation launchers (`slurm/staged_*.sh`).
+- `slurm/`: Slurm launchers for the Spanish and Basque ablation stages, reasoning pipelines, and held-out test runs.
 - `configs/experiments/`: per-run experiment configs (retrieval depth, reranking, few-shot, self-feedback, and reasoning pipeline). The final held-out test configurations are also copied, with their predictions and evaluations, to `reproducibility/final_test/`.
 - `experiments/runs/`: generated predictions and run artifacts (gitignored).
-- `reports/metrics/`: ablation result tables and summaries.
-- `docs/`: current prompt reference (`prompts.md`), supervisor meeting notes, reading list, bibliography notes.
+- `reports/metrics/`: generated evaluation outputs and summaries, kept out of git.
+- `docs/`: references for the current prompts and evaluation methodology.
 
 The manuscript itself (LaTeX source and compiled PDF) is kept outside this repository and is not tracked in git.
 
-## Ablation results
+## Reproducibility artefacts
 
-- [Spanish dev ablation results](reports/metrics/es_dev_ablation_results.md)
-- [Basque dev ablation results](reports/metrics/eu_dev_ablation_results.md)
+The exact final-test configurations, predictions, and evaluation outputs are
+available under [`reproducibility/final_test/`](reproducibility/final_test/).
+The complete development ablation and reasoning-pipeline tables are reported
+in the accompanying manuscript.
 
 ## Quick start
 
@@ -120,22 +122,26 @@ python scripts/evaluate_predictions.py \
 
 ```bash
 python scripts/run_reasoning_pipeline.py \
-  --config configs/experiments/1530_qwen35_9b_no_think_structured_cot_meanq_best_extractive_mixed_dev.json
+  --config configs/experiments/16000_qwen35_9b_no_think_structured_cot_e5_topk5_extractive_guiasalud_dev_costaware.json
 ```
 
 ## Slurm runs
 
-The staged ablation grid (retrieval depth -> reranking -> few-shot -> domain restriction) is launched per model/language via the `slurm/staged_*.sh` scripts, e.g.:
+The staged ablation grid is launched separately for Spanish and Basque. Each
+evaluation stage produces the selections required by dependent later stages.
+For example:
 
 ```bash
-sbatch slurm/staged_qwen35_9b_no_think_A.sh
-sbatch slurm/staged_latxa_A.sh
+sbatch slurm/spanish_ablation_generation_stageA.sh
+sbatch slurm/basque_ablation_generation_stageA.sh
 ```
 
-Retrieval indices are rebuilt with:
+The full mixed Spanish retrieval index can be rebuilt with:
 
 ```bash
-sbatch slurm/rebuild_full_corpus_indices.sh
+python scripts/build_retrieval_index.py \
+  --input data/processed/guiasalud_casimedicos/all.jsonl \
+  --output-dir models/retrieval/guiasalud_casimedicos_full_multilingual_e5_large
 ```
 
 Slurm logs go to `experiments/slurm_logs/`.

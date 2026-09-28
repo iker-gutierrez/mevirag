@@ -3,17 +3,16 @@
 This file documents the current prompt templates implemented in
 `src/medical_rag_thesis/prompts.py`.
 
-This is the v2 wording: answers are based on the retrieved context, with
+Answers are based on the retrieved context, with
 exact copying asked only when the context is directly related to the
 question, and an explicit fallback to the model's medical knowledge when the
-context is insufficient. The previous strict-extractive wording (copy always,
-no external knowledge) is preserved in `prompts_v1.md`.
+context is insufficient.
 
 The pipeline uses one prompt style: `extractive`.
 
 Each language/context combination uses a single template. One rule and one
 line of the output format are conditional on whether the record has multiple-
-choice `options` (CasiMedicos) or not (SNS1064, open-answer):
+choice `options` (CasiMedicos) or not (GuiaSalud, open-answer):
 
 - The rule "Si hay opciones de respuesta, en el apartado de 'Respuesta corta'
   incluye solo el número de la opción elegida (ej. '3.') y el texto de esa
@@ -30,7 +29,9 @@ Variables (resolved by the code before the prompt reaches the model; the
 literal `{...}` text never appears in what the model sees):
 
 - `{context}`: retrieved documents, when RAG is enabled.
-- `{question}`: merged runtime input from `topic`, `question`, and `subquestion`.
+- `{question}`: the normalized `query` field. For GuiaSalud, this is a labeled
+  concatenation of `topic`, `subtopic`, `question`, and `focus`, omitting empty
+  optional fields. For CasiMedicos-Exp, it is the original `full_question`.
 - `{options}`: answer options, only rendered for multiple-choice records.
 - `{examples}`: few-shot examples, when enabled. Each renders as a numbered
   block (`Ejemplo N` / `Adibidea N`) containing the example's question,
