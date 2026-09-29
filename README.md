@@ -152,7 +152,7 @@ introduces the system and reports its evaluation:
 ```bibtex
 @mastersthesis{gutierrezfandino2026mevirag,
   author = {Gutierrez Fandiño, Iker},
-  title  = {{GuiaSalud dataset and MeviRAG}: Towards evidence-grounded medical QA in Spanish and Basque},
+  title  = {{GuiaSalud dataset and MeviRAG: Towards evidence-grounded medical QA in Spanish and Basque}},
   school = {University of the Basque Country (EHU)},
   year   = {2026},
   type   = {Master's thesis}
