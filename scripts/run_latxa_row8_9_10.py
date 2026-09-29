@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 """Run Latxa's rows 8 (fewshot), 9 (SNS domain), 10 (CasiMedicos domain) at
-their correct base config -- retrieve top 1 -- staged in two waves rather than one
+their correct base config (retrieve top 1), staged in two waves rather than one
 flat batch, so row 8 finishes and evaluates before rows 9/10 start.
 
 This is NOT a "does row 8 win, then wire 9/10 to it" decision the way
 staged_ablation_runner.py's stage B->C wiring is: row 8, 9, and 10 are three
 independent forks off the SAME already-decided base (Latxa's own MeanQ winner,
-retrieve top 1 -- see write_result_tables.py's FORCED_REFERENCES comment), not a
+retrieve top 1, see write_result_tables.py's FORCED_REFERENCES comment), not a
 chain where a later row's config depends on an earlier row's result. Row 8
-adds few-shot demonstrations; rows 9/10 restrict the retrieval corpus -- mixing
+adds few-shot demonstrations, rows 9/10 restrict the retrieval corpus, mixing
 them (building 9/10 on top of row 8) would confound few-shot with corpus
 restriction, which is not what "does the corpus matter" is supposed to isolate.
 
@@ -19,7 +19,7 @@ before committing the rest of the budget). If that checkpoint isn't wanted,
 just run all three configs as one wave instead.
 
 All three configs (ids 1059/1060/1061) are ALREADY rewired to retrieval_top_k=1
-by this session's earlier work -- this script only submits inference and
+by this session's earlier work. This script only submits inference and
 evaluation, it does not touch any config file.
 
 Usage:

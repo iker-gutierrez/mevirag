@@ -5,13 +5,13 @@ Why this exists: the CasiMedicos metric subsets for the Qwen runs (and Mistral
 seeds 43/44) were produced by an evaluator that predated the mc_accuracy metric,
 so mc_accuracy is absent/None there. That made MeanQ = mean(ROUGE-L, BERT-F1,
 MC-acc) fall back to two components for those configs, and MC-acc was only
-seed-42-averaged for Mistral -- i.e. the config selection was not consistently
+seed-42-averaged for Mistral, i.e. the config selection was not consistently
 computed. The predictions already exist, so mc_accuracy is a pure recompute with
 no model loading and no GPU.
 
 This reuses the evaluator's OWN functions (parsed_prediction_sections,
 mc_accuracy) and the eval CLI's reference join (enrich_records_with_references)
-so the patched value matches exactly what a full re-eval would produce -- it just
+so the patched value matches exactly what a full re-eval would produce, it just
 skips the expensive ROUGE-L/BERT-F1 recompute and leaves those untouched.
 
 It writes mc_accuracy for BOTH the initial (before_feedback) and final
@@ -37,7 +37,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from medical_rag_thesis.evaluation import (  # noqa: E402
+from mevirag.evaluation import (  # noqa: E402
     mc_accuracy,
     parsed_prediction_sections,
     percent,
@@ -54,7 +54,7 @@ RUNS = ROOT / "experiments" / "runs"
 # exact id match instead of trusted-by-convention, so whichever reference file
 # actually agrees with a given run's own id scheme wins. Each candidate uses
 # whichever of correct_option/correct_answer that file happens to name the gold
-# option -- both hold the same kind of value (the gold option number).
+# option, both hold the same kind of value (the gold option number).
 CASIMEDICOS_REFERENCE_CANDIDATES = [
     ROOT / "data/processed/sns1064_casimedicos/dev_casimedicos_only.jsonl",
     ROOT / "data/processed/casimedicos_eu/dev.jsonl",

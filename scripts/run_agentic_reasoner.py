@@ -11,13 +11,13 @@ from typing import Any, Mapping
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from medical_rag_thesis.data_io import read_jsonl, write_jsonl  # noqa: E402
-from medical_rag_thesis.generation import (  # noqa: E402
+from mevirag.data_io import read_jsonl, write_jsonl  # noqa: E402
+from mevirag.generation import (  # noqa: E402
     build_chat_prompt,
     generate_one,
     load_generation_model,
 )
-from medical_rag_thesis.prompts import (  # noqa: E402
+from mevirag.prompts import (  # noqa: E402
     SYSTEM_PROMPT_ES,
     SYSTEM_PROMPTS,
     format_context_text,
@@ -25,7 +25,7 @@ from medical_rag_thesis.prompts import (  # noqa: E402
     format_question,
     parse_answer_sections,
 )
-from medical_rag_thesis.run_logging import run_with_logs  # noqa: E402
+from mevirag.run_logging import run_with_logs  # noqa: E402
 
 
 def parse_args() -> argparse.Namespace:
@@ -142,7 +142,7 @@ def build_agentic_prompt(
 
     question = format_question(record, language=language).removeprefix(f"{question_label}: ").strip()
     options = format_options(record)
-    context_text = format_context_text(candidate_record.get("retrieval_docs") or [])
+    context_text = format_context_text(candidate_record.get("retrieval_docs") or [], language=language)
 
     if language == "eu":
         sections = [

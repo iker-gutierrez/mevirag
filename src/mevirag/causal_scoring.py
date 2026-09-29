@@ -4,8 +4,8 @@ given query q as
 
     s(d, q) = alpha * sim(q, d) + beta * psi(d)
 
-where sim(q, d) is embedding cosine similarity (MedCPT in the original paper, our
-own multilingual-e5-large dense index here, see sec:retrieval) and psi(d) is a
+where sim(q, d) is embedding cosine similarity (MedCPT in the original paper and
+multilingual-e5-large in MeviRAG) and psi(d) is a
 "causal relevance score that estimates the diagnostic utility of the document",
 computed by "detecting medically relevant causal patterns in the text, such as
 causal operators ('leads to', 'causes', 'mediates'), treatment-action-effect
@@ -13,8 +13,8 @@ relations, and mechanistic disease explanations", implemented "via a weighted
 keyword matching scheme, normalized by document length to avoid verbosity bias."
 
 The paper gives no numeric value for alpha/beta and no keyword list (its corpus
-is English-language PubMed/StatPearls/textbooks/Wikipedia). This module is our
-adaptation to the thesis's Spanish and Basque clinical corpora: the three
+is English-language PubMed/StatPearls/textbooks/Wikipedia). This module adapts
+the method to MeviRAG's Spanish and Basque clinical corpora: the three
 keyword categories are translated directly from the paper's own examples and
 description, alpha = beta = 1.0 (an unweighted sum, since the paper specifies
 no other value), and psi(d) is length-normalized exactly as described.
@@ -30,7 +30,7 @@ ALPHA = 1.0
 BETA = 1.0
 
 # Three categories from the paper's psi(d) description, translated into
-# Spanish and Basque for this thesis's corpora:
+# Spanish and Basque for the MeviRAG corpora:
 #   1. causal operators ("leads to", "causes", "mediates")
 #   2. treatment-action-effect relations
 #   3. mechanistic disease explanations

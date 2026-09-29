@@ -321,9 +321,8 @@ def resolve_predicted_option(prediction: str, options: Mapping[str, Any]) -> Opt
     digit. For those, fall back to whichever option's text the prediction
     overlaps with most by token F1 (reusing the same token_prf scorer already
     used for ROUGE/BERT-adjacent quality metrics elsewhere in this module).
-    Verified against 376 already-published mc_accuracy values across every
-    model/language in this thesis: digit-first + content-fallback reproduces
-    346 exactly and the remainder within about one record out of ~63."""
+    The digit-first rule handles the expected output format, while the content
+    fallback supports otherwise valid answers that omit the leading number."""
     predicted = extract_option_number(prediction)
     if predicted is not None and predicted in options:
         return predicted

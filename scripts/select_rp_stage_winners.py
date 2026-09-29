@@ -20,8 +20,8 @@ from meanq import best_by_meanq_robust, incomplete_candidates  # noqa: E402
 METRICS = ROOT / "reports" / "metrics"
 OUTPUT = METRICS / "rp_stage_selection.json"
 
-# These define the model families and their RP candidate manifests.  They do
-# not prescribe a winning configuration or manuscript cell: the winner is
+# These define the model families and their reasoning-pipeline candidate
+# manifests. They do not prescribe a winner: the winner is
 # always calculated from the complete baseline + RP metric pool below.
 FAMILIES: dict[str, dict[str, str]] = {
     "qwen35_9b_no_think": {

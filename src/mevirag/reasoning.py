@@ -30,8 +30,8 @@ retriever + reranker as the winning single-pass RAG row of the dev ablation:
                      removed), a final synthesis pass resolves any record
                      that never reaches unanimity once the round budget is
                      exhausted (the original instead takes the last round's
-                     plurality vote, which has no equivalent on this thesis's
-                     open-answer half, so synthesis is kept as the
+                     plurality vote, which has no equivalent for open-answer
+                     records, so synthesis is kept as the
                      open-answer-compatible resolution mechanism).
 
 thought_rag_iter is the one pipeline still without a from-code faithfulness
@@ -55,7 +55,7 @@ from typing import Any, Mapping, Optional, Sequence
 
 import numpy as np
 
-from medical_rag_thesis.prompts import (
+from mevirag.prompts import (
     format_context_text,
     format_examples,
     format_options,
@@ -102,7 +102,7 @@ def question_of(record: Mapping[str, Any], language: str) -> str:
 
 
 def output_format_block(record: Mapping[str, Any], language: str) -> str:
-    """The exact two-field output contract used by every run in this thesis.
+    """The exact two-field output contract used by MeviRAG experiments.
 
     Kept byte-identical in spirit to prompts.build_extractive_user_prompt so the
     parser (parse_answer_sections) and therefore the metrics stay comparable
@@ -449,8 +449,8 @@ def parse_conflict_queries(text: str, *, fallback: str) -> list[str]:
     + `set()`-dedup. Falls back to the surface question if the model emits no
     tagged line at all (the original has no such fallback, it would run
     retrieval with an empty query list, i.e. skip retrieval that round, but
-    silently skipping evidence retrieval because of a formatting slip is worse
-    for this thesis's purposes than falling back to the plain question)."""
+    silently skipping evidence retrieval because of a formatting slip is less
+    robust than falling back to the plain question)."""
     matches = [m.strip() for m in QUERY_TAG_RE.findall(text or "") if m.strip()]
     queries = list(dict.fromkeys(matches))  # de-dup, order-preserving
     return queries[:4] if queries else [fallback]
@@ -522,7 +522,7 @@ def build_solver_prompt(
 def token_confidence(token_logprobs: Sequence[float]) -> float:
     """Confidence proxy standing in for the original's per-token entropy over
     the top-20 logprobs (ma_rag_entropy.py's process_response/token_entropies):
-    this thesis's Generator requests only the sampled token's own logprob from
+    MeviRAG's generator requests only the sampled token's own log probability from
     vLLM, not a full top-k distribution, so full categorical entropy is not
     available. Mean per-token log probability of the SAMPLED token is used
     instead, both are monotone proxies for "how sure was the model of what
@@ -565,7 +565,7 @@ def build_consensus_prompt(
     examples: Optional[Sequence[Mapping[str, Any]]] = None,
 ) -> str:
     """Final synthesis pass, only for records that never reach unanimity once
-    the round budget is exhausted. This thesis's open-answer-compatible
+    the round budget is exhausted. This open-answer-compatible
     resolution mechanism (the original instead just takes the last round's
     plurality vote, which has no equivalent for open-answer records)."""
     lab = labels(language)

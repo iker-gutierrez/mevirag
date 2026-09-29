@@ -11,7 +11,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from medical_rag_thesis.data_io import (  # noqa: E402
+from mevirag.data_io import (  # noqa: E402
     canonical_name,
     clean_text,
     compact_record,

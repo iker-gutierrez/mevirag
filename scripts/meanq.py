@@ -1,18 +1,17 @@
 #!/usr/bin/env python
 """MeanQ: the quality score used to choose the best RAG configuration.
 
-MeanQ = mean(ROUGE-L, BERT-F1, MC-accuracy), each as its raw 0-100 value, averaged
-over the three seeds, on the no-self-feedback (initial) prediction.
+MeanQ = mean(ROUGE-L, BERT-F1, MC-accuracy), each on its raw 0-100 scale.
+It is computed per seed before the mean and standard deviation across seeds.
 
 Rationale for the choice of metrics: ROUGE-L captures lexical fidelity, BERT-F1
 captures semantic fidelity, and MC-accuracy captures decision correctness. Averaging
-the three rewards a configuration only if it does well on all of the axes the thesis
-cares about, rather than winning on one and losing on the others, which a single
-metric (e.g. BERTScore alone) can hide.
+the three rewards configurations that perform well across all three axes rather than
+on only one, which a single metric such as BERTScore can hide.
 
 MC-accuracy is defined only for CasiMedicos-Exp (multiple-choice) records. On the
 mixed dev set it is therefore read from the CasiMedicos subset (`_casimedicos.json`),
-matching how the results tables report it. On an open-answer-only set (SNS-1064)
+matching how the results tables report it. On an open-answer-only set (GuiaSalud)
 MC-accuracy does not exist and MeanQ is the mean of the two overlap metrics.
 
 This module is pure computation over the metric JSONs, it loads no models and needs
@@ -205,9 +204,7 @@ def best_by_meanq_robust(
     candidates: "dict[str, tuple[str, str] | tuple[str, str, bool]]", *, use_sf: bool = False,
     margin: float = 0.5, std_threshold: float = 0.5, token_threshold: float = 1000.0,
 ) -> tuple[Optional[str], dict[str, dict]]:
-    """Variance- and cost-aware version of best_by_meanq, using a pairwise,
-    point-scored tie-break (see manuscript \\S "Selecting the best
-    configuration" / sec:selection-rule for the formal statement).
+    """Select a configuration with the MeanQ--Stability--Token rule.
 
     Reduces to the plain highest-mean-MeanQ winner whenever the leader's mean
     is at least `margin` points clear of every other candidate. Otherwise, the
@@ -217,9 +214,8 @@ def best_by_meanq_robust(
     of the larger std, a relative/percentage threshold makes it trivially
     easy to "meaningfully" beat a candidate whose own std is already small,
     since a tiny absolute gap can still clear a large percentage of a tiny
-    denominator. std_threshold matches `margin`'s own scale, since both ask
-    "is this difference at least as large as the smallest gap this thesis
-    already treats as a real MeanQ difference"). Cost awards its own point the
+    denominator. ``std_threshold`` uses the same absolute scale as ``margin``.
+    Cost awards its own point the
     same way whenever its measured LLM-token cost is at least
     `token_threshold` tokens/sample lower.  An absolute token threshold avoids
     treating a small difference as meaningful merely because a cheap baseline
@@ -244,12 +240,8 @@ def best_by_meanq_robust(
 
     Each candidate value is normally (prefix, base), scored with the call-level
     `use_sf`. A candidate may instead be (prefix, base, candidate_use_sf) to
-    override `use_sf` just for that one entry, e.g. GuiaSalud's final selection
-    (scripts/mixed_meanq.py) puts a row's noSF and SF variants in the SAME
-    pool as two separate candidates so the true winner (whichever variant
-    actually scores higher) can surface, matching the manuscript's own stated
-    rule that self-feedback is applied only where it is a row's own dev-set
-    MeanQ-winning state (sec:results-test).
+    override `use_sf` just for that one entry. This allows a row's noSF and SF
+    variants to compete in the same candidate pool.
 
     Returns (winning label, {label: {"mean": ..., "std": ..., "cost": ..., "n": ...}}).
     """
@@ -309,7 +301,7 @@ def decision_table(candidates: "dict[str, tuple[str, str] | tuple[str, str, bool
     `candidates` maps a display label -> (id_prefix, base), or (id_prefix,
     base, candidate_use_sf) to override `use_sf` for just that entry (see
     best_by_meanq_robust's own docstring -- same convention, used the same
-    way by scripts/mixed_meanq.py to list a row's noSF and SF variants
+    way by the staged selectors to list a row's noSF and SF variants
     side by side). Rows are sorted by MeanQ descending, the top row is bolded
     as the chosen configuration. This is the single source of the decision
     prose, so the .md reports never drift from what the staged ablation

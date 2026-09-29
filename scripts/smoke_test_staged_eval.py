@@ -5,8 +5,8 @@ to end on real Slurm/vLLM infrastructure, not just in a --dry-run print.
 
 Runs the exact same orchestration functions staged_ablation_runner.py uses
 (submit_infer_array, wait_for_job, evaluate, best_by_meanq, base_retrieval_fields,
-apply_base) against a throwaway copy of Latxa's 11-config spec -- chosen because
-it is the fastest model in the ablation (~0.2-0.5s/sample at seed42 timing) -- with
+apply_base) against a throwaway copy of Latxa's 11-config spec (chosen because
+it is the fastest model in the ablation, ~0.2-0.5s/sample at seed42 timing), with
 every config's --limit cut to 4 records and self-feedback off, so the whole thing
 finishes in minutes instead of the hours a real staged run takes, while still
 being genuine GPU inference through the real vLLM path, not a mock.
@@ -18,7 +18,7 @@ Real production predictions and configs are never read or written.
 
 What it proves, concretely:
   1. Stage A (baseline + 6-config retrieval sweep) runs, evaluates, and MeanQ
-     picks a winner from real (if tiny) generated text -- not canned data.
+     picks a winner from real (if tiny) generated text, not canned data.
   2. Row 8's config file is REWRITTEN with the winner's retrieval fields BEFORE
      stage B is submitted (the central claim of the staged approach: no row is
      ever inferred with a base that gets discarded and re-run).
@@ -51,7 +51,7 @@ SMOKE_TAG = "smoke_stagedeval"
 LIMIT = 4  # records per config: enough to exercise both source types
 
 # (label, real id_prefix, real base) for Latxa's 11 real configs, reused as the
-# template this smoke test copies from -- never written to.
+# template this smoke test copies from, never written to.
 REAL = {
     "baseline": ("1051", "latxa_llama31_8b_no_rag_extractive_mixed_eu_dev"),
     "retrieval": {

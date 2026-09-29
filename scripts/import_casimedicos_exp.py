@@ -11,7 +11,7 @@ from typing import Any, Optional
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from medical_rag_thesis.data_io import compact_record, records_to_dataframe, write_jsonl  # noqa: E402
+from mevirag.data_io import compact_record, records_to_dataframe, write_jsonl  # noqa: E402
 
 
 def parse_args() -> argparse.Namespace:
@@ -56,6 +56,16 @@ def normalize_record(row: dict[str, Any], split: str) -> Optional[dict[str, Any]
             "correct_option": correct_option,
             "short_answer": short_answer,
             "evidence": evidence,
+            # `query`/`justification` are the two fields both datasets are
+            # normalized to (see prepare_sns1064.py's GuiaSalud side). For
+            # CasiMedicos, question is already a self-contained clinical
+            # vignette ending in the actual question, so query is just a
+            # verbatim copy (no composite needed, unlike GuiaSalud's
+            # topic/subtopic/question/focus). justification is the same
+            # full_answer content evidence already holds, unchanged, just
+            # under the new key evaluation.py scores against.
+            "query": question,
+            "justification": evidence,
         }
     )
 

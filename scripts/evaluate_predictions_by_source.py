@@ -24,7 +24,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from medical_rag_thesis.data_io import read_jsonl, write_jsonl  # noqa: E402
+from mevirag.data_io import read_jsonl, write_jsonl  # noqa: E402
 
 SOURCE_PREFIXES = {"_sns1064": "sns1064", "_casimedicos": "casimedicos", "_guiasalud": "guiasalud"}
 INCOMPLETE_FINISH_REASONS = {"length", "repetition"}

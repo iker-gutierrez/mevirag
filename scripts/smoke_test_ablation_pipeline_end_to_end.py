@@ -12,16 +12,15 @@ hyperparameters only that family sets), covering:
 
   1. Retrieval with the query's own gold document excluded. Uses the
      generation script's own --log-gold-hit-rate instrumentation
-     (src/medical_rag_thesis/retrieval.py's HitRateLoggingEmbeddingRetriever)
+     (src/mevirag/retrieval.py's HitRateLoggingEmbeddingRetriever)
      rather than re-implementing a separate check, and additionally
      confirms no prediction's retrieved-context text contains the literal
      gold answer string of its own record (a leak that would slip past the
      doc_id-based exclusion, e.g. if two records shared identical content).
   2. Self-feedback generation: every config has self_feedback=true, so one
      generation run produces both an initial answer and a self-feedback
-     revision of it in the same predictions.jsonl (matching the manuscript's
-     own description, sec:sf: "Both the initial and the revised answers are
-     stored for every run"). Confirms the run's predictions carry both
+     revision of it in the same predictions.jsonl, matching the stored-output
+     contract. Confirms the run's predictions carry both
      texts and that the revision genuinely differs from the initial answer.
   3. Prompt rendering: confirms the actual rendered prompt (recovered via
      --save-prompts) contains real question text, not an empty or
@@ -37,16 +36,15 @@ hyperparameters only that family sets), covering:
   5. Decoding hyperparameters (temperature, top_p, top_k, min_p,
      presence_penalty): each model family is decoded with the sampling
      settings recommended by its own developers, held fixed across every
-     ablation-grid row of that model (manuscript's own hyperparameters
-     table). Confirms both that the ablation configs carry the correct
+     ablation-grid row of that model. Confirms both that the configs carry the
+     documented
      literal values for each family, and that the generated
      reasoning-pipeline config actually inherits the winning row's real
      settings rather than a stale or default value. Llama-3.1-8B-Instruct
      and Latxa-Llama-3.1-8B-Instruct only set temperature/top_p (their
      model cards recommend nothing else); Qwen3.5-9B additionally sets
-     top_k/min_p/presence_penalty -- the last of which was, historically, a
-     real shipped bug (silently applied as vLLM's unrelated
-     repetition_penalty field instead), so it is checked explicitly here.
+     top_k/min_p/presence_penalty. The presence penalty is checked explicitly
+     to ensure that it is not passed as vLLM's unrelated repetition penalty.
   6. Truncation safety: feedback_max_new_tokens is set equal to
      max_new_tokens (not a smaller fixed constant -- see
      scripts/create_single_run_self_feedback_configs.py's own docstring for
@@ -72,10 +70,13 @@ import json
 import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
+
+from truncation_safety import remove_failed_output  # noqa: E402
 
 CONFIG_DIR = ROOT / "configs" / "experiments"
 RUNS = ROOT / "experiments" / "runs"
@@ -127,7 +128,7 @@ QWEN_MODEL_CONFIG = {
     "max_new_tokens": 256,
     "temperature": 1.0,
     "trust_remote_code": True,
-    "retrieval_index": "models/retrieval/guiasalud_casimedicos_train_multilingual_e5_large",
+    "retrieval_index": "models/retrieval/guiasalud_casimedicos_full_multilingual_e5_large",
     "retrieval_top_k": 5,
     "reranker_model": "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1",
     "reranker_top_k": 1,
@@ -220,6 +221,29 @@ def run_evaluation(run_id: str, base: str, *, seed: int = 42) -> Path:
 def main() -> None:
     print(f"=== end-to-end smoke test: real generation + retrieval + staged selection ({LIMIT} records/run) ===")
     clean_up()
+
+    # --- failure-path checks (GPU-free) ---------------------------------
+    print("\n--- checking failed truncation artifacts are removed and rejected ---")
+    with tempfile.TemporaryDirectory(prefix="medrag_truncation_smoke_") as tmp:
+        output_path = Path(tmp) / "predictions.jsonl"
+        metadata_path = output_path.with_suffix(".meta.json")
+        output_path.write_text('{"id":"truncated"}\n', encoding="utf-8")
+        metadata_path.write_text('{"truncation_counts":{"num_initial_truncated":1}}\n', encoding="utf-8")
+        remove_failed_output(output_path)
+        check(not output_path.exists() and not metadata_path.exists(),
+              "failed generation cleanup removes predictions and metadata")
+
+        from evaluate_predictions_by_source import _validate_zero_truncation  # noqa: E402
+        try:
+            _validate_zero_truncation(
+                output_path,
+                [{"id": "orphan", "truncation": {"initial_finish_reason": "length"}}],
+            )
+        except RuntimeError:
+            pass
+        else:
+            raise SystemExit("SMOKE TEST FAILED: evaluator accepted an orphaned truncated artifact")
+        print("  [PASS] evaluator rejects an orphaned truncated artifact")
 
     # --- 1-3: real generation (with self-feedback), retrieval exclusion -
     print("\n--- generating: two rows, each with self-feedback enabled ---")
@@ -328,17 +352,16 @@ def main() -> None:
 
     # Decoding hyperparameters (temperature/top_p/top_k/min_p/presence_
     # penalty) are not tuned per row or per experiment: they are fixed to
-    # each model's own developer-recommended values (manuscript
-    # \autoref{tab:hyperparams}) and held uniform across every ablation
+    # each model's documented decoding values and held uniform across every ablation
     # condition for that model, so no condition is confounded by a decoding
     # change. Llama-3.1-8B-Instruct and Latxa-Llama-3.1-8B-Instruct both use
     # temperature=0.6, top_p=0.90 (neither model card recommends top_k/
     # min_p/presence_penalty, so those stay at vLLM's own defaults). This
     # pins the smoke-test model's real ablation config to those literal
-    # values, so a regression that changed them away from the manuscript's
-    # own stated table would be caught here, not just a mismatch between
-    # the ablation config and the reasoning-pipeline config it feeds.
-    print("\n--- checking the winning row's own decoding hyperparameters match the manuscript's recommended values ---")
+    # values, so a regression that changed them would be caught here, not just
+    # a mismatch between the ablation config and the reasoning-pipeline config
+    # it feeds.
+    print("\n--- checking the winning row's decoding hyperparameters ---")
     check(winner_cfg.get("temperature") == 0.6, f"winning row's temperature is 0.6 (got {winner_cfg.get('temperature')!r})")
     check(winner_cfg.get("top_p") == 0.9, f"winning row's top_p is 0.90 (got {winner_cfg.get('top_p')!r})")
     for unset_key in ("top_k", "min_p", "presence_penalty"):
@@ -357,7 +380,7 @@ def main() -> None:
     # function finalize_basque_ablation_and_write_reasoning_configs.py /
     # finalize_spanish_ablation_and_write_reasoning_configs.py use.
     print("\n--- checking sampling hyperparameters are correctly carried into a reasoning-pipeline config ---")
-    from create_mixed_reasoning_configs import base_config_for, LLAMA_ENGINE_FIELDS  # noqa: E402
+    from reasoning_config import base_config_for, LLAMA_ENGINE_FIELDS  # noqa: E402
 
     winner_record = {
         "config_path": f"configs/experiments/{winner_spec[0]}_{winner_spec[1]}.json",
@@ -390,7 +413,7 @@ def main() -> None:
     check(pred_qwen.exists() and len(pred_qwen.read_text().splitlines()) == LIMIT,
           f"Qwen3.5-9B: produced {LIMIT} real predictions ({pred_qwen.relative_to(ROOT)})")
 
-    print("\n--- checking Qwen3.5-9B's own config carries the manuscript's recommended decoding values ---")
+    print("\n--- checking Qwen3.5-9B's documented decoding values ---")
     check(qwen_cfg.get("temperature") == 1.0, f"Qwen config's temperature is 1.0 (got {qwen_cfg.get('temperature')!r})")
     check(qwen_cfg.get("top_p") == 0.95, f"Qwen config's top_p is 0.95 (got {qwen_cfg.get('top_p')!r})")
     check(qwen_cfg.get("top_k") == 20, f"Qwen config's top_k is 20 (got {qwen_cfg.get('top_k')!r})")
@@ -422,7 +445,7 @@ def main() -> None:
           "presence_penalty must not be silently remapped onto it)")
 
     print("\n--- checking Qwen's own hyperparameters carry correctly into a reasoning-pipeline config ---")
-    from create_mixed_reasoning_configs import QWEN_ENGINE_FIELDS  # noqa: E402
+    from reasoning_config import QWEN_ENGINE_FIELDS  # noqa: E402
 
     qwen_winner_record = {
         "config_path": f"configs/experiments/{qwen_row[0]}_{qwen_row[1]}.json",

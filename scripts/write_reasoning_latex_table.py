@@ -70,16 +70,16 @@ ES_ROWS = [
     # best RAG config (same evidence as the baseline and the other three
     # pipelines, isolates the effect of the four-stage causal reasoning
     # alone), and with MedCoT-RAG's own causal-aware retrieval scoring
-    # (sec:reasoning-pipelines, src/medical_rag_thesis/causal_scoring.py),
+    # (sec:reasoning-pipelines, src/mevirag/causal_scoring.py),
     # faithful to the full original method, retrieval and generation together.
     ("MedCoT-RAG (our best retrieval)", "1530_qwen35_9b_no_think_structured_cot_meanq_best_extractive_mixed_dev", False, None),
     ("MedCoT-RAG (their top-5 retrieval)", "1341_qwen35_9b_structured_cot_causal_no_think_extractive_mixed_dev", False, None),
     # thought_rag (RAR2 Parallel Scaling) and marag (multi-query retrieval
     # agent, confidence-sorted full-candidate history) were revised for closer
-    # faithfulness to their sources, see src/medical_rag_thesis/reasoning.py's
+    # faithfulness to their sources, see src/mevirag/reasoning.py's
     # module docstring. Configs 1601/1600 are the current, in-code pipelines,
     # the previous configs (1531/1533) used superseded pre-revision logic and
-    # are not part of the publication-facing repository.
+    # are not included in the final comparison.
     ("RAR$^2$ (parallel scaling)", "1601_qwen35_9b_no_think_thought_rag_meanq_best_extractive_mixed_dev", False, None),
     ("RAR$^2$ (iterative scaling)", "1532_qwen35_9b_no_think_thought_rag_iter_meanq_best_extractive_mixed_dev", False, None),
     ("MA-RAG", "1600_qwen35_9b_no_think_marag_meanq_best_extractive_mixed_dev", False, None),
@@ -178,7 +178,7 @@ def metric(summaries: list[dict], name: str, use_sf: bool) -> tuple[Optional[flo
 def meanq_per_seed(summaries: list[dict], mc_summaries: list[dict], use_sf: bool) -> tuple[Optional[float], Optional[float]]:
     """MeanQ per seed (pairing ROUGE-L/BERT-F1/MC-acc from the same seed by index --
     summaries and mc_summaries must be built from the same seed-ordered stem list),
-    then averaged. Same method as scripts/metric_tables.py's meanq_per_seed, so this
+    then averaged. This is the same method used by scripts/meanq.py, so this
     is directly comparable to the ablation decision tables and MeanQ column."""
     per_seed = []
     for i in range(len(summaries)):

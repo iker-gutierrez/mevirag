@@ -23,29 +23,28 @@ Each model's development-selected configuration was frozen and evaluated on the 
 | Llama-3.1-8B-Instruct | 33.99±1.30 | rerank top 3 | 43.85±2.35 | +9.86±1.30 |
 | Latxa-Llama-3.1-8B-Instruct | 37.15±0.37 | retrieve top 1 | 43.26±0.52 | +6.11±0.78 |
 
-For Qwen no-think, MA-RAG was the only one of the five reasoning-pipeline variants to beat its own model's RAG ablation winner on dev, so it is the frozen test-set configuration. The other three models carry forward their own single-pass ablation winner instead. The manuscript reports the full per-condition results, including cost and self-feedback deltas.
+For Qwen no-think, MA-RAG was the only one of the five reasoning-pipeline variants to beat its own model's RAG ablation winner on dev, so it is the frozen test-set configuration. The other three models carry forward their own single-pass ablation winner instead. The complete [development](reproducibility/development_results.md) and [held-out test](reproducibility/final_test/results.md) reports include the per-condition quality and cost results.
 
 ## Repository layout
 
 - `data/raw/`: original datasets, kept out of git.
 - `data/interim/`: temporary converted files.
 - `data/processed/`: normalized JSONL/CSV splits (Spanish and Basque).
-- `src/medical_rag_thesis/`: reusable experiment code (retrieval, generation, evaluation, reasoning pipelines).
+- `src/mevirag/`: reusable experiment code (retrieval, generation, evaluation, reasoning pipelines).
 - `scripts/`: command-line entry points for data prep, experiments, staged ablation, and result-table/report generation.
 - `slurm/`: Slurm launchers for the Spanish and Basque ablation stages, reasoning pipelines, and held-out test runs.
 - `configs/experiments/`: per-run experiment configs (retrieval depth, reranking, few-shot, self-feedback, and reasoning pipeline). The final held-out test configurations are also copied, with their predictions and evaluations, to `reproducibility/final_test/`.
 - `experiments/runs/`: generated predictions and run artifacts (gitignored).
 - `reports/metrics/`: generated evaluation outputs and summaries, kept out of git.
-- `docs/`: references for the current prompts and evaluation methodology.
-
-The manuscript itself (LaTeX source and compiled PDF) is kept outside this repository and is not tracked in git.
+- `docs/`: references for the prompt templates and evaluation methodology.
 
 ## Reproducibility artefacts
 
-The exact final-test configurations, predictions, and evaluation outputs are
-available under [`reproducibility/final_test/`](reproducibility/final_test/).
-The complete development ablation and reasoning-pipeline tables are reported
-in the accompanying manuscript.
+The complete development ablation and reasoning-pipeline results are available
+in [`reproducibility/development_results.md`](reproducibility/development_results.md).
+The exact final-test configurations, predictions, evaluation outputs, and
+consolidated results are available under
+[`reproducibility/final_test/`](reproducibility/final_test/).
 
 ## Quick start
 

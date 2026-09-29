@@ -1,7 +1,7 @@
 # Spanish and Basque prompts
 
-This file documents the current prompt templates implemented in
-`src/medical_rag_thesis/prompts.py`.
+This file documents the prompt templates implemented in
+`src/mevirag/prompts.py`.
 
 Answers are based on the retrieved context, with
 exact copying asked only when the context is directly related to the

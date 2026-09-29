@@ -4,13 +4,13 @@ each model's own best frozen dev config, run against test.jsonl instead of
 dev.jsonl, 3 seeds each (slurm/test_set_inference.sh, slurm/eval_test_set.sh).
 
 Reuses write_result_tables.py's own fmt()/esc()/mean_std()/value_or_none()
-so this table follows the same conventions (row format, MeanQ-per-seed
-averaging) as every other results table in this thesis, but reads metrics
+so this table follows the same row-format and MeanQ-aggregation conventions
+as the other MeviRAG result tables, but reads metrics
 directly by stem (test-set run dirs are named "{stem}_seed{N}", not the
 "{prefix}_{base}_seed{N}" pattern collect() assumes) rather than reusing
 collect() itself.
 
-Columns match every other results table: #, Model, Config, SF, Quality
+Columns are: #, Model, Config, SF, Quality
 (ROUGE-L, BERT-F1, MC-acc, MeanQ), Cost (sec, tok).
 
 Usage:
@@ -40,10 +40,10 @@ QUALITY = [
 
 # (row_id, model_label, config_label, stem, use_sf): row_id is the SAME
 # unique row id (number + model letter, e.g. "15a", "6b", "5c", "1d") that this
-# exact configuration already carries in the table it was originally staged
-# in, not a fresh id invented for this table and not the server-side config
-# number (1530/1280/1042/1053, which is a filename/experiment-tracking id,
-# not a manuscript-facing one). Qwen no-think's row is a reasoning-pipeline
+# exact configuration already carries in the table where it was originally
+# introduced. It is distinct from the server-side configuration number
+# (1530/1280/1042/1053), which is used for experiment tracking. Qwen
+# no-think's row is a reasoning-pipeline
 # row (table_reasoning_es.tex's "15a", MA-RAG, the
 # only pipeline that beat its own single-pass baseline, see
 # sec:results-reasoning). The other three are each model's own single-pass

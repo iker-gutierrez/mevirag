@@ -10,14 +10,14 @@ from typing import Optional
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from medical_rag_thesis.data_io import read_jsonl  # noqa: E402
-from medical_rag_thesis.evaluation import (  # noqa: E402
+from mevirag.data_io import read_jsonl  # noqa: E402
+from mevirag.evaluation import (  # noqa: E402
     evaluate_records,
     extract_option_number,
     resolve_predicted_option,
     write_metrics,
 )
-from medical_rag_thesis.run_logging import run_with_logs  # noqa: E402
+from mevirag.run_logging import run_with_logs  # noqa: E402
 
 
 def parse_args() -> argparse.Namespace:

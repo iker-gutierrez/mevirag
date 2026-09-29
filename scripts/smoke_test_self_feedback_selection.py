@@ -92,7 +92,7 @@ def main() -> None:
     print("=== smoke test: self-feedback readings in the staged selection (synthetic metrics, no GPU) ===")
     clean_up()
 
-    from mixed_meanq import CELLS  # noqa: E402
+    from ablation_grid import CELLS  # noqa: E402
 
     # Rows 0-6 (stage-A shape): one config id per row, 95000-95006. Row 8
     # (a stage-B dependent row): id 95015.
@@ -103,7 +103,7 @@ def main() -> None:
     high = {"rouge_l_f1": 90, "bertscore_f1": 90, "mc_accuracy": 90}
 
     for row in range(0, 7):
-        cell_slug, _cell_label, _ = CELLS[row]
+        cell_slug, _cell_label = CELLS[row]
         base = f"smoketest_llama31_8b_{cell_slug}_extractive_guiasalud_dev"
         top_k = 0 if row == 0 else 15
         write_config(START + row, base, retrieval_top_k=top_k)
@@ -118,7 +118,7 @@ def main() -> None:
             else:
                 write_metrics(START + row, base, seed=seed, before=low, after=low)
 
-    cell_slug8, _, _ = CELLS[8]
+    cell_slug8, _ = CELLS[8]
     row8_base = f"smoketest_llama31_8b_{cell_slug8}_extractive_guiasalud_dev"
     write_config(ROW8_ID, row8_base, retrieval_top_k=0)
 
@@ -127,7 +127,7 @@ def main() -> None:
 
     candidates = {}
     for row in range(0, 7):
-        cell_slug, cell_label, _ = CELLS[row]
+        cell_slug, cell_label = CELLS[row]
         base = f"smoketest_llama31_8b_{cell_slug}_extractive_guiasalud_dev"
         candidates[cell_label] = (str(START + row), base)
         candidates[f"{cell_label} (SF)"] = (str(START + row), base, True)

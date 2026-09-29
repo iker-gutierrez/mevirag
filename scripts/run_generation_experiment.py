@@ -12,8 +12,8 @@ from typing import Any, Optional
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from medical_rag_thesis.data_io import read_jsonl, write_jsonl  # noqa: E402
-from medical_rag_thesis.generation import (  # noqa: E402
+from mevirag.data_io import read_jsonl, write_jsonl  # noqa: E402
+from mevirag.generation import (  # noqa: E402
     generate_one,
     load_generation_model,
     load_vllm_model,
@@ -21,7 +21,7 @@ from medical_rag_thesis.generation import (  # noqa: E402
     make_self_feedback_prompt,
     strip_thinking_text,
 )
-from medical_rag_thesis.prompts import (  # noqa: E402
+from mevirag.prompts import (  # noqa: E402
     MINISTRAL_REASONING_SYSTEM_PROMPT,
     PROMPT_STYLES,
     SYSTEM_PROMPT_ES,
@@ -30,9 +30,9 @@ from medical_rag_thesis.prompts import (  # noqa: E402
     build_user_prompt,
     query_text,
 )
-from medical_rag_thesis.reasoning import parse_pipeline_answer  # noqa: E402
-from medical_rag_thesis.retrieval import EmbeddingRetriever, HitRateLoggingEmbeddingRetriever  # noqa: E402
-from medical_rag_thesis.run_logging import run_with_logs  # noqa: E402
+from mevirag.reasoning import parse_pipeline_answer  # noqa: E402
+from mevirag.retrieval import EmbeddingRetriever, HitRateLoggingEmbeddingRetriever  # noqa: E402
+from mevirag.run_logging import run_with_logs  # noqa: E402
 from truncation_safety import remove_failed_output  # noqa: E402
 
 
@@ -55,12 +55,9 @@ def parse_args() -> argparse.Namespace:
         "--presence-penalty", type=float, default=0.0,
         help="vLLM backend only. Maps directly to vLLM SamplingParams.presence_penalty "
         "(NOT repetition_penalty, a separate multiplicative mechanism vLLM also "
-        "exposes -- conflating the two by piping this into repetition_penalty "
-        "was a real, previously-shipped bug: presence_penalty=1.5 (Qwen3.5's own "
-        "documented recommendation) is a sane presence_penalty, but 1.0 + 1.5 = "
-        "2.5 is a destructively high repetition_penalty, confirmed to produce "
-        "non-repeating word-salad that runs to max_new_tokens on ~97%% of "
-        "GuiaSalud reasoning-pipeline records).",
+        "exposes). Do not convert this value into repetition_penalty: the two "
+        "parameters are not numerically interchangeable, and an excessively high "
+        "repetition penalty can cause degenerate generations.",
     )
     parser.add_argument(
         "--thinking-token-budget", type=int, default=None,
@@ -101,9 +98,9 @@ def parse_args() -> argparse.Namespace:
         "HitRateLoggingEmbeddingRetriever instead of the plain EmbeddingRetriever. "
         "Behaviour is identical (same top-k passages returned), but for every "
         "query it also records whether the query's own gold document would "
-        "have appeared in the naive top-(k+1) absent self-retrieval exclusion "
-        "(a hit-rate@k metric, manuscript appendix 'Retrieval self-exclusion "
-        "hit rate'), written to <output's parent>/retrieval_hit_rate_log.json "
+        "have appeared in the naive top-(k+1) absent self-retrieval exclusion. "
+        "This diagnostic hit-rate@k is written to "
+        "<output's parent>/retrieval_hit_rate_log.json "
         "alongside predictions.jsonl.",
     )
     parser.add_argument("--reranker-model", default="", help="Optional CrossEncoder model for reranking retrieved documents.")

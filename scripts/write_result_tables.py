@@ -40,8 +40,34 @@ METRICS_DIR = REPO / "reports" / "metrics"
 OUT_DIR = REPO / "manuscript"
 SEEDS = [42, 43, 44]
 
-# (row label, config-id prefix, run-name base) per model, per language.
-from write_mixed_es_seed_summary import EXPERIMENTS as ES_EXPERIMENTS  # noqa: E402
+from ablation_grid import CELLS  # noqa: E402
+
+
+def _config_base(config_id: int) -> str:
+    """Return the filename stem after ``<id>_`` for one tracked config."""
+    matches = sorted((REPO / "configs" / "experiments").glob(f"{config_id}_*.json"))
+    if len(matches) != 1:
+        raise RuntimeError(f"expected one config for ID {config_id}, found {len(matches)}")
+    return matches[0].stem.split("_", 1)[1]
+
+
+def _spanish_experiments() -> list[tuple[str, ...]]:
+    """Build rows for the finalized 12000-series Spanish ablation grid."""
+    rows = []
+    for row, (_slug, label) in enumerate(CELLS):
+        no_think_id = 12000 + row
+        think_id = 12011 + row if row < 8 else 12111 + row
+        no_think_base = _config_base(no_think_id)
+        think_base = _config_base(think_id)
+        rows.append((
+            label,
+            str(no_think_id), no_think_base, str(no_think_id), no_think_base,
+            str(think_id), think_base, str(think_id), think_base,
+        ))
+    return rows
+
+
+ES_EXPERIMENTS = _spanish_experiments()
 
 # Basque 11000-series: each config performs its initial and self-feedback
 # generation in one run, so the same id/base is intentionally supplied for
@@ -152,8 +178,8 @@ DOMAIN_RENAME = {
 # reranking), see FORCED_REFERENCES below for the per-model rationale.
 DOMAIN_BASE_LABEL: dict[str, dict[str, str]] = {
     # Qwen think's domain rows (1278/1279) were rebuilt with few_shot_k=3 added
-    # on top of rerank top 5, i.e. row 8's "3-shot + rerank top 5" base, per
-    # explicit request. Qwen no-think's domain rows (1136/1137) were not
+    # on top of rerank top 5, i.e. row 8's "3-shot + rerank top 5" base.
+    # Qwen no-think's domain rows (1136/1137) were not
     # touched and remain on their original rerank-top-5 base.
     "ES": {"Qwen no-think": "rerank top 5", "Qwen think": "3-shot + rerank top 5"},
     "EU": {"Llama": "rerank top 3", "Latxa": "e5 top 1"},
@@ -353,7 +379,7 @@ TIE_BREAK_STAGE: dict[str, str] = {}
 # no-think's rerank-top-5 row (6a) are the winners carried forward into stage
 # 3 (fewshot) via ES_STAGE_REFERENCE_OVERRIDE, but that carry-forward only
 # highlights the row in LATER stages' tables, within stage 2's OWN table,
-# both 6a and 6b need their own explicit highlight too, per request.
+# both 6a and 6b need their own explicit highlight in stage 2.
 EXTRA_PIN_ROWS: dict[tuple[str, str], frozenset[tuple[str, str]]] = {
     ("ES", "rerank"): frozenset({("rerank top 5", "Qwen think"), ("rerank top 5", "Qwen no-think")}),
     # Llama's dense-only stage-A leader is top-5; its overall selected row is
@@ -524,14 +550,10 @@ def collect(prefix: str, base: str, sf_prefix: str, sf_base: str, suffix: str, u
 
 # ── models per language ───────────────────────────────────────────────────────
 # Each EXPERIMENTS row is (label, id, base, sf_id, sf_base, id, base, sf_id,
-# sf_base, ...), FOUR slots per model (noSF id/base, SF id/base), in the order
-# the decision tables report them. The GuiaSalud round's noSF grid
-# (self_feedback: false, ids 3281-3333) and SF grid (self_feedback: true
-# clones, ids 3700-3743) are SEPARATE config ids producing SEPARATE metrics
-# files (unlike the old SNS1064-era architecture, where one run's file carried
-# both before_feedback/after_feedback blocks from a single self_feedback:true
-# pass), so use_sf now picks which FILE to read, not just which block within
-# one file, see collect() below.
+# sf_base, ...), four slots per model (noSF id/base, SF id/base), in the order
+# the decision tables report them. In the finalized grids, one self-feedback
+# run stores both the initial and revised answers, so the noSF and SF entries
+# intentionally point to the same run and select different metric blocks.
 ES_MODELS = ["Qwen no-think", "Qwen think"]
 EU_MODELS = ["Llama", "Latxa"]
 
@@ -847,7 +869,7 @@ def assign_ids(experiments, models) -> None:
     "2a", "2b'"), where language context is not always visible at the citation
     site. Letting ES use a/b and EU independently reuse a/b for entirely
     different models made "6a" ambiguous outside its own table. EU instead
-    continues from where ES left off (c/d), so every row id in this thesis is
+    continues from where ES left off (c/d), so every reported row ID is
     unique across languages, not just within one language's own tables. Model
     letters are therefore NOT cleared between languages in main() the way
     EXPERIMENT_NUMBERS is.
@@ -1028,8 +1050,8 @@ def build_language(experiments, models, lang: str, dev_slug: str, suffix: str, c
         # Short-caption dev-slug display text, matching the List of Tables
         # convention used elsewhere in the manuscript: the mixed-corpus tables
         # spell out "mixed dataset" (including the rerank stage, a prior
-        # version of this dict special-cased rerank to the shorter "mixed",
-        # an inconsistency since fixed by explicit request), and the two
+        # version of this dict special-cased rerank to the shorter "mixed"),
+        # and the two
         # single-source tables use the dataset's own capitalization (SNS1064,
         # CasiMédicos) instead of the lowercase slug used internally for
         # filenames/labels.

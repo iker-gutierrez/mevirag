@@ -8,7 +8,7 @@ from typing import Any, Iterable, Mapping, Optional, Sequence, Union
 import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 
-from medical_rag_thesis.data_io import read_jsonl, write_jsonl
+from mevirag.data_io import read_jsonl, write_jsonl
 
 
 DEFAULT_EMBEDDING_MODEL = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
@@ -72,8 +72,8 @@ GUIDEBOOK_TITLES = {
     ),
 }
 
-# Basque titles, hand-translated by the thesis author (not machine-translated,
-# unlike the rest of the Basque corpus, see manuscript sec:basque-translation-both).
+# Basque titles, translated manually rather than with the machine-translation
+# procedure used for the rest of the Basque corpus.
 # Keyed by data/processed/guiasalud_eu/*.jsonl's own `guidebook` filename
 # values, which are themselves Basque renamings of the Spanish originals
 # (ansiedad.txt -> antsietatea.txt, etc.), not the Spanish filenames above.
@@ -317,18 +317,16 @@ class EmbeddingRetriever:
         return results
 
 
-# Evidence-only experiment: used only with indices built by indexing solely the
-# evidence column of the corpus (not the full record), a rejected alternative
-# design discussed but not adopted in the manuscript (see manuscript/main.tex,
-# "Corpus and index").
+# Experimental retriever for indices built solely from the corpus evidence
+# field rather than the complete structured sample.
 class HitRateLoggingEmbeddingRetriever(EmbeddingRetriever):
     """EmbeddingRetriever variant used ONLY by the evidence-only-index runs
     (scripts/clone_configs_evidence_only.py's `log_gold_hit_rate` config
     field), to answer a concrete question raised during that work: how often
     would the query's own gold document have appeared in a naive top-k+1
-    search, absent self-retrieval exclusion? This is a hit-rate@k metric
-    (manuscript \\autoref{app:retrieval-leak}): the query's own gold document
-    is the single target per query, so "hit" is binary presence/absence in
+    search, absent self-retrieval exclusion? The query's own gold document is
+    the single target per query, so the hit-rate@k value is binary presence or
+    absence in
     the naive top-(k+1), not a graded relevance judgment.
 
     Behaviourally IDENTICAL to EmbeddingRetriever.query(), same top_k

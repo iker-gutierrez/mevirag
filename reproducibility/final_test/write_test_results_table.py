@@ -1,16 +1,13 @@
 #!/usr/bin/env python
-"""Generate ``table_test_results.tex`` from the bundled test evaluations:
-each model's own best frozen dev config, run against test.jsonl instead of
-dev.jsonl, with three seeds each.
+"""Generate ``table_test_results.tex`` from the stored test evaluations.
 
-Reuses write_result_tables.py's own fmt()/esc()/mean_std()/value_or_none()
-so this table follows the same conventions (row format, MeanQ-per-seed
-averaging) as every other results table in this thesis, but reads metrics
-directly by stem (test-set run dirs are named "{stem}_seed{N}", not the
-"{prefix}_{base}_seed{N}" pattern collect() assumes) rather than reusing
-collect() itself.
+Each model's development-selected configuration is evaluated on
+``test.jsonl`` with three seeds. The table follows the row-format and
+MeanQ-aggregation conventions used by the other MeviRAG result tables. It
+reads metrics directly by stem because test-run directories use the pattern
+``{stem}_seed{N}``.
 
-Columns match every other results table: #, Model, Config, SF, Quality
+Columns are: #, Model, Config, SF, Quality
 (ROUGE-L, BERT-F1, MC-acc, MeanQ), Cost (sec, tok).
 
 Usage from the repository root:
@@ -20,12 +17,14 @@ from __future__ import annotations
 
 import json
 import math
+import sys
 from pathlib import Path
 from typing import Any, Optional
 
-BUNDLE_DIR = Path(__file__).resolve().parent
-METRICS_DIR = BUNDLE_DIR / "evaluations"
-OUT_PATH = BUNDLE_DIR / "table_test_results.tex"
+ARTIFACT_DIR = Path(__file__).resolve().parent
+METRICS_DIR = ARTIFACT_DIR / "evaluations"
+OUT_PATH = ARTIFACT_DIR / "table_test_results.tex"
+MARKDOWN_OUT_PATH = ARTIFACT_DIR / "results.md"
 SEEDS = [42, 43, 44]
 RAW_QUALITY_FIELDS = ("rouge_l_f1", "bertscore_f1", "mc_accuracy")
 
@@ -81,10 +80,10 @@ QUALITY = [
 
 # (row_id, model_label, config_label, stem, use_sf): row_id is the SAME
 # unique row id (number + model letter, e.g. "15a", "6b", "5c", "1d") that this
-# exact configuration already carries in the table it was originally staged
-# in, not a fresh id invented for this table and not the server-side config
-# number (1530/1280/1042/1053, which is a filename/experiment-tracking id,
-# not a manuscript-facing one). Qwen no-think's row is a reasoning-pipeline
+# exact configuration already carries in the table where it was originally
+# introduced. It is distinct from the server-side configuration number
+# (1530/1280/1042/1053), which is used for experiment tracking. Qwen
+# no-think's row is a reasoning-pipeline
 # row (table_reasoning_es.tex's "15a", MA-RAG, the
 # only pipeline that beat its own single-pass baseline, see
 # sec:results-reasoning). The other three are each model's own single-pass
@@ -114,7 +113,7 @@ ROWS = [
      "17002_llama31_8b_rag_e5_rerank3_extractive_guiasalud_final_test", False),
     ("0d", "Latxa", "Baseline LLM only",
      "17103_latxa_llama31_8b_no_rag_extractive_guiasalud_llm_only_final_test", False),
-    ("1d", "Latxa", "e5 top 1",
+    ("1d", "Latxa", "E5 top 1",
      "17003_latxa_llama31_8b_rag_e5_topk1_extractive_guiasalud_final_test", False),
 ]
 
@@ -195,6 +194,14 @@ def fmt_delta(mean: float | None, std: float | None) -> str:
     if mean is None:
         return "---"
     return f"{mean:+.2f}{{\\tiny$\\pm${std:.2f}}}" if std else f"{mean:+.2f}"
+
+
+def fmt_markdown(mean: float | None, std: float | None, *, delta: bool = False) -> str:
+    """Format a mean and standard deviation for a Markdown results table."""
+    if mean is None:
+        return "---"
+    sign = "+" if delta and mean >= 0 else ""
+    return f"{sign}{mean:.2f} ± {std:.2f}" if std else f"{sign}{mean:.2f}"
 
 
 def collect_delta(rag_stem: str, rag_sf: bool, base_stem: str, base_sf: bool) -> dict | None:
@@ -328,6 +335,45 @@ def main() -> None:
 
     OUT_PATH.write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(f"wrote {OUT_PATH}")
+
+    markdown = [
+        "# Held-out test results",
+        "",
+        "Results on the 250-example mixed test set. Each retrieval-free baseline is "
+        "followed by the corresponding system selected exclusively on development data. "
+        "Delta rows report the selected system minus its baseline. Quality values are "
+        "means ± standard deviations over seeds 42, 43, and 44. Seconds and tokens are "
+        "mean costs per answer.",
+        "",
+        "| # | Model | Configuration | SF | ROUGE-L | BERT-F1 | MC-acc | MeanQ | Seconds | Tokens |",
+        "|---:|:---|:---|:---:|---:|---:|---:|---:|---:|---:|",
+    ]
+    for row_id, model_label, config_label, use_sf, row, is_delta in gathered:
+        quality = [
+            fmt_markdown(*row[metric], delta=is_delta)
+            for metric, _ in QUALITY
+        ]
+        if is_delta:
+            seconds = f"{row['sec']:+.2f}" if row["sec"] is not None else "---"
+            tokens = f"{row['tok']:+.0f}" if row["tok"] is not None else "---"
+            row_id = f"Δ{row_id[-1]}"
+        else:
+            seconds = f"{row['sec']:.2f}" if row["sec"] is not None else "---"
+            tokens = f"{row['tok']:.0f}" if row["tok"] is not None else "---"
+        markdown.append(
+            "| " + " | ".join([
+                row_id,
+                model_label,
+                config_label or "Selected − baseline",
+                "yes" if use_sf else "no",
+                *quality,
+                seconds,
+                tokens,
+            ]) + " |"
+        )
+
+    MARKDOWN_OUT_PATH.write_text("\n".join(markdown) + "\n", encoding="utf-8")
+    print(f"wrote {MARKDOWN_OUT_PATH}")
 
 
 if __name__ == "__main__":

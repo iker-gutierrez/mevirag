@@ -2,7 +2,7 @@
 """Run a reasoning pipeline on top of the frozen best RAG configuration.
 
 Pipelines: structured_cot | thought_rag | thought_rag_iter | marag
-(see src/medical_rag_thesis/reasoning.py for what each one is and where it
+(see src/mevirag/reasoning.py for what each one is and where it
 comes from).
 
 thought_rag is RAR2's Parallel Scaling strategy (xuEtAl2025 Fig. 4): sample
@@ -37,18 +37,18 @@ sys.path.insert(0, str(ROOT / "scripts"))
 from run_generation_experiment import sample_random_examples  # noqa: E402
 from truncation_safety import remove_failed_output  # noqa: E402
 
-from medical_rag_thesis.data_io import read_jsonl, write_jsonl  # noqa: E402
-from medical_rag_thesis.generation import (  # noqa: E402
+from mevirag.data_io import read_jsonl, write_jsonl  # noqa: E402
+from mevirag.generation import (  # noqa: E402
     build_chat_prompt,
     load_vllm_model,
     strip_thinking_text,
 )
-from medical_rag_thesis.prompts import (  # noqa: E402
+from mevirag.prompts import (  # noqa: E402
     SYSTEM_PROMPT_ES,
     SYSTEM_PROMPTS,
     query_text,
 )
-from medical_rag_thesis.reasoning import (  # noqa: E402
+from mevirag.reasoning import (  # noqa: E402
     PIPELINES,
     build_conflict_query_prompt,
     build_consensus_prompt,
@@ -67,9 +67,9 @@ from medical_rag_thesis.reasoning import (  # noqa: E402
     token_confidence,
     trim_leaked_thinking_prefix,
 )
-from medical_rag_thesis.causal_scoring import causal_score  # noqa: E402
-from medical_rag_thesis.retrieval import EmbeddingRetriever  # noqa: E402
-from medical_rag_thesis.run_logging import run_with_logs  # noqa: E402
+from mevirag.causal_scoring import causal_score  # noqa: E402
+from mevirag.retrieval import EmbeddingRetriever  # noqa: E402
+from mevirag.run_logging import run_with_logs  # noqa: E402
 
 INCOMPLETE_FINISH_REASONS = ("length", "repetition")
 
@@ -140,7 +140,7 @@ class Config:
 
         # retrieval (the frozen best config). `or default` rather than
         # `.get(key, default)`: domain-restriction / causal-scoring winners
-        # (scripts/mixed_meanq.py's retrieval_settings()) can write these
+        # The staged selection scripts can write these
         # keys as an EXPLICIT null (no reranker stage, not merely "unset"),
         # and .get()'s own default only fires when the key is absent, not
         # when it's present-but-None -- confirmed as a live bug: config 3320
@@ -195,7 +195,7 @@ class Config:
 
         # structured_cot only: MedCoT-RAG's causal-aware retrieval scoring,
         # s(d,q) = causal_alpha*sim(q,d) + causal_beta*psi(d) (sec:reasoning-pipelines,
-        # src/medical_rag_thesis/causal_scoring.py). Off by default so the other three
+        # src/mevirag/causal_scoring.py). Off by default so the other three
         # pipelines, and any existing structured_cot config that doesn't set this,
         # keep using the shared dense-retrieval-plus-reranking stage unchanged.
         self.causal_scoring: bool = bool(payload.get("causal_scoring", False))
@@ -586,9 +586,9 @@ def blank_stage_stats() -> dict[str, Any]:
 
 class Accumulator:
     """Per-record cost + trace ledger. Every LLM call in every pipeline funnels
-    through `add`, so the reported tokens/sample really is the whole pipeline and
-    not just its last stage, which is the number the thesis needs to compare a
-    3-round agentic loop against a single-pass baseline honestly."""
+    through `add`, so the reported tokens/sample covers the whole pipeline rather
+    than only its last stage. This permits a valid cost comparison between a
+    three-round agentic loop and a single-pass baseline."""
 
     def __init__(self, num_records: int):
         self.stats = [blank_stage_stats() for _ in range(num_records)]
@@ -832,7 +832,7 @@ def run_marag(
     new evidence from all of them, and carry ALL candidates (re-sorted
     ascending by confidence) into the next round's Solver prompt as history,
     there is no ranking/pruning agent in the original. A final synthesis
-    pass (this thesis's own addition, the original instead just takes the
+    pass (an adaptation for MeviRAG; the original instead takes the
     last round's plurality vote, which has no equivalent on the open-answer
     half of this dev set) resolves any record that never reaches unanimity.
     """

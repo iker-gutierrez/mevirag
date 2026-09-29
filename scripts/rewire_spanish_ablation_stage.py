@@ -17,9 +17,8 @@ computes that winner and rewrites the dependent rows' config files to match
 it, run between stages so each stage always starts from a config that
 reflects the previous stage's actual result.
 
-Every row is generated with self-feedback enabled (a single run produces
-both an initial answer and a revised one, in one generation pass, exactly
-as the manuscript's own self-feedback pipeline describes -- see
+Every row is generated with self-feedback enabled, so a single run produces
+both an initial answer and a revised one. See
 run_generation_experiment.py's --self-feedback path and
 scripts/evaluate_predictions.py's before_feedback/after_feedback scoring).
 Each row's two readings are independently evaluated and both are eligible
@@ -34,9 +33,8 @@ This script operates on a specific block of ablation-grid config files
 (configs/experiments/12000-12021) reserved for this rerun of the Spanish
 grid, kept separate from any earlier round's ablation configs so that no
 earlier round's config file or generated predictions are ever overwritten.
-It therefore does not use the older shared selection module
-(scripts/mixed_meanq.py), which is hardcoded to a different, older id block
-and is left untouched.
+It uses only the shared ablation-grid labels; experiment IDs are defined here
+for this run block.
 
 Usage:
     python scripts/rewire_spanish_ablation_stage.py --stage B
@@ -53,8 +51,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from mixed_meanq import CELLS  # noqa: E402
-from meanq import best_by_meanq_robust  # noqa: E402
+from ablation_grid import CELLS  # noqa: E402
+from meanq import best_by_meanq_robust, incomplete_candidates, SEEDS  # noqa: E402
 
 CONFIG_DIR = ROOT / "configs" / "experiments"
 
@@ -113,7 +111,7 @@ def candidates_for_pool(family_key: str, name_template: str, start_id: int, rows
     comparison can pick whichever reading actually scores higher."""
     candidates = {}
     for row in rows:
-        cell_slug, cell_label, _ = CELLS[row]
+        cell_slug, cell_label = CELLS[row]
         if row <= 6:
             run_id = start_id + row
         elif row in (7, 8):
@@ -177,6 +175,17 @@ def main() -> None:
         candidates = candidates_for_pool(family_key, name_template, start_id, stage["pool_rows"])
         pool = retrieving_pool(candidates, stage["pool_rows"])
 
+        incomplete = incomplete_candidates(pool)
+        if incomplete:
+            details = ", ".join(f"{label!r} ({n}/{len(SEEDS)} seeds)" for label, n in incomplete.items())
+            raise RuntimeError(
+                f"{family_label}: refusing to select a stage winner from an incomplete "
+                f"candidate pool -- {details}. This generation array likely finished with "
+                f"one or more failed tasks (see slurm logs); fix and resubmit those specific "
+                f"array indices, then rerun this evaluation, rather than let the selection "
+                f"proceed on a weaker-sampled candidate."
+            )
+
         winner, stats = best_by_meanq_robust(pool)
         if winner is None:
             print(f"  SKIP {family_label}: no metrics for any retrieving candidate yet")
@@ -191,7 +200,7 @@ def main() -> None:
         # call per target row is enough -- there is no separate
         # self-feedback config left to rewire in step.
         for target_row in stage["target_rows"]:
-            cell_slug, cell_label, _ = CELLS[target_row]
+            cell_slug, cell_label = CELLS[target_row]
             if target_row in (7, 8):
                 target_id = ROW_7_8_IDS[family_key][target_row]
             else:

@@ -5,7 +5,7 @@ The archived (pre-seed-fix) runs of these same configs truncated 0 / 20790
 records, and the configs now additionally carry repetition_detection plus
 max_truncation_retries=3. So the expected result here is zero. This script exists
 so that a regression shows up as a failed check rather than as a quietly degraded
-row in a results table -- a truncated generation still gets scored, it just gets
+row in a results table, a truncated generation still gets scored, it just gets
 scored on a half-written answer.
 
 Run after generation, before evaluation. Exit code 1 if anything truncated.
@@ -28,7 +28,7 @@ def main() -> None:
     parser.add_argument(
         "--runs-file",
         default="/tmp/claude-1034/-home-igutierrez134/033c132e-359b-4152-9f88-238f66c6f423/scratchpad/new_configs.txt",
-        help="File of config stems; each is checked at seeds 42/43/44.",
+        help="File of config stems, each is checked at seeds 42/43/44.",
     )
     parser.add_argument("--seeds", nargs="+", type=int, default=[42, 43, 44])
     args = parser.parse_args()

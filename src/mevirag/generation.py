@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 from typing import Any, Mapping, Optional, Sequence
 
-from medical_rag_thesis.prompts import SYSTEM_PROMPTS, SYSTEM_PROMPT_ES, build_self_feedback_prompt, build_user_prompt
+from mevirag.prompts import SYSTEM_PROMPTS, SYSTEM_PROMPT_ES, build_self_feedback_prompt, build_user_prompt
 
 
 def resolve_dtype(dtype: str) -> Any:

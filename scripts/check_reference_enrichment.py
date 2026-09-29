@@ -41,8 +41,8 @@ sys.path.insert(0, str(ROOT / "scripts"))
 sys.path.insert(0, str(ROOT / "src"))
 
 from evaluate_predictions import enrich_records_with_references, reference_path_from_metadata  # noqa: E402
-from medical_rag_thesis.data_io import read_jsonl  # noqa: E402
-from medical_rag_thesis.evaluation import reference_sections  # noqa: E402
+from mevirag.data_io import read_jsonl  # noqa: E402
+from mevirag.evaluation import reference_sections  # noqa: E402
 
 
 def main() -> None:

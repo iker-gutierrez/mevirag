@@ -30,8 +30,8 @@ configs/experiments/smoke_stagedeval_*.json
 configs/experiments/mini_test_qwen_fix.json
 configs/experiments/no_copy_prompt_test_1050.json
 
-# Historical experiment configs kept locally. Only the final publication-facing
-# ID ranges remain eligible for tracking.
+# Historical experiment configs kept locally. Only the experiment ID ranges
+# required to reproduce the reported results remain eligible for tracking.
 configs/experiments/*
 !configs/experiments/110??_*.json
 !configs/experiments/111??_*.json
@@ -55,8 +55,8 @@ reports/metrics/*
 reports/metrics_v2/*
 reports/metrics_archive/
 
-# Local checksum inventory for the historical working archive. The upload
-# contains only current, publication-facing artefacts under reproducibility/final_test/.
+# Local checksum inventory for the historical experiment archive. The tracked
+# reproducibility artefacts are stored under reproducibility/final_test/.
 reproducibility/full_working_archive_sha256.tsv
 
 # Processed datasets and generated metric reports remain local. Published data
@@ -92,8 +92,8 @@ slurm/*
 # Dataset construction lives in the separate GuiaSalud repository
 # (https://github.com/iker-gutierrez/guiasalud), not here.
 guiasalud_datasetting/
-src/medical_rag_thesis/datasetting_precuration.py
-src/medical_rag_thesis/datasetting_postcuration.py
+src/mevirag/datasetting_precuration.py
+src/mevirag/datasetting_postcuration.py
 scripts/prepare_sns1064.py
 scripts/check_translation_integrity.py
 scripts/translate_to_basque.py
@@ -101,8 +101,8 @@ scripts/retranslate_repetition_fields.py
 scripts/retranslate_truncated_fields.py
 
 # Superseded source and experiment-maintenance code retained locally
-src/medical_rag_thesis/prompts_v1.py
-src/medical_rag_thesis/reasoning_v1.py
+src/mevirag/prompts_v1.py
+src/mevirag/reasoning_v1.py
 scripts/add_bullets_to_query_field.py
 scripts/create_amplified_dataset.py
 scripts/create_llama_latxa_eu_configs.py
@@ -116,6 +116,22 @@ scripts/create_single_run_self_feedback_configs.py
 scripts/update_es_ablation_with_qwen3.py
 scripts/write_qwen35_spanish_summary.py
 scripts/write_supervisor_summary.py
+scripts/update_ablation_summary.py
+scripts/update_eu_summary.py
+scripts/write_agentic_summary.py
+scripts/write_llama_latxa_eu_summary.py
+scripts/write_mixed_agentic_summary.py
+scripts/write_self_feedback_diagnostic.py
+scripts/chain_reasoning_summary_update.sh
+scripts/write_eu_ablation_summary.py
+scripts/write_latex_appendix_tables.py
+scripts/write_latex_main_tables.py
+scripts/write_reasoning_pipeline_summary.py
+scripts/write_mixed_es_seed_summary.py
+scripts/write_mixed_eu_seed_summary.py
+scripts/metric_tables.py
+scripts/mixed_meanq.py
+scripts/create_mixed_reasoning_configs.py
 tests/fixtures/sns1064_tiny.csv
 
 # SNS-1064 paper (dataset not included)
@@ -130,8 +146,12 @@ manuscript/
 # Personal notes and exploration files
 becoming_autonomous_with_slurm.py
 codex_history_v2.md
+HANDOFF_SUMMARY.md
 experiments/codex_history.txt
 TODO_curated_rerun.md
+feedback_30-07-2026/
+docs/SUPERVISOR_FEEDBACK_REVIEW_LINES.md
+docs/supervisor_feedback_02-09-2026.md
 docs/inference_eval_scripts_summary.md
 docs/plan_extract.md
 docs/reading_list_v1.md

@@ -19,7 +19,7 @@ This runs automatically for the ablation. It deliberately stops before the reaso
 pipelines, which require a manual choice of the best configuration per language.
 
 It orchestrates GPU work by submitting Slurm jobs and waiting on them, so it must run
-somewhere it can call sbatch (a login node or a CPU Slurm job); it does no GPU work
+somewhere it can call sbatch (a login node or a CPU Slurm job), it does no GPU work
 itself.
 """
 from __future__ import annotations
@@ -40,7 +40,7 @@ CONFIG_LIST = Path(
 METRICS = ROOT / "reports" / "metrics"
 RUNS = ROOT / "experiments" / "runs"
 SEEDS = [42, 43, 44]
-MAX_PASSES = 4  # row8 then domain then converge; a safety ceiling
+MAX_PASSES = 4  # row8 then domain then converge, a safety ceiling
 
 
 def sh(cmd: list[str]) -> str:
@@ -49,7 +49,7 @@ def sh(cmd: list[str]) -> str:
 
 def evaluate_all() -> None:
     """Evaluate every run that has predictions but no metric file yet (CPU+1 GPU,
-    cosine off -- only the shown metrics)."""
+    cosine off, only the shown metrics)."""
     configs = CONFIG_LIST.read_text().split()
     for cfg in configs:
         lang = "eu" if cfg.endswith("_eu_dev") else "es"
@@ -69,7 +69,7 @@ def evaluate_all() -> None:
 
 
 def rewire() -> list[str]:
-    """Apply MeanQ rewiring; return the list of configs whose base changed."""
+    """Apply MeanQ rewiring, return the list of configs whose base changed."""
     changed_file = ROOT / "experiments" / "meanq_changed.txt"
     if changed_file.exists():
         changed_file.unlink()
@@ -121,7 +121,7 @@ def rerun_configs(configs: list[str], wait: bool) -> None:
     task_file.write_text("\n".join(tasks) + "\n")
 
     # Job name carries the model(s) in this batch (e.g. "abl-qwen-think") so squeue
-    # shows which rerun is which -- previously every batch was named "abl-meanq"
+    # shows which rerun is which. Previously every batch was named "abl-meanq"
     # regardless of model, and the only way to tell them apart was to cross-reference
     # job IDs against this script's own task-list output.
     labels = sorted(set(model_label(cfg) for cfg in configs))
@@ -182,9 +182,9 @@ def wait_for_job(job: str) -> None:
 
 
 def regenerate_tables() -> None:
-    for script in ("write_mixed_es_seed_summary.py", "write_mixed_eu_seed_summary.py",
-                   "write_result_tables.py"):
-        subprocess.run([sys.executable, f"scripts/{script}"], cwd=ROOT, check=False)
+    subprocess.run(
+        [sys.executable, "scripts/write_result_tables.py"], cwd=ROOT, check=False
+    )
 
 
 def main() -> None:
@@ -200,10 +200,10 @@ def main() -> None:
         if not changed:
             print("  grid is self-consistent: no dependent config changed.", flush=True)
             break
-        print(f"  {len(changed)} configs re-wired to their MeanQ base; re-running.", flush=True)
+        print(f"  {len(changed)} configs re-wired to their MeanQ base, re-running.", flush=True)
         rerun_configs(changed, wait=not args.no_wait)
     else:
-        print("  reached MAX_PASSES; stopping (check for oscillation).", flush=True)
+        print("  reached MAX_PASSES, stopping (check for oscillation).", flush=True)
 
     print("\n===== regenerating result tables =====", flush=True)
     regenerate_tables()

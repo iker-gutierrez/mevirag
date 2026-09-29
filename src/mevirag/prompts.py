@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 from typing import Any, Mapping, Optional, Sequence
 
-from medical_rag_thesis.retrieval import field_labels
+from mevirag.retrieval import field_labels
 
 
 SYSTEM_PROMPT_ES = "Eres un experto médico."

@@ -3,8 +3,8 @@
 
 The dev ablation reports `sec/sample` as a *batched* mean: all dev questions are
 served together via vLLM continuous batching, and the total is divided by the
-count. That is the right metric for comparing configurations -- it measures
-amortized serving cost on identical hardware -- but it is NOT how long one
+count. That is the right metric for comparing configurations, it measures
+amortized serving cost on identical hardware, but it is NOT how long one
 clinician waits for one answer. Batching overlaps requests, so the batched
 per-sample figure understates true single-request latency, often by several times
 for reasoning configs that decode long traces.
@@ -12,7 +12,7 @@ for reasoning configs that decode long traces.
 This script measures the other quantity: the wall-clock time for a *single* request,
 end to end (retrieval + rerank + prompt build + generation, and the self-feedback
 pass if the config uses it), by issuing one request at a time and timing each. It is
-meant to be run ONCE on the finally-chosen configuration, over a small sample -- not
+meant to be run ONCE on the finally-chosen configuration, over a small sample, not
 across the grid. Latency does not depend on the seed and is stable over ~20-30
 records, so a small sample gives a solid mean without re-running anything.
 
@@ -33,16 +33,16 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from medical_rag_thesis.data_io import read_jsonl  # noqa: E402
-from medical_rag_thesis.generation import (  # noqa: E402
+from mevirag.data_io import read_jsonl  # noqa: E402
+from mevirag.generation import (  # noqa: E402
     build_chat_prompt,
     load_vllm_model,
     make_prompt,
     make_self_feedback_prompt,
     strip_thinking_text,
 )
-from medical_rag_thesis.prompts import SYSTEM_PROMPTS, SYSTEM_PROMPT_ES, query_text  # noqa: E402
-from medical_rag_thesis.retrieval import EmbeddingRetriever  # noqa: E402
+from mevirag.prompts import SYSTEM_PROMPTS, SYSTEM_PROMPT_ES, query_text  # noqa: E402
+from mevirag.retrieval import EmbeddingRetriever  # noqa: E402
 
 
 def parse_args() -> argparse.Namespace:
@@ -58,8 +58,8 @@ def parse_args() -> argparse.Namespace:
 
 
 def generate_one_timed(llm: Any, prompt: str, tokenizer: Any, cfg: dict) -> tuple[str, float, str | None]:
-    """One request, timed. A list of length 1 forces vLLM to serve it alone -- no
-    batching overlap -- which is what makes this single-request latency rather than
+    """One request, timed. A list of length 1 forces vLLM to serve it alone, with no
+    batching overlap, which is what makes this single-request latency rather than
     throughput."""
     from vllm import SamplingParams
     from vllm.sampling_params import RepetitionDetectionParams
@@ -120,7 +120,7 @@ def main() -> None:
 
     retriever = reranker = None
     if cfg.get("retrieval_index") and int(cfg.get("retrieval_top_k", 0)) > 0:
-        # CPU encoder, as in every run in this thesis (shares the GPU with vLLM).
+        # Keep the encoder on CPU so that vLLM has exclusive use of the GPU.
         retriever = EmbeddingRetriever(cfg["retrieval_index"], device=cfg.get("retriever_device", "cpu"))
         if cfg.get("reranker_model") and int(cfg.get("reranker_top_k", 0)) > 0:
             from sentence_transformers import CrossEncoder
@@ -183,7 +183,7 @@ def main() -> None:
         },
         "note": ("End-to-end wall time for a SINGLE request (retrieval + generation "
                  "+ self-feedback if enabled), served one at a time. This is the "
-                 "user-facing latency; the dev ablation's sec/sample is batched "
+                 "user-facing latency, the dev ablation's sec/sample is batched "
                  "throughput and is systematically lower."),
     }
     out = ROOT / args.output

@@ -13,7 +13,7 @@ from typing import Any, Iterable, Optional
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from medical_rag_thesis.data_io import records_to_dataframe, write_jsonl  # noqa: E402
+from mevirag.data_io import records_to_dataframe, write_jsonl  # noqa: E402
 
 
 def parse_args() -> argparse.Namespace:

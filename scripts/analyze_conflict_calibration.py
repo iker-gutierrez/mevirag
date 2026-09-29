@@ -20,7 +20,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from medical_rag_thesis.reasoning import has_answer_label  # noqa: E402
+from mevirag.reasoning import has_answer_label  # noqa: E402
 
 RUNS = ROOT / "experiments" / "runs"
 

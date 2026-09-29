@@ -32,11 +32,9 @@ Writes:
     of reasoning-pipeline config paths just written, for the generation/
     evaluation scripts to read.
 
-This script imports its config-writing logic (base_config_for,
-retrieval_tag_for, PIPELINES) from scripts/create_mixed_reasoning_configs.py
-rather than duplicating it, and reads model-family metadata from
-scripts/mixed_meanq.py, but writes only to its own output files above, never
-touching the shared selection/manifest files those modules' own callers use.
+This script imports its shared config-writing logic from
+scripts/reasoning_config.py
+rather than duplicating it and writes only to its own output files above.
 
 Usage:
     python scripts/finalize_spanish_ablation_and_write_reasoning_configs.py --dry-run
@@ -52,9 +50,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from mixed_meanq import CELLS  # noqa: E402
-from meanq import best_by_meanq_robust  # noqa: E402
-from create_mixed_reasoning_configs import (  # noqa: E402
+from ablation_grid import CELLS  # noqa: E402
+from meanq import best_by_meanq_robust, incomplete_candidates, SEEDS  # noqa: E402
+from reasoning_config import (  # noqa: E402
     PIPELINES, QWEN_ENGINE_FIELDS, base_config_for, retrieval_tag_for,
 )
 
@@ -87,7 +85,7 @@ def candidates_all_rows(family_key: str, name_template: str, start_id: int, expl
     final winner can legitimately be either reading of any row."""
     candidates = {}
     for row in range(0, len(CELLS)):
-        cell_slug, cell_label, _ = CELLS[row]
+        cell_slug, cell_label = CELLS[row]
         run_id = start_id + row if row <= 6 else explicit_ids[row]
         base = name_template.format(cell=cell_slug)
         candidates[cell_label] = (str(run_id), base)
@@ -125,6 +123,17 @@ def main() -> None:
         print(f"=== {family_key} (final selection across all 11 rows) ===")
         candidates = candidates_all_rows(family_key, name_template, start_id, explicit_ids)
         pool = retrieving_pool(candidates)
+
+        incomplete = incomplete_candidates(pool)
+        if incomplete:
+            details = ", ".join(f"{label!r} ({n}/{len(SEEDS)} seeds)" for label, n in incomplete.items())
+            raise RuntimeError(
+                f"{family_key}: refusing to freeze the reasoning-pipeline base from an "
+                f"incomplete final-selection pool -- {details}. This is the selection that "
+                f"determines every reasoning-pipeline config's retrieval settings, so a "
+                f"weaker-sampled winner here has lasting downstream consequences; fix and "
+                f"resubmit the affected array indices, then rerun this finalize step."
+            )
 
         winner, stats = best_by_meanq_robust(pool)
         if winner is None:

@@ -311,4 +311,4 @@ def task_by_index(index: int) -> MixedAgenticTask:
     try:
         return TASKS[index]
     except IndexError as exc:
-        raise ValueError(f"Invalid mixed agentic task index {index}; expected 0-{len(TASKS) - 1}.") from exc
+        raise ValueError(f"Invalid mixed agentic task index {index}, expected 0-{len(TASKS) - 1}.") from exc

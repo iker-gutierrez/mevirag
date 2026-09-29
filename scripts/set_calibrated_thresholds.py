@@ -6,7 +6,7 @@ disagreement between candidates as conflict, so the bar is 0.
 
 The open-answer threshold does. Semantic conflict (1 - mean pairwise cosine over
 the candidates' short answers) never reaches 0 for correct paraphrases and its
-scale is model-dependent -- on the calibration subsample Llama-3.1-8B's open-answer
+scale is model-dependent, on the calibration subsample Llama-3.1-8B's open-answer
 conflict spread out to 0.183 while Qwen3.5-9B, being far more self-consistent,
 stayed much tighter. A single shared threshold would therefore make the refinement
 loop fire on nearly every Basque record and on almost no Spanish one, which says
@@ -14,7 +14,7 @@ more about the backbone than about the questions.
 
 Each model's threshold is set to the median round-1 conflict it produced on the
 24-record stratified calibration subsample, so the loop engages on the
-more-disagreeing half of open-answer records -- the same rough engagement rate
+more-disagreeing half of open-answer records, the same rough engagement rate
 that MA-RAG's own any-disagreement rule already yields on the multiple-choice half.
 """
 from __future__ import annotations
@@ -36,7 +36,7 @@ TARGETS = {
     "calib_marag_eu_topk3": "1313_llama31_8b_marag_e5_topk3_extractive_mixed_eu_dev",
     # Latxa's single-pass RAG reference moved from retrieve top3 to retrieve
     # top5 (FORCED_REFERENCES in write_result_tables.py), so the calibration
-    # target moved with it -- calib_marag_eu_latxa_topk3's threshold was read
+    # target moved with it, calib_marag_eu_latxa_topk3's threshold was read
     # off topk3 candidates and does not transfer.
     "calib_marag_eu_latxa_topk5": "1423_latxa_llama31_8b_marag_e5_topk5_extractive_mixed_eu_dev",
     "calib_marag_es_nothink": "1333_qwen35_9b_marag_e5_rerank5_no_think_extractive_mixed_dev",
