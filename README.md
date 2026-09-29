@@ -27,16 +27,26 @@ For Qwen no-think, MA-RAG was the only one of the five reasoning-pipeline varian
 
 ## Repository layout
 
-- `data/raw/`: original datasets, kept out of git.
-- `data/interim/`: temporary converted files.
-- `data/processed/`: normalized JSONL/CSV splits (Spanish and Basque).
-- `src/mevirag/`: reusable experiment code (retrieval, generation, evaluation, reasoning pipelines).
-- `scripts/`: command-line entry points for data prep, experiments, staged ablation, and result-table/report generation.
-- `slurm/`: Slurm launchers for the Spanish and Basque ablation stages, reasoning pipelines, and held-out test runs.
-- `configs/experiments/`: per-run experiment configs (retrieval depth, reranking, few-shot, self-feedback, and reasoning pipeline). The final held-out test configurations are also copied, with their predictions and evaluations, to `reproducibility/final_test/`.
-- `experiments/runs/`: generated predictions and run artifacts (gitignored).
-- `reports/metrics/`: generated evaluation outputs and summaries, kept out of git.
-- `docs/`: references for the prompt templates and evaluation methodology.
+```text
+.
+├── configs/
+│   ├── data/                  # Dataset and split configuration
+│   └── experiments/           # Retrieval, generation, and reasoning configurations
+├── data/
+│   ├── raw/                   # Original datasets (not tracked)
+│   ├── interim/               # Temporary converted data (not tracked)
+│   └── processed/             # Normalized Spanish and Basque splits (not tracked)
+├── docs/                      # Prompt and evaluation documentation
+├── reproducibility/
+│   ├── development_results.md # Final development results
+│   └── final_test/            # Test configs, predictions, evaluations, and results
+├── scripts/                   # Data, experiment, evaluation, and reporting commands
+├── slurm/                     # Slurm workflows for the reported experiments
+├── src/mevirag/               # Reusable MeviRAG implementation
+├── tests/                     # Automated tests
+├── experiments/runs/          # Generated run artifacts (not tracked)
+└── reports/metrics/           # Generated metric outputs (not tracked)
+```
 
 ## Reproducibility artefacts
 
