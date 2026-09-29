@@ -30,7 +30,7 @@ For Qwen no-think, MA-RAG was the only one of the five reasoning-pipeline varian
 ```text
 .
 ├── configs/
-│   ├── data/                  # Dataset and split configuration
+│   ├── data/                  # Dataset paths and split settings
 │   └── experiments/           # Retrieval, generation, and reasoning configurations
 ├── data/
 │   ├── raw/                   # Original datasets (not tracked)
