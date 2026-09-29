@@ -3,7 +3,7 @@
 This repository contains the completed implementation and evaluation of MeviRAG, a retrieval-augmented generation (RAG) pipeline for clinical question answering in Spanish and Basque.
 The system is evaluated on two tasks: open-answer clinical QA (GuiaSalud) and multiple-choice medical exam QA (CasiMédicos-Exp), across four core generator configurations (Qwen3.5-9B in non-thinking and thinking mode, Llama-3.1-8B-Instruct, and its Basque-adapted counterpart Latxa-Llama-3.1-8B-Instruct) and an eleven-condition ablation grid varying retrieval depth, cross-encoder reranking, few-shot prompting, self-feedback, and retrieval-corpus scope, plus five inference-only reasoning-pipeline variants drawn from recent literature.
 
-It includes retrieval, generation, self-feedback, reasoning pipelines, evaluation, and the final reproducibility artefacts. Retrieval uses the full corpus while excluding each query's own gold instance at query time.
+It includes retrieval, generation, self-feedback, reasoning pipelines, evaluation, and the final reproducibility resources. Retrieval uses the full corpus while excluding each query's own gold instance at query time.
 
 ## Key findings
 
@@ -44,11 +44,11 @@ For Qwen no-think, MA-RAG was the only one of the five reasoning-pipeline varian
 ├── slurm/                     # Slurm workflows for the reported experiments
 ├── src/mevirag/               # Reusable MeviRAG implementation
 ├── tests/                     # Automated tests
-├── experiments/runs/          # Generated run artifacts (not tracked)
+├── experiments/runs/          # Generated run outputs (not tracked)
 └── reports/metrics/           # Generated metric outputs (not tracked)
 ```
 
-## Reproducibility artefacts
+## Reproducibility resources
 
 The complete development ablation and reasoning-pipeline results are available
 in [`reproducibility/development_results.md`](reproducibility/development_results.md).
