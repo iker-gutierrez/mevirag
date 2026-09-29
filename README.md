@@ -1,20 +1,43 @@
 # MeviRAG: evidence-grounded RAG for the medical domain
 
-This repository contains the completed implementation and evaluation of MeviRAG, a retrieval-augmented generation (RAG) pipeline for clinical question answering in Spanish and Basque.
+This repository contains the completed implementation and evaluation of MeviRAG, a retrieval-augmented generation (RAG) pipeline for medical question answering in Spanish and Basque.
 The system is evaluated on two tasks: open-answer clinical QA (GuiaSalud) and multiple-choice medical exam QA (CasiMédicos-Exp), across four core generator configurations (Qwen3.5-9B in non-thinking and thinking mode, Llama-3.1-8B-Instruct, and its Basque-adapted counterpart Latxa-Llama-3.1-8B-Instruct) and an eleven-condition ablation grid varying retrieval depth, cross-encoder reranking, few-shot prompting, self-feedback, and retrieval-corpus scope, plus five inference-only reasoning-pipeline variants drawn from recent literature.
 
 It includes retrieval, generation, self-feedback, reasoning pipelines, evaluation, and the final reproducibility resources. Retrieval uses the full corpus while excluding each query's own gold instance at query time.
 
 ## Key findings
 
-- **Retrieval and ablations.** Retrieval helps every model substantially. Reranking is model-specific, while few-shot prompting and corpus restriction do not provide consistent gains. Self-feedback is close to neutral for both Qwen settings and improves both Basque models on average, but the final MST-selected Basque configurations do not use it.
+- **Retrieval and ablations.** Retrieval helps every model substantially, and reranking helps in most models, while few-shot prompting and corpus restriction do not provide consistent gains. Self-feedback is close to neutral for both Qwen settings and improves both Basque models on average, but the best Basque configurations do not benefit from it.
 - **Reasoning pipelines.** Of the five reasoning-pipeline variants, only MA-RAG improves over its model's selected single-pass MeviRAG reference, and only for Qwen no-think. Every reasoning pipeline underperforms the selected reference for Qwen think, Llama, and Latxa while generally increasing inference cost.
-- **Spanish--Basque gap.** A persistent 20-26 point MeanQ gap between the best achievable Spanish and Basque configurations survives every technique tested on dev and remains substantial on the held-out test set (21.94-24.16 points across the directly comparable systems).
 - **Basque adaptation.** Basque-specific continued pre-training provides targeted benefits for Latxa, particularly in retrieval-free generation, self-feedback, and multiple-choice accuracy, but it does not produce a uniform advantage over Llama once retrieval is used.
+
+## MeanQ–Stability–Token selection
+
+Configuration selection is performed exclusively on the development set and
+separately for each model. Quality is summarized by **MeanQ**, the unweighted
+mean of ROUGE-L F1, BERTScore F1, and multiple-choice accuracy. The
+**MeanQ–Stability–Token (MST) rule** deterministically selects the
+configuration with the best quality-cost tradeoff by comparing the current
+leader with each new candidate as follows:
+
+1. If their mean MeanQ values differ by at least **0.5 points**, the
+   configuration with the higher MeanQ wins.
+2. Otherwise, each configuration receives one point for meaningfully better
+   stability, defined as a seed-to-seed MeanQ standard deviation lower by more
+   than **0.5 points**, and one point for a mean LLM-token cost lower by more
+   than **1,000 tokens per answer**. The configuration with more points wins.
+3. If the stability and token-cost points are tied, the configuration with the
+   higher MeanQ wins.
+
+Token cost includes input and generated tokens from every LLM call, including
+self-feedback when enabled. Retrieval and CPU reranking are reflected in the
+reported end-to-end latency but are not converted into LLM tokens. The winner
+of each development stage becomes the model-specific reference for dependent
+stages.
 
 ## Test results
 
-Each model's development-selected configuration was frozen and evaluated on the held-out test split. MeanQ is the mean of ROUGE-L, BERT-F1, and MC-accuracy.
+Each model's development-selected configuration was frozen and evaluated on the held-out test split.
 
 | Model | Baseline (LLM only) | Selected system | Selected MeanQ | $\Delta$ |
 |---|---|---|---|---|
