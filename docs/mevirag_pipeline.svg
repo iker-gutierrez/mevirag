@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="390" viewBox="0 0 1400 390" role="img" aria-labelledby="title desc">
+  <title id="title">MeviRAG pipeline</title>
+  <desc id="desc">A question passes through a dense retriever, an optional reranker, an extractive prompt, and a generator LLM to produce a short answer and evidence. An optional self-feedback prompt sends the answer back to the generator for revision.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L10,4 L0,8 Z" fill="#285b8f"/>
+    </marker>
+    <style>
+      .box { fill: #eef5fb; stroke: #285b8f; stroke-width: 2.5; }
+      .optional { fill: #f6f9fc; stroke: #527ca5; stroke-width: 2.5; stroke-dasharray: 8 6; }
+      .arrow { fill: none; stroke: #285b8f; stroke-width: 3; marker-end: url(#arrow); }
+      .optional-arrow { fill: none; stroke: #527ca5; stroke-width: 3; stroke-dasharray: 8 6; marker-end: url(#arrow); }
+      .label { fill: #111827; font: 22px Arial, Helvetica, sans-serif; text-anchor: middle; }
+      .small { fill: #334155; font: 18px Arial, Helvetica, sans-serif; text-anchor: middle; }
+    </style>
+  </defs>
+
+  <rect width="1400" height="390" fill="#ffffff"/>
+
+  <rect class="box" x="25" y="60" width="150" height="90" rx="10"/>
+  <text class="label" x="100" y="113">Question</text>
+
+  <rect class="box" x="225" y="60" width="185" height="90" rx="10"/>
+  <text class="label" x="317.5" y="98">Dense retriever</text>
+  <text class="label" x="317.5" y="126">(top k)</text>
+
+  <rect class="optional" x="460" y="60" width="170" height="90" rx="10"/>
+  <text class="label" x="545" y="98">Reranker</text>
+  <text class="small" x="545" y="126">(optional)</text>
+
+  <rect class="box" x="680" y="60" width="180" height="90" rx="10"/>
+  <text class="label" x="770" y="98">Extractive</text>
+  <text class="label" x="770" y="126">prompt</text>
+
+  <rect class="box" x="910" y="60" width="170" height="90" rx="10"/>
+  <text class="label" x="995" y="98">Generator</text>
+  <text class="label" x="995" y="126">LLM</text>
+
+  <rect class="box" x="1130" y="60" width="235" height="90" rx="10"/>
+  <text class="label" x="1247.5" y="98">Short answer</text>
+  <text class="label" x="1247.5" y="126">+ evidence</text>
+
+  <path class="arrow" d="M175 105 H225"/>
+  <path class="arrow" d="M410 105 H460"/>
+  <path class="optional-arrow" d="M630 105 H680"/>
+  <path class="arrow" d="M860 105 H910"/>
+  <path class="arrow" d="M1080 105 H1130"/>
+
+  <rect class="optional" x="1115" y="250" width="265" height="90" rx="10"/>
+  <text class="label" x="1247.5" y="288">Self-feedback prompt</text>
+  <text class="small" x="1247.5" y="316">(optional)</text>
+
+  <path class="optional-arrow" d="M1247.5 150 V250"/>
+  <path class="optional-arrow" d="M1115 295 H995 V150"/>
+</svg>

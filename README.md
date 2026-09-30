@@ -1,15 +1,84 @@
 # MeviRAG: evidence-grounded RAG for the medical domain
 
-This repository contains the completed implementation and evaluation of MeviRAG, a retrieval-augmented generation (RAG) pipeline for medical question answering in Spanish and Basque.
-The system is evaluated on two tasks: open-answer clinical QA (GuiaSalud) and multiple-choice medical exam QA (CasiMédicos-Exp), across four core generator configurations (Qwen3.5-9B in non-thinking and thinking mode, Llama-3.1-8B-Instruct, and its Basque-adapted counterpart Latxa-Llama-3.1-8B-Instruct) and an eleven-condition ablation grid varying retrieval depth, cross-encoder reranking, few-shot prompting, self-feedback, and retrieval-corpus scope, plus five inference-only reasoning-pipeline variants drawn from recent literature.
+This repository contains the completed implementation and evaluation of MeviRAG, a retrieval-augmented generation (RAG) system for medical question answering in Spanish and Basque.
+The system is evaluated on two tasks: open-answer clinical QA (GuiaSalud dataset) and multiple-choice medical exam QA (CasiMédicos-Exp dataset), across four generator variants (Qwen3.5-9B in non-thinking and thinking mode, Llama-3.1-8B-Instruct, and its Basque-adapted counterpart Latxa-Llama-3.1-8B-Instruct). The development phase is conducted through an eleven-condition ablation grid (including retrieval depth, cross-encoder reranking, few-shot prompting, self-feedback, and retrieval-corpus scope), plus five inference-only reasoning-pipeline variants drawn from recent literature.
 
-It includes retrieval, generation, self-feedback, reasoning pipelines, evaluation, and the final reproducibility resources. Retrieval uses the full corpus while excluding each query's own gold instance at query time.
+## How MeviRAG works
 
-## Key findings
+Unlike conventional RAG over unstructured document chunks, MeviRAG retrieves
+structured medical QA instances containing a question, a short answer, and
+supporting evidence. Its base pipeline has four steps:
 
-- **Retrieval and ablations.** Retrieval helps every model substantially, and reranking helps in most models, while few-shot prompting and corpus restriction do not provide consistent gains. Self-feedback is close to neutral for both Qwen settings and improves both Basque models on average, but the best Basque configurations do not benefit from it.
-- **Reasoning pipelines.** Of the five reasoning-pipeline variants, only MA-RAG improves over its model's selected single-pass MeviRAG reference, and only for Qwen no-think. Every reasoning pipeline underperforms the selected reference for Qwen think, Llama, and Latxa while generally increasing inference cost.
-- **Basque adaptation.** Basque-specific continued pre-training provides targeted benefits for Latxa, particularly in retrieval-free generation, self-feedback, and multiple-choice accuracy, but it does not produce a uniform advantage over Llama once retrieval is used.
+<p align="center">
+  <img src="docs/mevirag_pipeline.svg" alt="MeviRAG pipeline: dense retrieval, optional reranking, evidence-grounded generation, and optional self-feedback" width="100%">
+</p>
+
+1. **Retrieve.** The question is encoded with `multilingual-E5-large` and used
+   to retrieve the most similar structured instances from a language-specific
+   dense index.
+2. **Rerank (optional).** The
+   `mmarco-mMiniLMv2-L12-H384-v1` cross-encoder jointly scores each
+   query–candidate pair and retains the most relevant instances.
+3. **Generate.** The selected evidence is inserted into an extractive prompt,
+   and the generator produces a short answer and supporting evidence.
+4. **Self-feedback (optional).** A second call asks the same model to check and
+   revise its initial answer against the retrieved evidence.
+
+The retrieval index contains the full train+development+test corpus to maximize
+the available evidence, but each query's own gold instance is excluded at
+query time to prevent answer leakage.
+
+## Experimental design
+
+### Model variants
+
+| Short name | Model and mode | Evaluation language |
+|:---|:---|:---|
+| Qwen no-think | Qwen3.5-9B, non-thinking mode | Spanish |
+| Qwen think | Qwen3.5-9B, thinking mode | Spanish |
+| Llama | Llama-3.1-8B-Instruct | Basque |
+| Latxa | Latxa-Llama-3.1-8B-Instruct | Basque |
+
+### Development configurations
+
+Inference and evaluation are interspersed across five development stages
+rather than run as one undivided grid. This is necessary because the retrieval
+settings of configurations 8, 9–10, 11, and 13–15 depend on the evaluation of
+earlier configurations.
+
+<p align="center">
+  <img src="docs/development_stages.svg" alt="Five development stages: retrieval, reranking, few-shot prompting, corpus scope, and reasoning" width="100%">
+</p>
+
+#### Ablation configurations (0–10)
+
+| # | Configuration | Retrieval setting |
+|---:|:---|:---|
+| 0 | Baseline | none |
+| 1 | retrieve top 1 | dense, top 1 |
+| 2 | retrieve top 3 | dense, top 3 |
+| 3 | retrieve top 5 | dense, top 5 |
+| 4 | rerank top 1 | retrieve 15, rerank to 1 |
+| 5 | rerank top 3 | retrieve 15, rerank to 3 |
+| 6 | rerank top 5 | retrieve 15, rerank to 5 |
+| 7 | 3-shot, no RAG | none |
+| 8 | 3-shot + selected RAG | selected from configurations 1–6 |
+| 9 | GuiaSalud retrieval | selected from configurations 1–6 and 8 |
+| 10 | CasiMédicos-Exp retrieval | selected from configurations 1–6 and 8 |
+
+#### Reasoning-pipeline configurations (11–15)
+
+| # | Configuration | Retrieval setting |
+|---:|:---|:---|
+| 11 | MedCoT-RAG (selected retrieval) | selected from configurations 0–10 |
+| 12 | MedCoT-RAG (causal top 5) | retrieve 15, causal scoring to top 5 |
+| 13 | RAR² (parallel scaling) | selected from configurations 0–10 |
+| 14 | RAR² (iterative scaling) | selected from configurations 0–10 |
+| 15 | MA-RAG | selected from configurations 0–10 |
+
+Configurations 0–10 constitute the ablation study and are evaluated both
+without and with self-feedback. Configurations 11–15 compare the selected
+single-pass MeviRAG reference with five inference-only reasoning pipelines.
 
 ## MeanQ–Stability–Token selection
 
@@ -46,7 +115,13 @@ Each model's development-selected configuration was frozen and evaluated on the 
 | Llama-3.1-8B-Instruct | 33.99±1.30 | rerank top 3 | 43.85±2.35 | +9.86±1.30 |
 | Latxa-Llama-3.1-8B-Instruct | 37.15±0.37 | retrieve top 1 | 43.26±0.52 | +6.11±0.78 |
 
-For Qwen no-think, MA-RAG was the only one of the five reasoning-pipeline variants to beat its own model's RAG ablation winner on dev, so it is the frozen test-set configuration. The other three models carry forward their own single-pass ablation winner instead. The complete [development](reproducibility/development_results.md) and [held-out test](reproducibility/final_test/results.md) reports include the per-condition quality and cost results.
+For Qwen no-think, MA-RAG was the only one of the five reasoning-pipeline variants to beat its own model's RAG ablation winner on dev, so it is the frozen test-set configuration. The other three models carry forward their own single-pass ablation winner instead. The complete [development](reproducibility/development_results.md) and [held-out test](reproducibility/final_test/results.md) reports include the quality and cost results config by config.
+
+## Key findings
+
+- **Retrieval and ablations.** Retrieval helps every model substantially, and reranking helps in most models, while few-shot prompting and corpus restriction do not provide consistent gains. Self-feedback is close to neutral for both Qwen variants and improves both Basque models on average, but the best Basque configurations do not benefit from it.
+- **Reasoning pipelines.** Of the five reasoning-pipeline variants, only MA-RAG improves over its model's selected single-pass MeviRAG reference, and only for Qwen no-think. Every reasoning pipeline underperforms the selected reference for Qwen think, Llama, and Latxa while generally increasing inference cost.
+- **Basque adaptation.** Basque-specific continued pre-training provides targeted benefits for Latxa, particularly in retrieval-free generation, self-feedback, and multiple-choice accuracy, but it does not produce a uniform advantage over Llama once retrieval is used.
 
 ## Repository layout
 
@@ -70,14 +145,6 @@ For Qwen no-think, MA-RAG was the only one of the five reasoning-pipeline varian
 ├── experiments/runs/          # Generated run outputs (not tracked)
 └── reports/metrics/           # Generated metric outputs (not tracked)
 ```
-
-## Reproducibility resources
-
-The complete development ablation and reasoning-pipeline results are available
-in [`reproducibility/development_results.md`](reproducibility/development_results.md).
-The exact final-test configurations, predictions, evaluation outputs, and
-consolidated results are available under
-[`reproducibility/final_test/`](reproducibility/final_test/).
 
 ## Quick start
 
@@ -155,7 +222,7 @@ python scripts/run_reasoning_pipeline.py \
   --config configs/experiments/16000_qwen35_9b_no_think_structured_cot_e5_topk5_extractive_guiasalud_dev_costaware.json
 ```
 
-## Slurm runs
+### Slurm runs
 
 The staged ablation grid is launched separately for Spanish and Basque. Each
 evaluation stage produces the selections required by dependent later stages.
@@ -175,6 +242,14 @@ python scripts/build_retrieval_index.py \
 ```
 
 Slurm logs go to `experiments/slurm_logs/`.
+
+## Reproducibility resources
+
+The complete development ablation and reasoning-pipeline results are available
+in [`reproducibility/development_results.md`](reproducibility/development_results.md).
+The exact final-test configurations, predictions, evaluation outputs, and
+consolidated results are available under
+[`reproducibility/final_test/`](reproducibility/final_test/).
 
 ## Citation
 

@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="190" viewBox="0 0 1400 190" role="img" aria-labelledby="title desc">
+  <title id="title">Five-stage development-selection workflow</title>
+  <desc id="desc">Retrieval configurations zero to three lead to reranking configurations four to six, few-shot configurations seven to eight, corpus-scope configurations nine to ten, and reasoning configurations eleven to fifteen.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L10,4 L0,8 Z" fill="#111827"/>
+    </marker>
+    <style>
+      .stage { fill: #e7f0f9; stroke: #144b82; stroke-width: 2.5; }
+      .reasoning { fill: #e5f5f2; stroke: #00695f; stroke-width: 2.5; }
+      .arrow { fill: none; stroke: #111827; stroke-width: 3; marker-end: url(#arrow); }
+      .heading { fill: #111827; font: bold 22px Arial, Helvetica, sans-serif; text-anchor: middle; }
+      .configs { fill: #334155; font: 19px Arial, Helvetica, sans-serif; text-anchor: middle; }
+    </style>
+  </defs>
+
+  <rect width="1400" height="190" fill="#ffffff"/>
+
+  <rect class="stage" x="20" y="45" width="230" height="100" rx="10"/>
+  <text class="heading" x="135" y="87">1. Retrieval</text>
+  <text class="configs" x="135" y="119">configs 0–3</text>
+
+  <rect class="stage" x="300" y="45" width="230" height="100" rx="10"/>
+  <text class="heading" x="415" y="87">2. Reranking</text>
+  <text class="configs" x="415" y="119">configs 4–6</text>
+
+  <rect class="stage" x="580" y="45" width="230" height="100" rx="10"/>
+  <text class="heading" x="695" y="87">3. Few-shot</text>
+  <text class="configs" x="695" y="119">configs 7–8</text>
+
+  <rect class="stage" x="860" y="45" width="250" height="100" rx="10"/>
+  <text class="heading" x="985" y="87">4. Corpus scope</text>
+  <text class="configs" x="985" y="119">configs 9–10</text>
+
+  <rect class="reasoning" x="1160" y="45" width="220" height="100" rx="10"/>
+  <text class="heading" x="1270" y="87">5. Reasoning</text>
+  <text class="configs" x="1270" y="119">configs 11–15</text>
+
+  <path class="arrow" d="M250 95 H300"/>
+  <path class="arrow" d="M530 95 H580"/>
+  <path class="arrow" d="M810 95 H860"/>
+  <path class="arrow" d="M1110 95 H1160"/>
+</svg>
