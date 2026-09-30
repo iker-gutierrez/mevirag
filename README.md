@@ -191,7 +191,7 @@ introduces the system and reports its evaluation:
 }
 ```
 
-The Master thesis was uploaded to ADDI
+Note: The Master thesis was uploaded to ADDI
 ([https://addi.ehu.eus](https://addi.ehu.eus)) and will soon be openly
 available there.
 
