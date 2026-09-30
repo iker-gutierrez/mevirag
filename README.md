@@ -191,6 +191,10 @@ introduces the system and reports its evaluation:
 }
 ```
 
+The Master thesis was uploaded to ADDI
+([https://addi.ehu.eus](https://addi.ehu.eus)) and will soon be openly
+available there.
+
 ## License
 
 This repository is released under the [Creative Commons Attribution-NonCommercial 4.0 International License](LICENSE).
